@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.xcscmblueprint
+*.moved-aside
+
+# Swift Package Manager
+.swiftpm/
+.build/
+Packages/
+
+# Downloaded dataset images (regenerate with tools/build_dataset.py).
+# Tracked seed images, if you choose to commit them, can be force-added.
+GuessAge/Resources/Seed/*.jpg
+GuessAge/Resources/Seed/*.jpeg
+GuessAge/Resources/Seed/*.png
+GuessAge/Resources/manifest.json
+
+# Python
+__pycache__/
+*.pyc
