@@ -20,6 +20,13 @@ final class DataStore: ObservableObject {
         loadSeed()
     }
 
+    /// Test/preview seam: build a store from in-memory photos, skipping the
+    /// bundle load so behavior is deterministic and isolated.
+    init(photos: [AgePhoto], session: URLSession = .shared) {
+        self.session = session
+        append(photos)
+    }
+
     /// Synchronously load the bundled seed so the first screen has data.
     private func loadSeed() {
         guard let url = Bundle.main.url(forResource: AppConfig.seedResourceName, withExtension: "json"),
