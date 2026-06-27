@@ -11,8 +11,18 @@
 		A1A1A1A1A1A1A1A1A1A10005 /* GuessAgeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GuessAgeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A1A1A1A1A1A1A1A1A1A10027 /* Exceptions */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A1A1A1A1A1A1A1A1A1A10008 /* GuessAge */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		A1A1A1A1A1A1A1A1A1A10006 /* GuessAge */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = GuessAge; sourceTree = "<group>"; };
+		A1A1A1A1A1A1A1A1A1A10006 /* GuessAge */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A1A1A1A1A1A1A1A1A1A10027 /* Exceptions */, ); explicitFileTypes = {}; explicitFolders = (); path = GuessAge; sourceTree = "<group>"; };
 		A1A1A1A1A1A1A1A1A1A10007 /* GuessAgeTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = GuessAgeTests; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
