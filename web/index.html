@@ -332,9 +332,10 @@
 
     // Idle animation params (all 0 for a static draw).
     const a = anim || {};
-    const bobPx = (a.bob || 0) * unit * 0.012;   // gentle vertical breathe
+    const bobPx = (a.bob || 0) * unit * 0.012;   // (unused now) vertical offset
     const swayR = (a.sway || 0) * 0.014;          // subtle head tilt (radians)
     const blink = a.blink || 0;                   // 0 open .. 1 closed
+    const smile = a.smile || 0;                   // 0 rest .. 1 full grin
 
     // Age factors
     const t = clamp(age);
@@ -349,7 +350,15 @@
     const eyeCol = hex(pick(EYES));
     const hair = mix(hex(pick(HAIR)), [206,206,212], gray*0.92);
     const hairDark = mix(hair,[20,16,16],0.25);
-    const cloth = hex(pick(CLOTH));
+    let cloth = hex(pick(CLOTH));
+    // Clothing type is a strong apparent-age cue.
+    let clothType;
+    if (t < 13) clothType = 'tee';
+    else if (t < 20) clothType = 'hoodie';
+    else if (t < 45) clothType = (rnd() < 0.5 ? 'collar' : 'crew');
+    else if (t < 63) clothType = (rnd() < 0.6 ? 'sweater' : 'collar');
+    else clothType = (rnd() < 0.6 ? 'cardigan' : 'sweater');
+    if (t >= 55) cloth = mix(cloth, [125,125,130], 0.34);   // muted tones read older
     const bgp = pick(BG);
     const glasses = rnd() < (0.12 + 0.5*cl01((t-40)/40));
 
@@ -376,9 +385,12 @@
     spot.addColorStop(0,'rgba(255,255,255,0.32)'); spot.addColorStop(1,'rgba(255,255,255,0)');
     ctx.fillStyle = spot; ctx.fillRect(0,0,W,H);
 
-    // Bob/tilt the whole person over the static background (idle "breathing").
+    // Transform the whole person over the static background: children render
+    // smaller (more headroom, anchored low) plus an optional subtle tilt.
+    const kidScale = 1 - child * 0.24;            // age ~3 -> 0.76, teen+ -> 1.0
+    const pivotY = cy + faceH * 1.15;             // scale/rotate about the chest
     ctx.save();
-    if (bobPx || swayR) { ctx.translate(cx, cy - bobPx); ctx.rotate(swayR); ctx.translate(-cx, -cy); }
+    ctx.translate(cx, pivotY); ctx.rotate(swayR); ctx.scale(kidScale, kidScale); ctx.translate(-cx, -pivotY - bobPx);
 
     // ---------- line-art + cel-shade palette ----------
     const ink = [56, 42, 44];                 // warm near-black line-art colour
@@ -446,7 +458,7 @@
     else if (style==='pony') { hb.ellipse(cx+faceW*0.95, cy+faceH*0.35, faceW*0.3, faceH*0.72, -0.35,0,7); ctx.fill(hb); strokeInk(LW,0.9); ctx.stroke(hb); }
     else if (style==='bun') { hb.ellipse(cx, cy-faceH*1.05, faceW*0.32, faceW*0.32, 0,0,7); ctx.fill(hb); strokeInk(LW,0.9); ctx.stroke(hb); }
 
-    // ---------- shoulders ----------
+    // ---------- shoulders + clothing (age cue) ----------
     const sh = new Path2D();
     sh.moveTo(cx-faceW*1.75, cy+faceH*2.3);
     sh.quadraticCurveTo(cx-faceW*1.45, cy+faceH*1.1, cx, cy+faceH*1.0);
@@ -463,6 +475,64 @@
     setF(shade(cloth,0.14)); E(cx-faceW*1.0, cy+faceH*1.6, faceW*0.5, faceH*0.7, 0.5); ctx.fill(); // light fold
     ctx.restore();
     strokeInk(); ctx.stroke(sh);
+
+    // Clothing details keyed to apparent age.
+    const nby = cy+faceH*1.03;   // neckline base
+    if (clothType==='tee') {
+      // bright crew tee: ribbed round neckline
+      strokeInk(Math.max(2, faceW*0.03), 0.9);
+      ctx.beginPath(); ctx.moveTo(cx-faceW*0.52, nby+faceH*0.02);
+      ctx.quadraticCurveTo(cx, nby+faceH*0.34, cx+faceW*0.52, nby+faceH*0.02); ctx.stroke();
+    } else if (clothType==='crew') {
+      strokeInk(Math.max(1.6, faceW*0.02), 0.7);
+      ctx.beginPath(); ctx.moveTo(cx-faceW*0.5, nby+faceH*0.03);
+      ctx.quadraticCurveTo(cx, nby+faceH*0.3, cx+faceW*0.5, nby+faceH*0.03); ctx.stroke();
+    } else if (clothType==='hoodie') {
+      // rolled hood collar around the neck + drawstrings
+      for (const s of [-1,1]) {
+        setF(shade(cloth,-0.1)); E(cx+s*faceW*0.5, nby+faceH*0.18, faceW*0.52, faceH*0.30, s*0.5); ctx.fill();
+        strokeInk(LW*0.9); E(cx+s*faceW*0.5, nby+faceH*0.18, faceW*0.52, faceH*0.30, s*0.5); ctx.stroke();
+      }
+      strokeInk(Math.max(1.6, faceW*0.018));
+      for (const s of [-1,1]) { ctx.beginPath(); ctx.moveTo(cx+s*faceW*0.1, nby+faceH*0.24); ctx.lineTo(cx+s*faceW*0.13, cy+faceH*1.95); ctx.stroke(); }
+      for (const s of [-1,1]) { setF(shade(cloth,0.1)); E(cx+s*faceW*0.13, cy+faceH*2.0, faceW*0.055, faceH*0.05); ctx.fill(); strokeInk(LW*0.8); E(cx+s*faceW*0.13, cy+faceH*2.0, faceW*0.055, faceH*0.05); ctx.stroke(); }
+    } else if (clothType==='collar') {
+      // dress-shirt collar: two flaps + placket
+      const cc = shade(cloth, 0.08);
+      for (const s of [-1,1]) {
+        setF(cc);
+        ctx.beginPath();
+        ctx.moveTo(cx+s*faceW*0.04, nby+faceH*0.05);
+        ctx.lineTo(cx+s*faceW*0.52, nby+faceH*0.0);
+        ctx.lineTo(cx+s*faceW*0.14, nby+faceH*0.5);
+        ctx.closePath(); ctx.fill(); strokeInk(LW*0.9); ctx.stroke();
+      }
+      strokeInk(LW*0.8, 0.7); ctx.beginPath(); ctx.moveTo(cx, nby+faceH*0.12); ctx.lineTo(cx, cy+faceH*2.3); ctx.stroke();
+    } else if (clothType==='sweater') {
+      // ribbed crew sweater: thick collar band
+      setF(shade(cloth,-0.1));
+      ctx.beginPath();
+      ctx.moveTo(cx-faceW*0.5, nby+faceH*0.04);
+      ctx.quadraticCurveTo(cx, nby+faceH*0.34, cx+faceW*0.5, nby+faceH*0.04);
+      ctx.quadraticCurveTo(cx, nby+faceH*0.5, cx-faceW*0.5, nby+faceH*0.04);
+      ctx.closePath(); ctx.fill(); strokeInk(LW*0.9); ctx.stroke();
+      strokeInk(LW*0.6, 0.5);
+      for (const dx of [-0.34,-0.12,0.12,0.34]) { ctx.beginPath(); ctx.moveTo(cx+dx*faceW, nby+faceH*0.12); ctx.lineTo(cx+dx*faceW, nby+faceH*0.4); ctx.stroke(); }
+    } else if (clothType==='cardigan') {
+      // V opening with a button placket + buttons (reads older)
+      const cc = shade(cloth, 0.06);
+      for (const s of [-1,1]) {
+        setF(cc);
+        ctx.beginPath();
+        ctx.moveTo(cx, nby+faceH*0.02);
+        ctx.lineTo(cx+s*faceW*0.34, nby-faceH*0.02);
+        ctx.lineTo(cx+s*faceW*0.30, cy+faceH*2.3);
+        ctx.lineTo(cx+s*faceW*0.04, cy+faceH*2.3);
+        ctx.closePath(); ctx.fill(); strokeInk(LW*0.85); ctx.stroke();
+      }
+      setF(shade(cloth,-0.28));
+      for (const k of [0,1,2]) { E(cx, nby+faceH*(0.5+k*0.55), faceW*0.05, faceH*0.05); ctx.fill(); }
+    }
 
     // ---------- neck ----------
     const nk = new Path2D();
@@ -663,18 +733,26 @@
       }
     }
 
-    // mouth (soft cartoon smile with a clean outline)
-    const lipW = faceW*0.30;
+    // mouth — a soft smile at rest that widens into a toothy grin (animated)
+    const sm = smile;
+    const lipW = faceW*(0.30 + 0.06*sm);
+    const cornerLift = faceH*(0.02 + 0.05*sm);
+    const depth = faceH*(0.085 - old*0.02) + faceH*0.075*sm;
     const lip = mix(skin,[184,88,88],0.55);
-    setF(mix(lip,[0,0,0],0.06));
-    ctx.beginPath();
-    ctx.moveTo(cx-lipW, mY);
-    ctx.quadraticCurveTo(cx, mY+faceH*0.10, cx+lipW, mY);
-    ctx.quadraticCurveTo(cx, mY+faceH*0.02, cx-lipW, mY);
-    ctx.closePath(); ctx.fill();
-    strokeInk(Math.max(1.5, faceW*0.02), 0.8);
-    ctx.beginPath(); ctx.moveTo(cx-lipW, mY);
-    ctx.quadraticCurveTo(cx, mY+faceH*(0.085-old*0.02), cx+lipW, mY); ctx.stroke();
+    const Lx = cx-lipW, Rx2 = cx+lipW, Ly = mY - cornerLift;
+    const mouthPath = () => { ctx.beginPath(); ctx.moveTo(Lx, Ly); ctx.quadraticCurveTo(cx, mY+depth, Rx2, Ly); ctx.quadraticCurveTo(cx, mY+depth*0.32, Lx, Ly); ctx.closePath(); };
+    if (sm > 0.12) {
+      // open grin: dark interior + a growing white teeth strip
+      setF(mix(lip,[30,10,10],0.5)); mouthPath(); ctx.fill();
+      ctx.save(); mouthPath(); ctx.clip();
+      setF('rgba(255,255,255,' + (0.92*Math.min(1,(sm-0.12)/0.4)).toFixed(3) + ')');
+      ctx.fillRect(Lx, Ly - faceH*0.03, lipW*2, depth*0.85);
+      ctx.restore();
+    } else {
+      setF(mix(lip,[0,0,0],0.06)); mouthPath(); ctx.fill();
+    }
+    strokeInk(Math.max(1.5, faceW*0.02), 0.85);
+    ctx.beginPath(); ctx.moveTo(Lx, Ly); ctx.quadraticCurveTo(cx, mY+depth, Rx2, Ly); ctx.stroke();
 
     // glasses
     if (glasses) {
@@ -784,18 +862,19 @@
     setStat('s-acc', acc + '%');
   }
 
-  // ---- Idle animation for the cartoon face (gentle bob + tilt + blinking) ----
+  // ---- Idle animation for the cartoon face (blinking + occasional smile) ----
+  // No vertical bob — the head stays put; only the eyes blink and the mouth
+  // breaks into a grin now and then, with a whisper of head tilt.
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let animOn = false, animRAF = 0, lastFrame = 0, blinkStart = -1, nextBlink = 0;
+  let animOn = false, animRAF = 0, lastFrame = 0, blinkStart = -1, nextBlink = 0, grinStart = -1, nextGrin = 0;
   function faceFrame(now) {
     if (!animOn) { animRAF = 0; return; }
     animRAF = requestAnimationFrame(faceFrame);
     if (now - lastFrame < 33) return; // ~30fps cap — plenty smooth, easy on battery
     lastFrame = now;
     const t = now / 1000;
-    const bob = Math.sin(t * 1.7);          // slow vertical breathe
-    const sway = Math.sin(t * 0.8 + 1.3);   // subtle head tilt
-    let blink = 0;
+    const sway = Math.sin(t * 0.7 + 1.3) * 0.45;   // subtle side tilt only
+    let blink = 0, smile = 0;
     if (blinkStart >= 0) {
       const bt = now - blinkStart, dur = 150;
       if (bt <= dur) blink = Math.sin(Math.PI * (bt / dur)); // 0 -> 1 -> 0
@@ -803,11 +882,20 @@
     } else if (now >= nextBlink) {
       blinkStart = now;
     }
-    drawFace(canvas, state.age, state.seed, { bob, sway, blink });
+    if (grinStart >= 0) {
+      const gt = now - grinStart, dur = 1600;
+      if (gt <= dur) smile = Math.sin(Math.PI * (gt / dur)); // ease up into a grin and back
+      else { grinStart = -1; nextGrin = now + 2800 + Math.random() * 4200; }
+    } else if (now >= nextGrin) {
+      grinStart = now;
+    }
+    drawFace(canvas, state.age, state.seed, { bob: 0, sway, blink, smile });
   }
   function startFaceAnim() {
     if (reduceMotion) { drawFace(canvas, state.age, state.seed); return; }
-    nextBlink = performance.now() + 1200 + Math.random() * 2000;
+    const now = performance.now();
+    nextBlink = now + 1200 + Math.random() * 2000;
+    nextGrin = now + 1800 + Math.random() * 2600;
     if (!animOn) { animOn = true; animRAF = requestAnimationFrame(faceFrame); }
   }
   function stopFaceAnim() { animOn = false; if (animRAF) { cancelAnimationFrame(animRAF); animRAF = 0; } }

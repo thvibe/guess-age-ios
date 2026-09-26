@@ -39,7 +39,9 @@ const SEEDS = [12345, 777, 90210, 42];
       tag.style.cssText = 'position:absolute;left:8px;top:8px;font:600 13px system-ui;color:#fff;background:rgba(0,0,0,.45);padding:2px 8px;border-radius:8px';
       cell.appendChild(tag);
       grid.appendChild(cell);
-      window.__drawFace(cv, age, seed, null);
+      // Right-hand columns show the animated grin; left columns the resting mouth.
+      const col = seeds.indexOf(seed);
+      window.__drawFace(cv, age, seed, { smile: col >= 2 ? 0.9 : 0 });
     }
   }, { ages: AGES, seeds: SEEDS, CW, CH });
 
