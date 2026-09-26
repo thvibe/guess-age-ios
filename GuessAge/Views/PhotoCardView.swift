@@ -4,6 +4,7 @@ import SwiftUI
 /// bundled image → remote URL (streamed, cached) → procedural placeholder.
 struct PhotoCardView: View {
     let photo: AgePhoto
+    var style: FaceStyle = .photo
 
     var body: some View {
         GeometryReader { geo in
@@ -21,7 +22,10 @@ struct PhotoCardView: View {
 
     @ViewBuilder
     private var content: some View {
-        if let name = photo.localImageName, let ui = ImageLoader.bundledImage(named: name) {
+        if style == .cartoon {
+            // Cartoon mode: the illustrated face IS the content (age-expressive).
+            CartoonFace(seed: ImageLoader.seed(for: photo.id), age: photo.age)
+        } else if let name = photo.localImageName, let ui = ImageLoader.bundledImage(named: name) {
             Image(uiImage: ui)
                 .resizable()
                 .scaledToFill()

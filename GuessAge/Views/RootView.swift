@@ -4,6 +4,12 @@ import SwiftUI
 struct RootView: View {
     @EnvironmentObject private var store: DataStore
     @State private var showHowTo = false
+    @AppStorage("faceStyle") private var faceStyleRaw = FaceStyle.cartoon.rawValue
+
+    private var faceStyle: FaceStyle { FaceStyle(rawValue: faceStyleRaw) ?? .cartoon }
+    private var hasPhotoDataset: Bool {
+        store.photos.contains { $0.imageURL != nil || $0.localImageName != nil }
+    }
 
     var body: some View {
         NavigationStack {
@@ -25,8 +31,22 @@ struct RootView: View {
                 Spacer()
 
                 VStack(spacing: 14) {
+                    Picker("Image style", selection: $faceStyleRaw) {
+                        ForEach(FaceStyle.allCases) { style in
+                            Text(style.label).tag(style.rawValue)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+
+                    if faceStyle == .photo && !hasPhotoDataset {
+                        Text("No AI photos loaded yet — generate them with tools/generate_faces.py, or play Cartoon.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+
                     NavigationLink {
-                        GameView(store: store)
+                        GameView(store: store, mode: faceStyle)
                     } label: {
                         menuLabel("Play", systemImage: "play.fill", prominent: true)
                     }
@@ -42,7 +62,8 @@ struct RootView: View {
                     }
                 }
 
-                Text("\(store.photos.count) photos loaded")
+                Text(faceStyle == .cartoon ? "Cartoon faces · all ages"
+                                           : "\(store.photos.count) photos loaded")
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
 
@@ -73,9 +94,9 @@ private struct HowToPlayView: View {
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 18) {
-                rule("person.crop.circle", "Each round shows an AI-generated person — a synthetic face, no real identity.")
-                rule("4.square", "Tap which of the four ages is correct.")
-                rule("wand.and.stars", "Every face is generated at a target age. Your job is to guess how old it looks.")
+                rule("photo.artframe", "Choose your faces: Cartoon (drawn in-app, all ages) or AI Photos (realistic, adults 18+).")
+                rule("4.square", "Each round shows a face — tap which of the four ages is correct.")
+                rule("person.crop.circle", "All faces are synthetic — no real people. The correct answer is the age each one was made at.")
                 rule("flame", "Build a streak for bonus points. There's no finish line — just keep guessing.")
                 Spacer()
             }

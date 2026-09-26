@@ -15,7 +15,7 @@ Provider: OpenAI's `gpt-image-1` (or any OpenAI-compatible Images API at
   IMAGE_API_KEY        (required)  your API key
   IMAGE_API_BASE       (default https://api.openai.com/v1)
   IMAGE_MODEL          (default gpt-image-1)
-  IMAGE_SIZE           (default 1024x1024; gpt-image-1: 1024x1024|1024x1536|1536x1024)
+  IMAGE_SIZE           (default 1024x1536 portrait; also 1024x1024|1536x1024)
   IMAGE_QUALITY        (default medium; gpt-image-1: low|medium|high) — drives cost
   IMAGE_OUTPUT_FORMAT  (default jpeg; jpeg|png|webp)
 Point IMAGE_API_BASE at Azure OpenAI, a gateway, or another compatible service
@@ -114,9 +114,9 @@ def main():
     ap.add_argument("--max-age", type=int, default=85)
     ap.add_argument("--image-base-url", default="", help="URL prefix where you'll host "
                     "generated images, for the streaming manifest (e.g. https://cdn/faces/)")
-    ap.add_argument("--size", default=os.environ.get("IMAGE_SIZE", "1024x1024"),
+    ap.add_argument("--size", default=os.environ.get("IMAGE_SIZE", "1024x1536"),
                     choices=["1024x1024", "1024x1536", "1536x1024", "auto"],
-                    help="gpt-image-1 image size (default 1024x1024; 1024x1536 = portrait)")
+                    help="gpt-image-1 image size (default 1024x1536 = portrait)")
     ap.add_argument("--quality", default=os.environ.get("IMAGE_QUALITY", "medium"),
                     choices=["low", "medium", "high", "auto"],
                     help="gpt-image-1 quality; higher costs more (default medium)")

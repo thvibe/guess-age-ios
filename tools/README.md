@@ -25,7 +25,7 @@ Default backend is OpenAI's **`gpt-image-1`**.
 ```bash
 export IMAGE_API_KEY=sk-...            # required
 python3 tools/generate_faces.py --count 200 --seed-count 50 \
-  --quality medium --size 1024x1024 \
+  --quality medium --size 1024x1536 \
   --image-base-url https://your-cdn.example.com/faces
 ```
 
@@ -34,7 +34,7 @@ Useful flags / env (flags win over env):
 | Flag / env | Default | Notes |
 |------------|---------|-------|
 | `--quality` / `IMAGE_QUALITY` | `medium` | `low` / `medium` / `high`. Drives cost. |
-| `--size` / `IMAGE_SIZE` | `1024x1024` | or `1024x1536` (portrait) / `1536x1024`. |
+| `--size` / `IMAGE_SIZE` | `1024x1536` (portrait) | or `1024x1024` / `1536x1024`. |
 | `--output-format` / `IMAGE_OUTPUT_FORMAT` | `jpeg` | `jpeg` / `png` / `webp`. |
 | `IMAGE_MODEL` | `gpt-image-1` | any OpenAI-compatible model. |
 | `IMAGE_API_BASE` | `https://api.openai.com/v1` | point at Azure/gateway to switch backend. |

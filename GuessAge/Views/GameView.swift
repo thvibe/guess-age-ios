@@ -6,8 +6,8 @@ struct GameView: View {
 
     /// Owns its view model for the lifetime of the pushed screen, so an
     /// unrelated `store` update can't recreate it and reset the score.
-    init(store: DataStore) {
-        _game = StateObject(wrappedValue: GameViewModel(store: store))
+    init(store: DataStore, mode: FaceStyle) {
+        _game = StateObject(wrappedValue: GameViewModel(store: store, mode: mode))
     }
 
     var body: some View {
@@ -15,7 +15,7 @@ struct GameView: View {
             scoreBar
 
             if let photo = game.current, let options = game.options {
-                PhotoCardView(photo: photo)
+                PhotoCardView(photo: photo, style: game.mode)
                     .frame(maxWidth: .infinity)
                     .frame(maxHeight: .infinity)
                     .id(photo.id) // force a fresh transition per photo

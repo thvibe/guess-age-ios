@@ -34,19 +34,33 @@ final class GameViewModel: ObservableObject {
         return selectedIndex == options.correctIndex
     }
 
+    /// Which kind of image this game shows.
+    let mode: FaceStyle
+
+    /// Age range for generated cartoon faces (includes children).
+    private let cartoonAgeRange = 3...85
+
     private let store: DataStore
     private var queue: [AgePhoto] = []
 
-    init(store: DataStore) {
+    init(store: DataStore, mode: FaceStyle = .photo) {
         self.store = store
+        self.mode = mode
         start()
     }
 
     /// (Re)start a fresh game.
     func start() {
         score = 0; rounds = 0; correctCount = 0; streak = 0; bestStreak = 0
-        queue = store.photos.shuffled()
+        queue = mode == .cartoon ? [] : store.photos.shuffled()
         advance()
+    }
+
+    /// A fresh randomly-aged cartoon person. Cartoon mode is endless by
+    /// generation, so it needs no dataset and works fully offline.
+    private func makeCartoonPhoto() -> AgePhoto {
+        AgePhoto(id: "cartoon-\(UInt32.random(in: .min ... .max))",
+                 age: Int.random(in: cartoonAgeRange))
     }
 
     /// Register the player's tap. No-op once already answered.
@@ -66,19 +80,27 @@ final class GameViewModel: ObservableObject {
         }
     }
 
-    /// Move to the next photo.
+    /// Move to the next face.
     func advance() {
-        refillIfNeeded()
         selectedIndex = nil
         hasAnswered = false
-        guard let next = queue.first else {
+
+        let next: AgePhoto?
+        if mode == .cartoon {
+            next = makeCartoonPhoto()
+        } else {
+            refillIfNeeded()
+            next = queue.first
+            if next != nil { queue.removeFirst() }
+        }
+
+        guard let photo = next else {
             current = nil
             options = nil
             return
         }
-        queue.removeFirst()
-        current = next
-        options = AgeOptionGenerator.makeOptions(trueAge: next.age)
+        current = photo
+        options = AgeOptionGenerator.makeOptions(trueAge: photo.age)
     }
 
     /// Endless loop: when the queue runs low, reshuffle the full known pool

@@ -3,11 +3,15 @@
 A solo, never-ending iOS game: look at a photo of a real person and tap which of
 four ages is correct. Built in SwiftUI, no third-party dependencies.
 
-> **AI-generated people, no royalties.** Faces are synthetic — generated at a
-> target age (the correct answer) with an image model, depicting no real person,
-> so there are no likeness or copyright concerns. Adults only (18+) by design.
-> A real-photo path (royalty-free Wikimedia photos with *documented* ages,
-> children included) is also available if you prefer real subjects.
+> **Two face styles the player picks from — both royalty-free.**
+> - **Cartoon** — illustrated faces drawn in-app (SwiftUI `Canvas`), **all ages
+>   incl. children**, works fully offline, no data needed.
+> - **AI Photos** — photorealistic synthetic people from `gpt-image-1`
+>   (portrait, **adults 18+**), depicting no real person, so no likeness/
+>   copyright/royalty concerns. The correct answer is the age each face was made at.
+>
+> A real-photo path (royalty-free Wikimedia photos with *documented* ages) is also
+> available if you prefer real subjects.
 
 ## What's here
 

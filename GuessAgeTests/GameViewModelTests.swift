@@ -123,4 +123,29 @@ final class GameViewModelTests: XCTestCase {
         XCTAssertFalse(game.hasAnswered)
         XCTAssertNotNil(game.current)
     }
+
+    // MARK: Cartoon mode (generated, no dataset)
+
+    func testCartoonModeIsEndlessWithoutDataset() {
+        let game = GameViewModel(store: DataStore(photos: []), mode: .cartoon)
+        for _ in 0..<150 {
+            XCTAssertNotNil(game.current)
+            XCTAssertEqual(game.options?.values.count, 4)
+            game.select(correctIndex(game))
+            game.advance()
+        }
+        XCTAssertNotNil(game.current)
+    }
+
+    func testCartoonAgesAreInChildInclusiveRange() {
+        let game = GameViewModel(store: DataStore(photos: []), mode: .cartoon)
+        var sawChild = false
+        for _ in 0..<300 {
+            let age = game.current!.age
+            XCTAssertTrue((3...85).contains(age), "cartoon age \(age) out of range")
+            if age < 13 { sawChild = true }
+            game.advance()
+        }
+        XCTAssertTrue(sawChild, "cartoon mode should include children")
+    }
 }

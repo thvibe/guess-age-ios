@@ -49,6 +49,17 @@ struct AgePhoto: Codable, Identifiable, Equatable, Hashable {
     }
 }
 
+/// The kind of image the game shows. The player chooses this.
+enum FaceStyle: String, CaseIterable, Identifiable {
+    /// Illustrated faces drawn in-app (includes children).
+    case cartoon
+    /// AI-generated / real photographs from the dataset (adults only).
+    case photo
+
+    var id: String { rawValue }
+    var label: String { self == .cartoon ? "Cartoon" : "AI Photos" }
+}
+
 /// Top-level shape of a `seed.json` / `manifest.json` document.
 struct PhotoManifest: Codable {
     /// Schema version, for forward compatibility.

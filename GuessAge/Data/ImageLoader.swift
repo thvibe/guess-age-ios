@@ -35,6 +35,15 @@ enum ImageLoader {
         return nil
     }
 
+    /// A stable 32-bit seed derived from an id, for deterministic cartoon faces.
+    static func seed(for id: String) -> UInt32 {
+        var hash: UInt32 = 2166136261
+        for byte in id.utf8 {
+            hash = (hash ^ UInt32(byte)) &* 16777619
+        }
+        return hash
+    }
+
     /// A stable color derived from an id, used for procedural placeholder faces
     /// so the offline seed looks varied without bundling any binary assets.
     static func placeholderColors(for id: String) -> (Color, Color) {
