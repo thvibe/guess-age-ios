@@ -34,6 +34,19 @@ final class AgeOptionGeneratorTests: XCTestCase {
         }
     }
 
+    func testOptionsAreSpacedApart() {
+        for age in AgeOptionGenerator.minAge...AgeOptionGenerator.maxAge {
+            var rng = SeededRNG(seed: UInt64(age) * 17 + 11)
+            let opts = AgeOptionGenerator.makeOptions(trueAge: age, using: &rng)
+            let sorted = opts.values.sorted()
+            for i in 1..<sorted.count {
+                XCTAssertGreaterThanOrEqual(
+                    sorted[i] - sorted[i-1], AgeOptionGenerator.minOptionGap,
+                    "options \(sorted) too close for age \(age)")
+            }
+        }
+    }
+
     func testOptionsWithinValidRange() {
         for age in AgeOptionGenerator.minAge...AgeOptionGenerator.maxAge {
             var rng = SeededRNG(seed: UInt64(age) * 13 + 5)
