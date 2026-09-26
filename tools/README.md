@@ -15,8 +15,10 @@ python3 tools/gen_placeholder_seed.py
 ## `generate_faces.py` — AI-generated faces (primary)
 
 Generates synthetic people at target ages using an OpenAI-compatible Images API.
-These faces depict no real person, so there are no likeness/copyright/royalty
-concerns. The age is the *intended/apparent* age each face was generated at.
+By default it produces **hand-drawn anime-style illustrations** (Studio-Ghibli /
+Makoto-Shinkai feel); pass `--art-style photo` for photorealistic instead. These
+faces depict no real person, so there are no likeness/copyright/royalty concerns.
+The age is the *intended/apparent* age each face was generated at.
 
 **Adults only (18+) by design** — the tool will not generate images of minors.
 
@@ -35,6 +37,7 @@ Useful flags / env (flags win over env):
 |------------|---------|-------|
 | `--quality` / `IMAGE_QUALITY` | `medium` | `low` / `medium` / `high`. Drives cost. |
 | `--size` / `IMAGE_SIZE` | `1024x1536` (portrait) | or `1024x1024` / `1536x1024`. |
+| `--art-style` / `IMAGE_ART_STYLE` | `anime` | `anime` hand-drawn illustration (Ghibli-esque) or `photo` photorealistic. |
 | `--output-format` / `IMAGE_OUTPUT_FORMAT` | `jpeg` | `jpeg` / `png` / `webp`. |
 | `IMAGE_MODEL` | `gpt-image-1` | any OpenAI-compatible model. |
 | `IMAGE_API_BASE` | `https://api.openai.com/v1` | point at Azure/gateway to switch backend. |
@@ -60,6 +63,31 @@ Images endpoint to use a different backend/model.
 > years from how the face actually reads. For a casual guessing game that's fine;
 > if you want tighter labels, run an age-estimation pass over the results and
 > store the estimate instead.
+
+## `generate_faces_local.py` — anime faces, LOCAL & free (no API)
+
+Runs Stable Diffusion on your own machine (Apple Silicon / NVIDIA / CPU) with an
+anime checkpoint — no account, no key, no per-image cost, fully private. Same
+output shape as `generate_faces.py`. Adults only (18+).
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r tools/requirements-local.txt
+python3 tools/generate_faces_local.py --count 20 --seed-count 20
+```
+
+- First run downloads the model (~6-7 GB) from Hugging Face and caches it.
+- Default model is an anime **SDXL** checkpoint (`cagliostrolab/animagine-xl-3.1`).
+  Override with `--model` (any diffusers text-to-image model). For a lighter/faster
+  **SD1.5** anime model, also pass `--size 512x768`.
+- Tuning: `--steps`, `--guidance`, `--size WxH`, `--device`, `--dtype`.
+- On Apple Silicon expect ~20-60s per image (MPS backend, auto-detected).
+- **Try `--preview` first:** `python3 tools/generate_faces_local.py --preview` renders
+  three sample faces (young / adult / old) into `./preview/` with timings and exits,
+  so you can check quality and speed before committing to a full batch.
+
+Then bundle `Seed/` for offline play, host `Generated/` + `manifest.json` for the
+streamed pool, and point `AppConfig.manifestURL` at it — same as the other tools.
 
 ## `build_dataset.py` — real, verified photos (alternative)
 

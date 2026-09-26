@@ -39,7 +39,7 @@ struct RootView: View {
                     .pickerStyle(.segmented)
 
                     if faceStyle == .photo && !hasPhotoDataset {
-                        Text("No AI photos loaded yet — generate them with tools/generate_faces.py, or play Cartoon.")
+                        Text("No anime images loaded yet — generate them with tools/generate_faces.py, or play Cartoon.")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
@@ -94,7 +94,7 @@ private struct HowToPlayView: View {
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 18) {
-                rule("photo.artframe", "Choose your faces: Cartoon (drawn in-app, all ages) or AI Photos (realistic, adults 18+).")
+                rule("photo.artframe", "Choose your faces: Cartoon (drawn in-app, all ages) or Anime (AI-drawn, adults 18+).")
                 rule("4.square", "Each round shows a face — tap which of the four ages is correct.")
                 rule("person.crop.circle", "All faces are synthetic — no real people. The correct answer is the age each one was made at.")
                 rule("flame", "Build a streak for bonus points. There's no finish line — just keep guessing.")
