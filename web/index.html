@@ -111,6 +111,19 @@
     min-height: 260px;
   }
   #face { width: 100%; height: 100%; display: block; }
+  #animeImg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:none; }
+  #card.anime #face { display:none; }
+  #card.anime #animeImg { display:block; }
+  .spinner { position:absolute; inset:0; display:none; place-items:center; }
+  #card.loading .spinner { display:grid; }
+  .spinner div { width:36px; height:36px; border-radius:50%;
+    border:3px solid rgba(255,255,255,.35); border-top-color:#fff; animation:spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .modes { display:flex; gap:8px; }
+  .mode { flex:1; appearance:none; border:0; border-radius:12px; padding:9px 0; cursor:pointer;
+    font-family:var(--round); font-weight:800; font-size:14px; background:var(--fill); color:var(--text-2);
+    transition:background .15s, color .15s; }
+  .mode.active { background:var(--accent); color:#fff; }
   .card-tag {
     position: absolute; left: 12px; bottom: 12px; font-size: 11px; font-weight: 600;
     color: #fff; background: rgba(0,0,0,.34); backdrop-filter: blur(6px);
@@ -193,10 +206,17 @@
     <div class="stat" id="s-acc"><b>0%</b><span>Accuracy</span></div>
   </div>
 
+  <div class="modes" id="modes">
+    <button class="mode active" data-mode="cartoon">Cartoon</button>
+    <button class="mode" data-mode="anime">Anime · AI</button>
+  </div>
+
   <div class="card-wrap">
     <div id="card">
       <canvas id="face"></canvas>
-      <div class="card-tag">✎ cartoon style</div>
+      <img id="animeImg" alt="anime face">
+      <div class="spinner"><div></div></div>
+      <div class="card-tag" id="cardTag">✎ cartoon style</div>
     </div>
   </div>
 
@@ -210,8 +230,9 @@
   <button class="next" id="next" hidden>Next</button>
 
   <div class="foot">
-    This is the <b>Cartoon</b> style — drawn in-app, all ages incl. kids.<br>
-    In the app you can switch to <b>Anime</b> — AI-drawn portraits, adults 18+.
+    <b>Cartoon</b> draws instantly on your device (all ages). <b>Anime · AI</b> generates a
+    free image each round (adults 18+, needs a connection).<br>
+    Anime only loads on the hosted site — not in this claude.ai preview.
   </div>
 </div>
 
@@ -598,8 +619,23 @@
   const optEls = [...document.querySelectorAll('.opt')];
   const state = { score:0, rounds:0, correct:0, streak:0, best:0, age:0, seed:0, opts:null, answered:false };
 
-  function randAge() { return 3 + Math.floor(Math.random()*83); } // cartoon: all ages 3..85
+  let mode = 'cartoon';
+  const animeImg = el('animeImg');
+
+  // Cartoon spans all ages; Anime (AI) is adults only (18+).
+  function randAge() { return mode === 'anime' ? 18 + Math.floor(Math.random()*68) : 3 + Math.floor(Math.random()*83); }
   function randSeed() { return (Math.random()*2**31) >>> 0; }
+
+  // Free, no-key AI image generation (Pollinations). Loads in the browser on the
+  // hosted site (GitHub Pages); external images are blocked in the claude.ai preview.
+  function animeURL(age, seed) {
+    const g = ['man','woman'][Math.floor(Math.random()*2)];
+    const hair = ['short hair','long hair','ponytail','wavy hair','messy hair'][Math.floor(Math.random()*5)];
+    const p = `anime portrait illustration, upper body, a ${age} year old ${g}, ${hair}, `
+            + `soft cel shading, clean lineart, studio ghibli style, simple background, `
+            + `one person, looking at viewer, safe for work, no text`;
+    return `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=512&height=624&nologo=true&model=flux&seed=${seed}`;
+  }
 
   function setStat(id, val, flash) {
     const node = el(id); node.querySelector('b').textContent = val;
@@ -617,7 +653,21 @@
     state.age = randAge(); state.seed = randSeed(); state.answered = false;
     state.opts = makeOptions(state.age, rngFrom(state.seed ^ 0x9e3779b9));
     const card = el('card'); card.classList.remove('reveal-in'); void card.offsetWidth; card.classList.add('reveal-in');
-    drawFace(canvas, state.age, state.seed);
+    if (mode === 'anime') {
+      card.classList.add('anime', 'loading');
+      el('cardTag').textContent = '✨ anime · AI';
+      animeImg.onload = () => card.classList.remove('loading');
+      animeImg.onerror = () => { // AI unavailable this round: fall back to a cartoon
+        card.classList.remove('anime', 'loading');
+        el('cardTag').textContent = '✎ cartoon (AI unavailable)';
+        drawFace(canvas, state.age, state.seed);
+      };
+      animeImg.src = animeURL(state.age, state.seed);
+    } else {
+      card.classList.remove('anime', 'loading');
+      el('cardTag').textContent = '✎ cartoon style';
+      drawFace(canvas, state.age, state.seed);
+    }
     el('options').classList.remove('answered');
     optEls.forEach((b,i) => {
       b.textContent = state.opts.values[i];
@@ -659,6 +709,14 @@
     renderScores(false); newRound();
   });
   el('play').addEventListener('click', () => { el('start').classList.add('hidden'); newRound(); });
+
+  document.querySelectorAll('.mode').forEach(btn => btn.addEventListener('click', () => {
+    if (btn.dataset.mode === mode) return;
+    mode = btn.dataset.mode;
+    document.querySelectorAll('.mode').forEach(b => b.classList.toggle('active', b === btn));
+    Object.assign(state, { score:0, rounds:0, correct:0, streak:0, best:0 });
+    renderScores(false); newRound();
+  }));
 
   let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { drawFace(canvas, state.age, state.seed); }, 120); });
 
