@@ -70,7 +70,7 @@ jobs:
           python-version: "3.11"
 
       - name: Syntax-check scripts
-        run: python -m py_compile tools/build_dataset.py tools/gen_placeholder_seed.py tools/generate_faces.py
+        run: python -m py_compile tools/build_dataset.py tools/gen_placeholder_seed.py tools/generate_faces.py tools/generate_faces_local.py
 
       - name: Generate placeholder seed and validate JSON
         run: |

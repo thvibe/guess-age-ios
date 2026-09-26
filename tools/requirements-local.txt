@@ -1,0 +1,11 @@
+# Dependencies for local (free) anime face generation — tools/generate_faces_local.py.
+# Install into a virtualenv:  pip install -r tools/requirements-local.txt
+#
+# On Apple Silicon, the default `pip install torch` provides the MPS backend.
+# On an NVIDIA machine, install the CUDA build of torch per pytorch.org.
+torch>=2.1
+diffusers>=0.27
+transformers>=4.38
+accelerate>=0.27
+safetensors>=0.4
+Pillow>=10.0

@@ -64,6 +64,28 @@ Images endpoint to use a different backend/model.
 > if you want tighter labels, run an age-estimation pass over the results and
 > store the estimate instead.
 
+## `generate_faces_local.py` — anime faces, LOCAL & free (no API)
+
+Runs Stable Diffusion on your own machine (Apple Silicon / NVIDIA / CPU) with an
+anime checkpoint — no account, no key, no per-image cost, fully private. Same
+output shape as `generate_faces.py`. Adults only (18+).
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r tools/requirements-local.txt
+python3 tools/generate_faces_local.py --count 20 --seed-count 20
+```
+
+- First run downloads the model (~6-7 GB) from Hugging Face and caches it.
+- Default model is an anime **SDXL** checkpoint (`cagliostrolab/animagine-xl-3.1`).
+  Override with `--model` (any diffusers text-to-image model). For a lighter/faster
+  **SD1.5** anime model, also pass `--size 512x768`.
+- Tuning: `--steps`, `--guidance`, `--size WxH`, `--device`, `--dtype`.
+- On Apple Silicon expect ~20-60s per image (MPS backend, auto-detected).
+
+Then bundle `Seed/` for offline play, host `Generated/` + `manifest.json` for the
+streamed pool, and point `AppConfig.manifestURL` at it — same as the other tools.
+
 ## `build_dataset.py` — real, verified photos (alternative)
 
 If you'd rather use **real** people with **documented** ages (and want to include
