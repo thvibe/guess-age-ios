@@ -1,0 +1,2 @@
+# Downloaded seed images land here when you run tools/build_dataset.py.
+# Kept in git so the folder exists; the images themselves are gitignored.

@@ -1,0 +1,4 @@
+# build_dataset.py and gen_placeholder_seed.py use only the Python 3 standard
+# library (urllib, json, re) — no third-party packages are required.
+# This file exists so `pip install -r requirements.txt` is a safe no-op and as a
+# place to pin extras if you later swap urllib for requests, add Pillow, etc.

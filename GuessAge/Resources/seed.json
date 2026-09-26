@@ -1,0 +1,155 @@
+{
+  "version": 1,
+  "photos": [
+    {
+      "id": "placeholder-000",
+      "age": 3,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-001",
+      "age": 6,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-002",
+      "age": 9,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-003",
+      "age": 12,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-004",
+      "age": 15,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-005",
+      "age": 18,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-006",
+      "age": 21,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-007",
+      "age": 24,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-008",
+      "age": 27,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-009",
+      "age": 30,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-010",
+      "age": 33,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-011",
+      "age": 36,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-012",
+      "age": 40,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-013",
+      "age": 44,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-014",
+      "age": 48,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-015",
+      "age": 52,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-016",
+      "age": 56,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-017",
+      "age": 60,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-018",
+      "age": 64,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-019",
+      "age": 68,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-020",
+      "age": 72,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-021",
+      "age": 76,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-022",
+      "age": 80,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-023",
+      "age": 85,
+      "name": null,
+      "attribution": null
+    },
+    {
+      "id": "placeholder-024",
+      "age": 90,
+      "name": null,
+      "attribution": null
+    }
+  ]
+}

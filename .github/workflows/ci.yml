@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios-build-test:
+    name: Build & test (iOS)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select latest stable Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          xcrun simctl list devices available | grep -i iphone | head -n 10
+
+      - name: Pick an available iPhone simulator
+        id: sim
+        run: |
+          # Choose the first available iPhone simulator so we don't pin a name
+          # that may drift between Xcode versions.
+          name=$(xcrun simctl list devices available \
+            | grep -Eo 'iPhone [0-9]+( Pro( Max)?)?' | head -n 1)
+          echo "name=${name:-iPhone 16}" >> "$GITHUB_OUTPUT"
+          echo "Using simulator: ${name:-iPhone 16}"
+
+      - name: Build & test
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project GuessAge.xcodeproj \
+            -scheme GuessAge \
+            -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.name }},OS=latest" \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcbeautify || xcodebuild test \
+              -project GuessAge.xcodeproj \
+              -scheme GuessAge \
+              -destination "platform=iOS Simulator,name=${{ steps.sim.outputs.name }},OS=latest" \
+              CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TestResults
+          path: TestResults.xcresult
+          if-no-files-found: ignore
+
+  dataset-tools:
+    name: Dataset tools (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Syntax-check scripts
+        run: python -m py_compile tools/build_dataset.py tools/gen_placeholder_seed.py tools/generate_faces.py
+
+      - name: Generate placeholder seed and validate JSON
+        run: |
+          python tools/gen_placeholder_seed.py
+          python -m json.tool GuessAge/Resources/seed.json > /dev/null
+          echo "seed.json is valid JSON"
