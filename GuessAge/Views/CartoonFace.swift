@@ -112,7 +112,8 @@ struct CartoonFace: View {
         // Hair cap.
         if child > 0.05 || balding < 0.85 {
             let cap = faceW*1.02
-            let brow = cy - faceH*(0.34 - balding*0.28)
+            // Younger faces get a fuller, lower hairline so they never read bald.
+            let brow = cy - faceH*(0.34 - balding*0.28 - child*0.10)
             var hp = Path()
             hp.move(to: CGPoint(x: cx-cap, y: brow))
             hp.addCurve(to: CGPoint(x: cx+cap, y: brow),

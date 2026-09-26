@@ -10,6 +10,9 @@ enum AgeOptionGenerator {
     static let minAge = 1
     /// Highest age the game will ever show as an option.
     static let maxAge = 99
+    /// Minimum spacing between any two options, so choices are never
+    /// near-duplicates (e.g. never "80" next to "82").
+    static let minOptionGap = 8
 
     /// The result of generating a question's options.
     struct Options: Equatable {
@@ -23,50 +26,60 @@ enum AgeOptionGenerator {
 
     /// Build four options for a photo whose true age is `trueAge`.
     ///
-    /// Guarantees: exactly 4 values, all distinct, all within [minAge, maxAge],
-    /// the true age is present, and the distractors sit plausibly near the
-    /// truth (a wider window for older subjects, where a one-year miss matters
-    /// less perceptually).
+    /// Guarantees: exactly 4 values, all within [minAge, maxAge], the true age
+    /// present, and every pair of options at least `minOptionGap` years apart.
+    /// The distractors grow outward from the truth (alternating sides) so they
+    /// stay plausibly near it while remaining clearly distinguishable.
     static func makeOptions<G: RandomNumberGenerator>(
         trueAge: Int,
         using rng: inout G
     ) -> Options {
         let truth = clamp(trueAge)
+        var chosen = [truth]
+        var low = truth, high = truth
+        var preferHigh = Bool.random(using: &rng)
 
-        // Spread scales gently with age: tight for kids, looser for adults.
-        let spread = max(3, min(12, 3 + truth / 10))
+        while chosen.count < 4 {
+            // A gap that's always >= minOptionGap, with a little variety so the
+            // options don't form an obvious arithmetic sequence.
+            let step = minOptionGap + Int.random(in: 0...6, using: &rng)
+            let canHigh = high + step <= maxAge
+            let canLow = low - step >= minAge
 
-        var pool = Set<Int>()
-        pool.insert(truth)
-
-        // Collect candidate distractors within the window, excluding the truth.
-        var candidates: [Int] = []
-        for delta in 1...spread {
-            let lower = truth - delta
-            let upper = truth + delta
-            if lower >= minAge { candidates.append(lower) }
-            if upper <= maxAge { candidates.append(upper) }
-        }
-        candidates.shuffle(using: &rng)
-
-        for c in candidates where pool.count < 4 {
-            pool.insert(c)
-        }
-
-        // Fallback near the [minAge, maxAge] edges where the window is thin:
-        // widen outward until we have four distinct values.
-        var extra = spread + 1
-        while pool.count < 4 && extra < (maxAge - minAge) {
-            for c in [truth - extra, truth + extra] where pool.count < 4 {
-                if c >= minAge && c <= maxAge { pool.insert(c) }
+            let useHigh: Bool
+            if canHigh && canLow {
+                useHigh = preferHigh
+                preferHigh.toggle()
+            } else if canHigh {
+                useHigh = true
+            } else if canLow {
+                useHigh = false
+            } else {
+                break // no room on either side (only in pathological ranges)
             }
-            extra += 1
+
+            if useHigh {
+                high += step
+                chosen.append(high)
+            } else {
+                low -= step
+                chosen.append(low)
+            }
         }
 
-        var values = Array(pool)
-        values.shuffle(using: &rng)
-        let correctIndex = values.firstIndex(of: truth) ?? 0
-        return Options(values: values, correctIndex: correctIndex)
+        // Safety net for impossibly tight ranges: fill with distinct values.
+        // Not reached for the real [1, 99] range with minOptionGap 8.
+        if chosen.count < 4 {
+            var v = minAge
+            while chosen.count < 4 && v <= maxAge {
+                if !chosen.contains(v) { chosen.append(v) }
+                v += 1
+            }
+        }
+
+        chosen.shuffle(using: &rng)
+        let correctIndex = chosen.firstIndex(of: truth) ?? 0
+        return Options(values: chosen, correctIndex: correctIndex)
     }
 
     /// Convenience for production code using the system RNG.
