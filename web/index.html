@@ -623,6 +623,7 @@
   const state = { score:0, rounds:0, correct:0, streak:0, best:0, age:0, seed:0, opts:null, answered:false };
 
   let mode = 'cartoon';
+  let staticFaces = []; // pre-generated anime set (web/faces/manifest.json)
   const animeImg = el('animeImg');
 
   // Cartoon spans all ages; Anime (AI) is adults only (18+).
@@ -678,11 +679,34 @@
   }
 
   function newRound() {
-    state.age = randAge(); state.seed = randSeed(); state.answered = false;
-    state.opts = makeOptions(state.age, rngFrom(state.seed ^ 0x9e3779b9));
+    state.seed = randSeed(); state.answered = false;
     const card = el('card'); card.classList.remove('reveal-in'); void card.offsetWidth; card.classList.add('reveal-in');
-    if (mode === 'anime') {
-      loadAnime(state.age, state.seed);
+
+    // In anime mode, prefer a pre-generated static image (reliable + instant).
+    let staticFile = null;
+    if (mode === 'anime' && staticFaces.length) {
+      const p = staticFaces[Math.floor(Math.random() * staticFaces.length)];
+      state.age = p.age; staticFile = p.file;
+    } else {
+      state.age = randAge();
+    }
+    state.opts = makeOptions(state.age, rngFrom(state.seed ^ 0x9e3779b9));
+
+    if (mode === 'anime' && staticFile) {
+      animeToken++;
+      const myToken = animeToken;
+      card.classList.add('anime', 'loading');
+      el('cardTag').textContent = '✨ anime';
+      animeImg.onload = () => { if (myToken === animeToken) card.classList.remove('loading'); };
+      animeImg.onerror = () => {
+        if (myToken !== animeToken) return;
+        card.classList.remove('anime', 'loading');
+        el('cardTag').textContent = '✎ cartoon';
+        drawFace(canvas, state.age, state.seed);
+      };
+      animeImg.src = 'faces/' + staticFile;
+    } else if (mode === 'anime') {
+      loadAnime(state.age, state.seed); // live fallback until the set is generated
     } else {
       animeToken++; // cancel any in-flight anime load
       card.classList.remove('anime', 'loading');
@@ -740,6 +764,13 @@
   }));
 
   let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { drawFace(canvas, state.age, state.seed); }, 120); });
+
+  // Load the pre-generated anime set if it exists (populated by the
+  // "Generate faces" GitHub Action). Until then, Anime mode generates live.
+  fetch('faces/manifest.json', { cache: 'no-store' })
+    .then(r => r.ok ? r.json() : null)
+    .then(d => { if (d && Array.isArray(d.photos)) staticFaces = d.photos; })
+    .catch(() => {});
 
   renderScores(false);
   drawFace(canvas, 34, 12345);
