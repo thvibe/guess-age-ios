@@ -214,6 +214,11 @@ def main():
     ap.add_argument("--batch", type=int, default=200, help="SPARQL page size")
     ap.add_argument("--delay", type=float, default=0.5, help="seconds between API calls")
     ap.add_argument("--res-dir", default=RES_DIR)
+    ap.add_argument("--web-dir", default=None,
+                    help="if set, download every photo here and write manifest.json for the web app "
+                         "(skips the iOS seed/Seed outputs)")
+    ap.add_argument("--budget", type=float, default=0,
+                    help="wall-clock seconds ceiling for collection (0 = no limit)")
     args = ap.parse_args()
 
     seed_dir = os.path.join(args.res_dir, "Seed")
@@ -222,8 +227,13 @@ def main():
     collected = []
     per_person = {}
     offset = 0
+    start = time.time()
 
     while len(collected) < args.target:
+        if args.budget and time.time() - start > args.budget:
+            print(f"Time budget ({args.budget}s) reached; stopping with "
+                  f"{len(collected)} photos.", file=sys.stderr)
+            break
         people = sparql_people(args.batch, offset)
         if not people:
             print("No more results from Wikidata.", file=sys.stderr)
@@ -258,6 +268,31 @@ def main():
     if not collected:
         print("Collected nothing — check network access to Wikimedia.", file=sys.stderr)
         sys.exit(1)
+
+    # Web output: download every image locally and write a manifest the web app
+    # serves directly (no cross-origin hotlinking, works on GitHub Pages).
+    if args.web_dir:
+        os.makedirs(args.web_dir, exist_ok=True)
+        photos = []
+        for rec in collected:
+            fname = f"p-{rec['id']}.jpg"
+            try:
+                download(rec["imageURL"], os.path.join(args.web_dir, fname))
+                time.sleep(args.delay)
+            except Exception as e:  # noqa: BLE001
+                print(f"  skip {fname}: {e}", file=sys.stderr)
+                continue
+            photos.append({
+                "file": fname,
+                "age": rec["age"],
+                "name": rec["name"],
+                "attribution": rec["attribution"],
+            })
+        with open(os.path.join(args.web_dir, "manifest.json"), "w", encoding="utf-8") as f:
+            json.dump({"version": 1, "photos": photos}, f, indent=1, ensure_ascii=False)
+            f.write("\n")
+        print(f"Wrote {len(photos)} web photos -> {args.web_dir}")
+        return
 
     # Full streaming manifest.
     manifest_path = os.path.join(args.res_dir, "manifest.json")

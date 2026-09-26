@@ -1,0 +1,54 @@
+name: Build photo set
+
+# Collects real, royalty-free photos with VERIFIED ages from Wikimedia on the
+# runner (which can reach the internet), commits them to web/photos/, and Pages
+# redeploys to serve them. Run from the Actions tab, or push a change to the
+# builder / this workflow to re-run.
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "How many verified photos to collect"
+        default: "80"
+  push:
+    branches: [claude/age-guessing-game-ios-4rs8x2]
+    paths:
+      - "tools/build_dataset.py"
+      - ".github/workflows/build-photos.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-photos
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Collect verified-age photos
+        run: |
+          python tools/build_dataset.py \
+            --web-dir web/photos \
+            --target ${{ github.event.inputs.target || '80' }} \
+            --thumb-width 640 \
+            --budget 1500
+
+      - name: Commit the photo set
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/photos
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            n=$(ls web/photos/*.jpg 2>/dev/null | wc -l | tr -d ' ')
+            git commit -m "Build verified-age photo set (${n} photos)"
+            git pull --rebase origin "${GITHUB_REF_NAME}" && git push
+          fi
