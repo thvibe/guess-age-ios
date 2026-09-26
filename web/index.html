@@ -316,7 +316,7 @@
   const BG = [['#eef0ff','#d3d7f4'],['#eafaf1','#cbeede'],['#fff0ea','#f5d1c4'],['#eaf6ff','#cde4f6'],['#f5eeff','#ded0f1'],['#fff7e4','#f2e0b4'],['#fdeef4','#f2cfe0']];
 
   // ---- Face renderer: apparent age driven by `age`, cosmetics by `seed` ----
-  function drawFace(canvas, age, seed) {
+  function drawFace(canvas, age, seed, anim) {
     const dpr = Math.min(3, window.devicePixelRatio || 1);
     const W = canvas.clientWidth, H = canvas.clientHeight;
     canvas.width = W * dpr; canvas.height = H * dpr;
@@ -329,6 +329,12 @@
     const E = (x,y,rx,ry,rot=0) => { ctx.beginPath(); ctx.ellipse(x,y,Math.abs(rx),Math.abs(ry),rot,0,7); };
 
     const cx = W/2, cy = H*0.53, unit = Math.min(W,H);
+
+    // Idle animation params (all 0 for a static draw).
+    const a = anim || {};
+    const bobPx = (a.bob || 0) * unit * 0.012;   // gentle vertical breathe
+    const swayR = (a.sway || 0) * 0.014;          // subtle head tilt (radians)
+    const blink = a.blink || 0;                   // 0 open .. 1 closed
 
     // Age factors
     const t = clamp(age);
@@ -369,6 +375,10 @@
     const spot = ctx.createRadialGradient(cx, cy-faceH*0.25, faceW*0.2, cx, cy, unit*0.95);
     spot.addColorStop(0,'rgba(255,255,255,0.32)'); spot.addColorStop(1,'rgba(255,255,255,0)');
     ctx.fillStyle = spot; ctx.fillRect(0,0,W,H);
+
+    // Bob/tilt the whole person over the static background (idle "breathing").
+    ctx.save();
+    if (bobPx || swayR) { ctx.translate(cx, cy - bobPx); ctx.rotate(swayR); ctx.translate(-cx, -cy); }
 
     // ---------- helpers ----------
     function headPath() {
@@ -498,11 +508,12 @@
     }
 
     // eyes
+    const ehE = eh * (1 - 0.9*blink); // squish vertically to blink
     for (const s of [-1,1]) {
       const ex = cx+s*eyeDX;
-      setF('#ffffff'); E(ex, eyeY, ew, eh); ctx.fill();
+      setF('#ffffff'); E(ex, eyeY, ew, ehE); ctx.fill();
       ctx.save();
-      E(ex, eyeY, ew, eh); ctx.clip();
+      E(ex, eyeY, ew, ehE); ctx.clip();
       const ir = eh*0.98;
       setF(eyeCol); E(ex, eyeY+eh*0.05, ir*0.82, ir); ctx.fill();
       setF('#1a1210'); E(ex, eyeY+eh*0.05, ir*0.42, ir*0.5); ctx.fill();
@@ -614,6 +625,8 @@
       ctx.fillStyle = rgba([255,120,120], 0.12 + child*0.18);
       for (const s of [-1,1]) { E(cx+s*faceW*0.5, cy+faceH*0.24, faceW*0.16, faceH*0.1); ctx.fill(); }
     }
+
+    ctx.restore(); // end person bob/tilt group
   }
 
   // ---- Game state (scoring ported from GameViewModel.swift) ----
@@ -660,7 +673,7 @@
       } else {
         card.classList.remove('anime', 'loading');
         el('cardTag').textContent = '✎ cartoon (AI busy — Next to retry)';
-        drawFace(canvas, age, seed);
+        state.age = age; state.seed = seed; startFaceAnim();
       }
     };
     animeImg.src = animeURL(age, seed);
@@ -678,6 +691,39 @@
     setStat('s-acc', acc + '%');
   }
 
+  // ---- Idle animation for the cartoon face (gentle bob + tilt + blinking) ----
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let animOn = false, animRAF = 0, lastFrame = 0, blinkStart = -1, nextBlink = 0;
+  function faceFrame(now) {
+    if (!animOn) { animRAF = 0; return; }
+    animRAF = requestAnimationFrame(faceFrame);
+    if (now - lastFrame < 33) return; // ~30fps cap — plenty smooth, easy on battery
+    lastFrame = now;
+    const t = now / 1000;
+    const bob = Math.sin(t * 1.7);          // slow vertical breathe
+    const sway = Math.sin(t * 0.8 + 1.3);   // subtle head tilt
+    let blink = 0;
+    if (blinkStart >= 0) {
+      const bt = now - blinkStart, dur = 150;
+      if (bt <= dur) blink = Math.sin(Math.PI * (bt / dur)); // 0 -> 1 -> 0
+      else { blinkStart = -1; nextBlink = now + 2400 + Math.random() * 3600; }
+    } else if (now >= nextBlink) {
+      blinkStart = now;
+    }
+    drawFace(canvas, state.age, state.seed, { bob, sway, blink });
+  }
+  function startFaceAnim() {
+    if (reduceMotion) { drawFace(canvas, state.age, state.seed); return; }
+    nextBlink = performance.now() + 1200 + Math.random() * 2000;
+    if (!animOn) { animOn = true; animRAF = requestAnimationFrame(faceFrame); }
+  }
+  function stopFaceAnim() { animOn = false; if (animRAF) { cancelAnimationFrame(animRAF); animRAF = 0; } }
+  // Pause the loop when the tab is hidden.
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stopFaceAnim();
+    else if (mode === 'cartoon') startFaceAnim();
+  });
+
   function newRound() {
     state.seed = randSeed(); state.answered = false;
     const card = el('card'); card.classList.remove('reveal-in'); void card.offsetWidth; card.classList.add('reveal-in');
@@ -693,6 +739,7 @@
     state.opts = makeOptions(state.age, rngFrom(state.seed ^ 0x9e3779b9));
 
     if (mode === 'anime' && staticFile) {
+      stopFaceAnim();
       animeToken++;
       const myToken = animeToken;
       card.classList.add('anime', 'loading');
@@ -702,16 +749,17 @@
         if (myToken !== animeToken) return;
         card.classList.remove('anime', 'loading');
         el('cardTag').textContent = '✎ cartoon';
-        drawFace(canvas, state.age, state.seed);
+        startFaceAnim();
       };
       animeImg.src = 'faces/' + staticFile;
     } else if (mode === 'anime') {
+      stopFaceAnim();
       loadAnime(state.age, state.seed); // live fallback until the set is generated
     } else {
       animeToken++; // cancel any in-flight anime load
       card.classList.remove('anime', 'loading');
       el('cardTag').textContent = '✎ cartoon style';
-      drawFace(canvas, state.age, state.seed);
+      startFaceAnim();
     }
     el('options').classList.remove('answered');
     optEls.forEach((b,i) => {
@@ -763,7 +811,7 @@
     renderScores(false); newRound();
   }));
 
-  let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { drawFace(canvas, state.age, state.seed); }, 120); });
+  let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (mode !== 'anime') drawFace(canvas, state.age, state.seed); }, 120); });
 
   // Load the pre-generated anime set if it exists (populated by the
   // "Generate faces" GitHub Action). Until then, Anime mode generates live.
@@ -773,7 +821,8 @@
     .catch(() => {});
 
   renderScores(false);
-  drawFace(canvas, 34, 12345);
+  state.age = 34; state.seed = 12345;
+  startFaceAnim();
 })();
 </script>
 </body>
