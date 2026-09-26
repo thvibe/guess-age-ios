@@ -18,6 +18,7 @@ Provider: OpenAI's `gpt-image-1` (or any OpenAI-compatible Images API at
   IMAGE_SIZE           (default 1024x1536 portrait; also 1024x1024|1536x1024)
   IMAGE_QUALITY        (default medium; gpt-image-1: low|medium|high) — drives cost
   IMAGE_OUTPUT_FORMAT  (default jpeg; jpeg|png|webp)
+  IMAGE_ART_STYLE      (default anime; anime hand-drawn illustration, or photo)
 Point IMAGE_API_BASE at Azure OpenAI, a gateway, or another compatible service
 to use a different backend.
 
@@ -56,10 +57,20 @@ BACKDROPS = ["a plain light-grey studio background", "a soft-focus neutral backg
 LIGHTING = ["soft natural lighting", "even studio lighting", "gentle window light"]
 
 
-def build_prompt(age, rnd):
+def build_prompt(age, rnd, art_style):
     gender = rnd.choice(GENDERS)
     descent = rnd.choice(DESCENTS)
     expr = rnd.choice(EXPRESSIONS)
+    if art_style == "anime":
+        return (
+            f"A hand-drawn anime-style portrait illustration of a {age}-year-old "
+            f"{descent} {gender}, in the warm, detailed style of a modern Japanese "
+            f"animated film (Studio Ghibli / Makoto Shinkai): soft cel shading, clean "
+            f"line art, expressive eyes, natural human proportions (not chibi, not "
+            f"super-deformed), gentle lighting, a simple soft-focus background. "
+            f"Head-and-shoulders, facing the viewer with {expr}. One character only. "
+            f"No text, no watermark, no logo, no border, no speech bubbles."
+        )
     bg = rnd.choice(BACKDROPS)
     light = rnd.choice(LIGHTING)
     return (
@@ -122,6 +133,9 @@ def main():
                     help="gpt-image-1 quality; higher costs more (default medium)")
     ap.add_argument("--output-format", default=os.environ.get("IMAGE_OUTPUT_FORMAT", "jpeg"),
                     choices=["jpeg", "png", "webp"], help="image format (default jpeg)")
+    ap.add_argument("--art-style", default=os.environ.get("IMAGE_ART_STYLE", "anime"),
+                    choices=["anime", "photo"],
+                    help="anime illustration (default) or photorealistic")
     ap.add_argument("--res-dir", default=RES_DIR)
     ap.add_argument("--delay", type=float, default=1.0, help="seconds between API calls")
     args = ap.parse_args()
@@ -144,9 +158,9 @@ def main():
 
     # Rough cost heads-up (per 1024x1024; check current OpenAI pricing).
     rate = {"low": 0.02, "medium": 0.04, "high": 0.17, "auto": 0.04}.get(args.quality, 0.04)
-    print(f"About to generate up to {args.count} images with {cfg['model']} at "
-          f"{args.quality} quality (~${rate * args.count:.2f} est.; verify pricing).",
-          file=sys.stderr)
+    print(f"About to generate up to {args.count} {args.art_style} images with "
+          f"{cfg['model']} at {args.quality} quality "
+          f"(~${rate * args.count:.2f} est.; verify pricing).", file=sys.stderr)
 
     seed_dir = os.path.join(args.res_dir, "Seed")
     gen_dir = os.path.join(args.res_dir, "Generated")
@@ -158,7 +172,7 @@ def main():
 
     for i in range(args.count):
         age = rnd.randint(min_age, args.max_age)
-        prompt = build_prompt(age, rnd)
+        prompt = build_prompt(age, rnd, args.art_style)
         name = f"ai-{i:04d}"
         try:
             img, ext = generate_one(prompt, cfg)

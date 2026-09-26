@@ -15,8 +15,10 @@ python3 tools/gen_placeholder_seed.py
 ## `generate_faces.py` — AI-generated faces (primary)
 
 Generates synthetic people at target ages using an OpenAI-compatible Images API.
-These faces depict no real person, so there are no likeness/copyright/royalty
-concerns. The age is the *intended/apparent* age each face was generated at.
+By default it produces **hand-drawn anime-style illustrations** (Studio-Ghibli /
+Makoto-Shinkai feel); pass `--art-style photo` for photorealistic instead. These
+faces depict no real person, so there are no likeness/copyright/royalty concerns.
+The age is the *intended/apparent* age each face was generated at.
 
 **Adults only (18+) by design** — the tool will not generate images of minors.
 
@@ -35,6 +37,7 @@ Useful flags / env (flags win over env):
 |------------|---------|-------|
 | `--quality` / `IMAGE_QUALITY` | `medium` | `low` / `medium` / `high`. Drives cost. |
 | `--size` / `IMAGE_SIZE` | `1024x1536` (portrait) | or `1024x1024` / `1536x1024`. |
+| `--art-style` / `IMAGE_ART_STYLE` | `anime` | `anime` hand-drawn illustration (Ghibli-esque) or `photo` photorealistic. |
 | `--output-format` / `IMAGE_OUTPUT_FORMAT` | `jpeg` | `jpeg` / `png` / `webp`. |
 | `IMAGE_MODEL` | `gpt-image-1` | any OpenAI-compatible model. |
 | `IMAGE_API_BASE` | `https://api.openai.com/v1` | point at Azure/gateway to switch backend. |
