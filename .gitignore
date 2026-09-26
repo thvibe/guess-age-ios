@@ -14,11 +14,12 @@ xcuserdata/
 .build/
 Packages/
 
-# Downloaded dataset images (regenerate with tools/build_dataset.py).
+# Generated/downloaded dataset images (recreate with the tools/ scripts).
 # Tracked seed images, if you choose to commit them, can be force-added.
 GuessAge/Resources/Seed/*.jpg
 GuessAge/Resources/Seed/*.jpeg
 GuessAge/Resources/Seed/*.png
+GuessAge/Resources/Generated/*.png
 GuessAge/Resources/manifest.json
 
 # Python

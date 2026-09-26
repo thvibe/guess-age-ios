@@ -16,7 +16,7 @@ struct RootView: View {
                         .foregroundStyle(.tint)
                     Text("Guess the Age")
                         .font(.largeTitle.bold())
-                    Text("Look at the photo. Pick the right age.\nKeep going as long as you like.")
+                    Text("Look at the face. Pick the right age.\nKeep going as long as you like.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -38,7 +38,7 @@ struct RootView: View {
                     NavigationLink {
                         AboutView()
                     } label: {
-                        menuLabel("Photo credits", systemImage: "info.circle")
+                        menuLabel("About the images", systemImage: "info.circle")
                     }
                 }
 
@@ -73,9 +73,9 @@ private struct HowToPlayView: View {
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 18) {
-                rule("photo", "Each round shows a real person's photo.")
+                rule("person.crop.circle", "Each round shows an AI-generated person — a synthetic face, no real identity.")
                 rule("4.square", "Tap which of the four ages is correct.")
-                rule("checkmark.seal", "Every age is verified from public records — the subject's birth date and the photo's capture date.")
+                rule("wand.and.stars", "Every face is generated at a target age. Your job is to guess how old it looks.")
                 rule("flame", "Build a streak for bonus points. There's no finish line — just keep guessing.")
                 Spacer()
             }

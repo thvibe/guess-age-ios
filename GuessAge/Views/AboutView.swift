@@ -9,18 +9,13 @@ struct AboutView: View {
     var body: some View {
         List {
             Section {
-                Text("Photos come from Wikimedia Commons and Wikidata. Each age is computed from the subject's documented birth date and the photo's capture date. Images are public domain or used under their Creative Commons licenses; credits are listed below.")
+                Text("The faces in this game are AI-generated. They are synthetic and depict no real people — each one is created at a target age, which is the correct answer. Because no real person is shown, there are no likeness or copyright concerns.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
 
-            if store.creditedPhotos.isEmpty {
-                Section {
-                    Text("No attributed photos are loaded yet. Run tools/build_dataset.py to fetch real, verified photos.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
-            } else {
+            if !store.creditedPhotos.isEmpty {
+                // Shown only if you also load real, licensed photos (hybrid mode).
                 Section("Photo credits") {
                     ForEach(store.creditedPhotos) { photo in
                         creditRow(photo)
@@ -28,7 +23,7 @@ struct AboutView: View {
                 }
             }
         }
-        .navigationTitle("Photo credits")
+        .navigationTitle("About the images")
         .navigationBarTitleDisplayMode(.inline)
     }
 

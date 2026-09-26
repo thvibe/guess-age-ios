@@ -3,10 +3,11 @@
 A solo, never-ending iOS game: look at a photo of a real person and tap which of
 four ages is correct. Built in SwiftUI, no third-party dependencies.
 
-> **Verified ages, royalty-free.** Photos and ages come from **Wikimedia Commons
-> + Wikidata**. Each age is *computed* from documented facts — the subject's birth
-> date and the photo's capture date — not estimated. Only public-domain / CC0 /
-> CC BY / CC BY-SA images are used, with author + license shown in-app.
+> **AI-generated people, no royalties.** Faces are synthetic — generated at a
+> target age (the correct answer) with an image model, depicting no real person,
+> so there are no likeness or copyright concerns. Adults only (18+) by design.
+> A real-photo path (royalty-free Wikimedia photos with *documented* ages,
+> children included) is also available if you prefer real subjects.
 
 ## What's here
 
@@ -32,18 +33,28 @@ Out of the box it plays on a **placeholder seed** (procedurally drawn faces) so
 you can try the whole game loop offline immediately. Press **⌘U** to run the unit
 tests.
 
-## Add real, verified photos
+## Add real faces
 
-The placeholder faces are stand-ins. To fetch real people with verified ages
-(needs internet; run on your Mac, not a locked-down sandbox):
+The bundled faces are procedural stand-ins. To fill the game with real content
+(run on your Mac, not a locked-down sandbox):
+
+**AI-generated people (primary)** — needs an image-model API key:
+
+```bash
+export IMAGE_API_KEY=sk-...
+python3 tools/generate_faces.py --count 200 --seed-count 50 \
+  --image-base-url https://your-cdn.example.com/faces
+```
+
+**Real, documented photos (alternative)** — royalty-free Wikimedia, no key:
 
 ```bash
 python3 tools/build_dataset.py --target 400 --seed-count 50
 ```
 
-This writes a bundled offline `seed.json` (+ downloaded `Seed/` images) and a full
-`manifest.json`. Re-run the app to see real photos. See **[tools/README.md](tools/README.md)**
-for details and licensing notes.
+Either writes a bundled offline `seed.json` (+ `Seed/` images) and a full
+`manifest.json`. Re-run the app to see them. See **[tools/README.md](tools/README.md)**
+for setup, hosting, and the trade-offs between the two.
 
 ## Hybrid delivery (offline + streaming)
 
@@ -59,8 +70,9 @@ for details and licensing notes.
   (window widens with age), with the truth always included. Pure and unit-tested.
 - `GameViewModel` keeps a shuffled queue, refills it endlessly, and tracks score,
   streak, best streak, and accuracy. Streaks grant bonus points.
-- The subject's **name is hidden while guessing** (it would give recognizable
-  people away) and revealed with credit on the answer screen.
+- AI faces carry no name; if you use the real-photo path instead, the subject's
+  **name is hidden while guessing** (it would give recognizable people away) and
+  revealed with credit on the answer screen.
 
 ## Roadmap (deliberately deferred)
 
