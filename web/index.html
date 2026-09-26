@@ -113,10 +113,31 @@
     border-radius: 50%; overflow: hidden;
     box-shadow: var(--shadow); background: var(--fill);
   }
-  /* The cartoon canvas fills the circular card. */
-  #face { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
-  #card.reveal-in #face { animation: fade .28s ease; }
+  /* The cartoon canvas and the photo are absolute layers filling the circle;
+     the card shows one at a time (class .photo) so its size never shifts. */
+  #face, #photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  #photo { display: none; object-position: center 28%; background: var(--fill); }
+  #card.photo #face { display: none; }
+  #card.photo #photo { display: block; }
+  #card.reveal-in #face, #card.reveal-in #photo { animation: fade .28s ease; }
   @keyframes fade { from { opacity: 0; transform: scale(1.02); } to { opacity: 1; transform: none; } }
+  /* Photographer credit (CC attribution) — a small pill over the photo that
+     stays inside the circle; never shows the subject's name. */
+  .credit {
+    position: absolute; left: 50%; transform: translateX(-50%); bottom: 8%; z-index: 2;
+    max-width: 72%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font-size: 10px; line-height: 1.2; color: #fff;
+    background: rgba(0,0,0,.42); backdrop-filter: blur(4px);
+    padding: 4px 10px; border-radius: 999px; opacity: 0; transition: opacity .2s;
+  }
+  #card.photo .credit { opacity: 1; }
+  .credit a { color: #fff; }
+  .modes { display: flex; gap: 8px; }
+  .mode { flex: 1; appearance: none; border: 0; border-radius: 12px; padding: 9px 0; cursor: pointer;
+    font-family: var(--round); font-weight: 800; font-size: 14px; background: var(--fill); color: var(--text-2);
+    transition: background .15s, color .15s; }
+  .mode.active { background: var(--accent); color: #fff; }
+  .mode:disabled { opacity: .45; cursor: default; }
 
   .prompt { text-align: center; min-height: 50px; display: grid; place-items: center; }
   .prompt .ask { color: var(--text-2); font-weight: 600; font-size: 15px; }
@@ -191,9 +212,16 @@
     <div class="stat" id="s-acc"><b>0%</b><span>Accuracy</span></div>
   </div>
 
+  <div class="modes" id="modes">
+    <button class="mode active" data-mode="photo">Photos</button>
+    <button class="mode" data-mode="cartoon">Cartoon</button>
+  </div>
+
   <div class="card-wrap">
     <div id="card">
       <canvas id="face"></canvas>
+      <img id="photo" alt="">
+      <div class="credit" id="credit"></div>
     </div>
   </div>
 
@@ -207,7 +235,7 @@
   <button class="next is-hidden" id="next">Next</button>
 
   <div class="foot">
-    Endless · a miss just resets your <b>streak</b>.
+    <b>Photos</b> are real people with ages verified from public records · <b>Cartoon</b> is drawn, all ages.
   </div>
 </div>
 
@@ -217,7 +245,7 @@
     <h1>Guess the Age</h1>
     <p class="tag">Look at the face. Tap the right age. Keep going.</p>
     <div class="rules">
-      <div class="rule"><div class="n">1</div><span>Each round draws a <b>cartoon face</b> — pick which of <b>four ages</b> is right.</span></div>
+      <div class="rule"><div class="n">1</div><span>Each round shows a face — a <b>real photo</b> (verified age) or a <b>cartoon</b> — pick which of <b>four ages</b> is right.</span></div>
       <div class="rule"><div class="n">2</div><span>Build a <b>streak</b> for bonus points. A miss resets it.</span></div>
       <div class="rule"><div class="n">3</div><span>There's no finish line. It just <b>keeps going</b>.</span></div>
     </div>
@@ -775,12 +803,19 @@
   // ---- Game state (scoring ported from GameViewModel.swift) ----
   const el = id => document.getElementById(id);
   const canvas = el('face');
+  const photoImg = el('photo');
+  const credit = el('credit');
   const optEls = [...document.querySelectorAll('.opt')];
-  const state = { score:0, rounds:0, correct:0, streak:0, best:0, age:0, seed:0, opts:null, answered:false };
+  const state = { score:0, rounds:0, correct:0, streak:0, best:0, age:0, seed:0, opts:null, answered:false, photo:null };
 
-  // Ages span 3..85 — the procedural cartoon renderer covers the whole range.
+  let mode = 'photo';        // Photos primary; falls back to Cartoon if none loaded.
+  let photos = [];           // verified-age real photos (photos/manifest.json)
+
+  // Cartoon ages span 3..85; photo rounds use each photo's verified age.
   function randAge() { return 3 + Math.floor(Math.random() * 83); }
   function randSeed() { return (Math.random() * 2 ** 31) >>> 0; }
+  const escapeHtml = s => String(s == null ? '' : s).replace(/[&<>"']/g,
+    c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 
   function setStat(id, val, flash) {
     const node = el(id); node.querySelector('b').textContent = val;
@@ -831,18 +866,34 @@
     if (!animOn) { animOn = true; animRAF = requestAnimationFrame(faceFrame); }
   }
   function stopFaceAnim() { animOn = false; if (animRAF) { cancelAnimationFrame(animRAF); animRAF = 0; } }
-  // Pause the loop when the tab is hidden.
+  // Pause the loop when the tab is hidden (cartoon only).
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) stopFaceAnim();
-    else startFaceAnim();
+    else if (mode === 'cartoon') startFaceAnim();
   });
 
   function newRound() {
     state.seed = randSeed(); state.answered = false;
     const card = el('card'); card.classList.remove('reveal-in'); void card.offsetWidth; card.classList.add('reveal-in');
-    state.age = randAge();
+
+    if (mode === 'photo' && photos.length) {
+      stopFaceAnim();
+      const p = photos[Math.floor(Math.random() * photos.length)];
+      state.photo = p; state.age = p.age;
+      card.classList.add('photo');
+      const a = p.attribution || {};
+      // Photographer credit only — never the subject's name (it would spoil the age).
+      credit.innerHTML = escapeHtml((a.author || 'Unknown') + (a.license ? ' · ' + a.license : ''));
+      photoImg.onerror = () => { card.classList.remove('photo'); startFaceAnim(); };
+      photoImg.src = 'photos/' + p.file;
+    } else {
+      state.photo = null;
+      card.classList.remove('photo');
+      state.age = randAge();
+      startFaceAnim();
+    }
     state.opts = makeOptions(state.age, rngFrom(state.seed ^ 0x9e3779b9));
-    startFaceAnim();
+
     el('options').classList.remove('answered');
     optEls.forEach((b,i) => {
       b.textContent = state.opts.values[i];
@@ -870,9 +921,18 @@
       else if (idx === i) b.classList.add('wrong');
       else b.classList.add('dim');
     });
+    let sub;
+    if (state.photo) {
+      const p = state.photo, a = p.attribution || {};
+      const who = p.name ? escapeHtml(p.name) + ' · age ' + state.age : 'Age ' + state.age;
+      const src = a.sourceURL ? ' · <a href="' + escapeHtml(a.sourceURL) + '" target="_blank" rel="noopener">source</a>' : '';
+      sub = who + src;
+    } else {
+      sub = isRight ? 'Drawn at age ' + state.age : '+0 — streak reset';
+    }
     el('prompt').innerHTML = isRight
-      ? '<div><div class="verdict good">Correct!</div><div class="sub">Drawn at age ' + state.age + '</div></div>'
-      : '<div><div class="verdict bad">Actual age: ' + state.age + '</div><div class="sub">+0 — streak reset</div></div>';
+      ? '<div><div class="verdict good">Correct!</div><div class="sub">' + sub + '</div></div>'
+      : '<div><div class="verdict bad">Actual age: ' + state.age + '</div><div class="sub">' + sub + '</div></div>';
     el('next').classList.remove('is-hidden');
     renderScores(isRight);
   }
@@ -885,7 +945,34 @@
   });
   el('play').addEventListener('click', () => { el('start').classList.add('hidden'); newRound(); });
 
-  let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { drawFace(canvas, state.age, state.seed); }, 120); });
+  const modeBtns = [...document.querySelectorAll('.mode')];
+  function setActiveMode(m) {
+    mode = m;
+    modeBtns.forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  }
+  modeBtns.forEach(b => b.addEventListener('click', () => {
+    if (b.disabled || b.dataset.mode === mode) return;
+    setActiveMode(b.dataset.mode);
+    Object.assign(state, { score:0, rounds:0, correct:0, streak:0, best:0 });
+    renderScores(false); newRound();
+  }));
+
+  // Load the verified-age photo set. Until it exists, disable Photos and play
+  // Cartoon; once it lands, Photos becomes the default.
+  function disablePhotos() {
+    const pb = modeBtns.find(b => b.dataset.mode === 'photo');
+    if (pb) pb.disabled = true;
+    if (mode === 'photo') setActiveMode('cartoon');
+  }
+  fetch('photos/manifest.json', { cache: 'no-store' })
+    .then(r => r.ok ? r.json() : null)
+    .then(d => {
+      if (d && Array.isArray(d.photos) && d.photos.length) photos = d.photos;
+      else disablePhotos();
+    })
+    .catch(disablePhotos);
+
+  let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (mode === 'cartoon') drawFace(canvas, state.age, state.seed); }, 120); });
 
   renderScores(false);
   state.age = 34; state.seed = 12345;
