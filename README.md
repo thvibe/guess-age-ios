@@ -61,6 +61,19 @@ Either writes a bundled offline `seed.json` (+ `Seed/` images) and a full
 `manifest.json`. Re-run the app to see them. See **[tools/README.md](tools/README.md)**
 for setup, hosting, and the trade-offs between the two.
 
+## Play in a browser (GitHub Pages)
+
+A web version of the game (Cartoon mode) lives in [`web/`](web/) and is published
+to GitHub Pages by [`.github/workflows/pages.yml`](.github/workflows/pages.yml):
+
+- **One-time:** repo **Settings → Pages → Build and deployment → Source: GitHub
+  Actions**. (Pages on a private repo needs a paid GitHub plan; public repos are free.)
+- Then every push that touches `web/` publishes to **`https://<owner>.github.io/guess-age-ios/`**.
+
+Open that URL on an iPhone in Safari → **Share → Add to Home Screen** to play it
+full-screen like an app. This is the free, no-Mac way to try the gameplay; the
+native app and the Anime style still live in Xcode.
+
 ## Get it on your iPhone (TestFlight)
 
 A GitHub Actions workflow can build the app in the cloud and deliver it to your

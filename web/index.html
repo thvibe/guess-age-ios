@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Guess the Age</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Guess the Age">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#5e5ce6">
+<style>
+  :root {
+    --accent: #5e5ce6;
+    --accent-press: #4b49c9;
+    --good: #34c759;
+    --good-fill: rgba(52,199,89,.16);
+    --bad: #ff3b30;
+    --bad-fill: rgba(255,59,48,.16);
+    --bg: #ececf2;
+    --card: #ffffff;
+    --fill: #e6e6ee;
+    --fill-press: #dcdce6;
+    --text: #14141a;
+    --text-2: #6d6d78;
+    --text-3: #a0a0ad;
+    --hair-line: rgba(20,20,26,.08);
+    --shadow: 0 10px 30px rgba(30,28,70,.12), 0 2px 6px rgba(30,28,70,.06);
+    --sans: -apple-system, "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif;
+    --round: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --accent: #7d7bff;
+      --accent-press: #6663f0;
+      --good: #30d158;
+      --good-fill: rgba(48,209,88,.18);
+      --bad: #ff453a;
+      --bad-fill: rgba(255,69,58,.18);
+      --bg: #000000;
+      --card: #1c1c1e;
+      --fill: #2a2a2d;
+      --fill-press: #38383c;
+      --text: #f4f4f7;
+      --text-2: #9a9aa2;
+      --text-3: #6a6a72;
+      --hair-line: rgba(255,255,255,.08);
+      --shadow: 0 10px 30px rgba(0,0,0,.5), 0 2px 6px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="light"] {
+    --accent:#5e5ce6;--accent-press:#4b49c9;--good:#34c759;--good-fill:rgba(52,199,89,.16);
+    --bad:#ff3b30;--bad-fill:rgba(255,59,48,.16);--bg:#ececf2;--card:#fff;--fill:#e6e6ee;
+    --fill-press:#dcdce6;--text:#14141a;--text-2:#6d6d78;--text-3:#a0a0ad;
+    --hair-line:rgba(20,20,26,.08);--shadow:0 10px 30px rgba(30,28,70,.12),0 2px 6px rgba(30,28,70,.06);
+  }
+  :root[data-theme="dark"] {
+    --accent:#7d7bff;--accent-press:#6663f0;--good:#30d158;--good-fill:rgba(48,209,88,.18);
+    --bad:#ff453a;--bad-fill:rgba(255,69,58,.18);--bg:#000;--card:#1c1c1e;--fill:#2a2a2d;
+    --fill-press:#38383c;--text:#f4f4f7;--text-2:#9a9aa2;--text-3:#6a6a72;
+    --hair-line:rgba(255,255,255,.08);--shadow:0 10px 30px rgba(0,0,0,.5),0 2px 6px rgba(0,0,0,.4);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    justify-content: center;
+    min-height: 100dvh;
+  }
+  #phone {
+    width: 100%;
+    max-width: 440px;
+    min-height: 100dvh;
+    padding: max(14px, env(safe-area-inset-top)) 18px calc(18px + env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: relative;
+  }
+
+  header.bar { display: flex; align-items: center; justify-content: space-between; }
+  .title { font-family: var(--round); font-weight: 800; font-size: 19px; letter-spacing: -.01em; }
+  .title small { color: var(--text-2); font-weight: 700; }
+  .icon-btn {
+    appearance: none; border: 0; background: var(--fill); color: var(--text);
+    width: 38px; height: 38px; border-radius: 50%; font-size: 17px; cursor: pointer;
+    display: grid; place-items: center; transition: background .15s, transform .1s;
+  }
+  .icon-btn:active { transform: scale(.92); background: var(--fill-press); }
+
+  .scores { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+  .stat {
+    background: var(--card); border-radius: 14px; padding: 9px 6px; text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .stat b { font-family: var(--round); font-weight: 800; font-size: 20px; display: block;
+    font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .stat span { font-size: 10.5px; color: var(--text-2); text-transform: uppercase; letter-spacing: .05em; }
+  .stat.flash b { animation: pop .35s ease; }
+  @keyframes pop { 0%{transform:scale(1)} 40%{transform:scale(1.22)} 100%{transform:scale(1)} }
+
+  .card-wrap { flex: 1 1 auto; min-height: 0; display: flex; }
+  #card {
+    position: relative; flex: 1; border-radius: 26px; overflow: hidden;
+    box-shadow: var(--shadow); background: var(--fill);
+    min-height: 260px;
+  }
+  #face { width: 100%; height: 100%; display: block; }
+  .card-tag {
+    position: absolute; left: 12px; bottom: 12px; font-size: 11px; font-weight: 600;
+    color: #fff; background: rgba(0,0,0,.34); backdrop-filter: blur(6px);
+    padding: 5px 9px; border-radius: 999px; letter-spacing: .01em;
+    display: flex; align-items: center; gap: 5px;
+  }
+  #card.reveal-in #face { animation: fade .28s ease; }
+  @keyframes fade { from { opacity: 0; transform: scale(1.02); } to { opacity: 1; transform: none; } }
+
+  .prompt { text-align: center; min-height: 46px; display: grid; place-items: center; }
+  .prompt .ask { color: var(--text-2); font-weight: 600; font-size: 15px; }
+  .prompt .verdict { font-family: var(--round); font-weight: 800; font-size: 21px; letter-spacing: -.01em; }
+  .prompt .verdict.good { color: var(--good); }
+  .prompt .verdict.bad { color: var(--bad); }
+  .prompt .sub { color: var(--text-3); font-size: 12px; margin-top: 2px; }
+
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .opt {
+    appearance: none; border: 2px solid transparent; background: var(--card);
+    color: var(--text); border-radius: 18px; padding: 18px 0; cursor: pointer;
+    font-family: var(--round); font-weight: 800; font-size: 30px;
+    font-variant-numeric: tabular-nums; box-shadow: var(--shadow);
+    transition: transform .08s, background .15s, border-color .15s, color .15s, opacity .15s;
+  }
+  .opt:active { transform: scale(.97); }
+  .opt:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .opt.correct { border-color: var(--good); background: var(--good-fill); }
+  .opt.wrong { border-color: var(--bad); background: var(--bad-fill); }
+  .opt.dim { opacity: .45; }
+  .answered .opt { cursor: default; }
+
+  .next {
+    appearance: none; border: 0; border-radius: 16px; padding: 15px; cursor: pointer;
+    background: var(--accent); color: #fff; font-family: var(--round); font-weight: 800;
+    font-size: 17px; transition: transform .08s, background .15s, opacity .2s;
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 45%, transparent);
+  }
+  .next:active { transform: scale(.98); background: var(--accent-press); }
+  .next[hidden] { display: none; }
+
+  .foot { text-align: center; color: var(--text-3); font-size: 11px; line-height: 1.5; }
+  .foot b { color: var(--text-2); font-weight: 700; }
+
+  #start {
+    position: fixed; inset: 0; background: color-mix(in srgb, var(--bg) 86%, transparent);
+    backdrop-filter: blur(10px); display: grid; place-items: center; padding: 24px; z-index: 5;
+  }
+  #start.hidden { display: none; }
+  .sheet {
+    width: 100%; max-width: 380px; background: var(--card); border-radius: 26px;
+    padding: 26px 24px; box-shadow: var(--shadow); text-align: center;
+  }
+  .sheet h1 { font-family: var(--round); font-weight: 800; font-size: 27px; margin: 6px 0 2px; letter-spacing: -.02em; }
+  .sheet p.tag { color: var(--text-2); margin: 0 0 18px; font-size: 14px; }
+  .rules { text-align: left; display: flex; flex-direction: column; gap: 12px; margin: 0 0 22px; }
+  .rule { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; }
+  .rule .n { flex: none; width: 26px; height: 26px; border-radius: 8px; background: var(--fill);
+    color: var(--accent); font-family: var(--round); font-weight: 800; display: grid; place-items: center; font-size: 14px; }
+  .rule span { color: var(--text-2); line-height: 1.35; }
+  .rule b { color: var(--text); font-weight: 700; }
+  .badge { display:inline-flex; align-items:center; gap:6px; background: var(--fill); color: var(--text-2);
+    font-size: 11.5px; font-weight:600; padding: 6px 11px; border-radius: 999px; margin-bottom: 14px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div id="phone" aria-hidden="false">
+  <header class="bar">
+    <div class="title">Guess the Age <small>· demo</small></div>
+    <button class="icon-btn" id="restart" title="Restart" aria-label="Restart">↺</button>
+  </header>
+
+  <div class="scores">
+    <div class="stat" id="s-score"><b>0</b><span>Score</span></div>
+    <div class="stat" id="s-streak"><b>0</b><span>Streak</span></div>
+    <div class="stat" id="s-best"><b>0</b><span>Best</span></div>
+    <div class="stat" id="s-acc"><b>0%</b><span>Accuracy</span></div>
+  </div>
+
+  <div class="card-wrap">
+    <div id="card">
+      <canvas id="face"></canvas>
+      <div class="card-tag">✎ cartoon style</div>
+    </div>
+  </div>
+
+  <div class="prompt" id="prompt"><div class="ask">How old is this person?</div></div>
+
+  <div class="options" id="options">
+    <button class="opt"></button><button class="opt"></button>
+    <button class="opt"></button><button class="opt"></button>
+  </div>
+
+  <button class="next" id="next" hidden>Next</button>
+
+  <div class="foot">
+    This is the <b>Cartoon</b> style — drawn in-app, all ages incl. kids.<br>
+    In the app you can switch to <b>Anime</b> — AI-drawn portraits, adults 18+.
+  </div>
+</div>
+
+<div id="start">
+  <div class="sheet">
+    <div class="badge">🎯 solo · endless</div>
+    <h1>Guess the Age</h1>
+    <p class="tag">Look at the face. Tap the right age. Keep going.</p>
+    <div class="rules">
+      <div class="rule"><div class="n">1</div><span>Each round shows a <b>synthetic face</b> — pick which of <b>four ages</b> is right. (The app offers Cartoon or AI-photo faces.)</span></div>
+      <div class="rule"><div class="n">2</div><span>Build a <b>streak</b> for bonus points. A miss resets it.</span></div>
+      <div class="rule"><div class="n">3</div><span>There's no finish line. It just <b>keeps going</b>.</span></div>
+    </div>
+    <button class="next" id="play" style="width:100%">Play</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const MIN = 1, MAX = 99;
+  const clamp = a => Math.min(Math.max(a, MIN), MAX);
+  const cl01 = x => Math.min(1, Math.max(0, x));
+
+  function rngFrom(seed) {
+    let t = seed >>> 0;
+    return () => {
+      t += 0x6D2B79F5;
+      let r = Math.imul(t ^ (t >>> 15), 1 | t);
+      r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
+      return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  // ---- Option generation: faithful port of AgeOptionGenerator.swift ----
+  // Four options, every pair >= MIN_GAP apart, growing outward from the truth.
+  const MIN_GAP = 8;
+  function makeOptions(trueAge, rnd) {
+    const truth = clamp(trueAge);
+    const chosen = [truth];
+    let low = truth, high = truth;
+    let preferHigh = rnd() < 0.5;
+    let safety = 0;
+    while (chosen.length < 4 && safety++ < 100) {
+      const step = MIN_GAP + Math.floor(rnd() * 7); // 8..14
+      const canHigh = high + step <= MAX;
+      const canLow = low - step >= MIN;
+      let useHigh;
+      if (canHigh && canLow) { useHigh = preferHigh; preferHigh = !preferHigh; }
+      else if (canHigh) useHigh = true;
+      else if (canLow) useHigh = false;
+      else break;
+      if (useHigh) { high += step; chosen.push(high); }
+      else { low -= step; chosen.push(low); }
+    }
+    while (chosen.length < 4) {
+      for (let v = MIN; v <= MAX && chosen.length < 4; v++)
+        if (!chosen.includes(v)) chosen.push(v);
+    }
+    for (let i = chosen.length - 1; i > 0; i--) {
+      const j = Math.floor(rnd() * (i + 1));
+      [chosen[i], chosen[j]] = [chosen[j], chosen[i]];
+    }
+    return { values: chosen, correctIndex: chosen.indexOf(truth) };
+  }
+
+  // ---- Color helpers ----
+  const hex = h => { h = h.replace('#',''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; };
+  const rgb = a => `rgb(${a[0]|0},${a[1]|0},${a[2]|0})`;
+  const rgba = (a,al) => `rgba(${a[0]|0},${a[1]|0},${a[2]|0},${al})`;
+  const mix = (a,b,t) => a.map((v,i)=>v+(b[i]-v)*t);
+  const shade = (a,t) => a.map(v => t<0 ? v*(1+t) : v+(255-v)*t);
+
+  const SKIN = ['#ffe0c4','#f7cfa6','#eab98f','#d89e72','#c07f52','#a2623b','#7d4a2e','#5d3720'];
+  const HAIR = ['#141013','#241c1a','#3d2b20','#5c3d29','#7a4e2e','#9c6b34','#c39a54','#dcc38f'];
+  const CLOTH = ['#5566c8','#e0567f','#3fa389','#e29a5b','#7b86ef','#57a6d6','#9a6fd0','#5f9e6a','#c85b6b','#4b5b73'];
+  const EYES = ['#43301f','#5c3b24','#6e4a2e','#3e6b53','#3f6ea5','#5a5f66'];
+  const BG = [['#eef0ff','#d3d7f4'],['#eafaf1','#cbeede'],['#fff0ea','#f5d1c4'],['#eaf6ff','#cde4f6'],['#f5eeff','#ded0f1'],['#fff7e4','#f2e0b4'],['#fdeef4','#f2cfe0']];
+
+  // ---- Face renderer: apparent age driven by `age`, cosmetics by `seed` ----
+  function drawFace(canvas, age, seed) {
+    const dpr = Math.min(3, window.devicePixelRatio || 1);
+    const W = canvas.clientWidth, H = canvas.clientHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.clearRect(0,0,W,H);
+    const rnd = rngFrom(seed);
+    const pick = a => a[Math.floor(rnd()*a.length)];
+    const setF = c => { ctx.fillStyle = Array.isArray(c) ? rgb(c) : c; };
+    const E = (x,y,rx,ry,rot=0) => { ctx.beginPath(); ctx.ellipse(x,y,Math.abs(rx),Math.abs(ry),rot,0,7); };
+
+    const cx = W/2, cy = H*0.53, unit = Math.min(W,H);
+
+    // Age factors
+    const t = clamp(age);
+    const gray = cl01((t-34)/42);
+    const recede = cl01((t-45)/40);
+    const wrinkle = cl01((t-26)/55);
+    const child = cl01((15 - t)/12);
+    const old = cl01((t-58)/30);
+
+    // Look
+    const skin = hex(pick(SKIN));
+    const eyeCol = hex(pick(EYES));
+    const hair = mix(hex(pick(HAIR)), [206,206,212], gray*0.92);
+    const hairDark = mix(hair,[20,16,16],0.25);
+    const cloth = hex(pick(CLOTH));
+    const bgp = pick(BG);
+    const glasses = rnd() < (0.12 + 0.5*cl01((t-40)/40));
+
+    let style;
+    if (t >= 48 && rnd() < 0.35 + recede*0.5) style = (rnd() < 0.45 ? 'bald' : 'receding');
+    else {
+      const pool = t < 16 ? ['short','curly','long','bob','pony']
+                          : ['short','sidePart','buzz','curly','long','bob','bun','pony'];
+      style = pick(pool);
+    }
+    const longStyle = style==='long' || style==='bob' || style==='bun' || style==='pony';
+    const beard = !longStyle && t>=18 && t<75 && rnd() < 0.30;
+    const beardStyle = pick(['full','stubble','goatee','mustache']);
+
+    const faceW = unit*(0.28 + child*0.03);
+    const faceH = unit*(0.36 - child*0.02);
+    const jaw = 0.50 + child*0.14 + old*0.06;
+
+    // ---------- background ----------
+    const bg = ctx.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,bgp[0]); bg.addColorStop(1,bgp[1]);
+    ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+    const spot = ctx.createRadialGradient(cx, cy-faceH*0.25, faceW*0.2, cx, cy, unit*0.95);
+    spot.addColorStop(0,'rgba(255,255,255,0.32)'); spot.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle = spot; ctx.fillRect(0,0,W,H);
+
+    // ---------- helpers ----------
+    function headPath() {
+      const p = new Path2D();
+      p.moveTo(cx-faceW, cy-faceH*0.12);
+      p.bezierCurveTo(cx-faceW, cy-faceH*1.02, cx+faceW, cy-faceH*1.02, cx+faceW, cy-faceH*0.12);
+      p.bezierCurveTo(cx+faceW*(0.55+jaw*0.5), cy+faceH*0.5, cx+faceW*jaw, cy+faceH, cx, cy+faceH);
+      p.bezierCurveTo(cx-faceW*jaw, cy+faceH, cx-faceW*(0.55+jaw*0.5), cy+faceH*0.5, cx-faceW, cy-faceH*0.12);
+      p.closePath();
+      return p;
+    }
+    function capHair(browY, sideY, w) {
+      w = w || 1.06;
+      setF(hair);
+      ctx.beginPath();
+      ctx.moveTo(cx-faceW*w, sideY);
+      ctx.bezierCurveTo(cx-faceW*w, cy-faceH*1.12, cx+faceW*w, cy-faceH*1.12, cx+faceW*w, sideY);
+      ctx.bezierCurveTo(cx+faceW*0.72, browY, cx-faceW*0.72, browY, cx-faceW*w, sideY);
+      ctx.fill();
+    }
+
+    // ---------- hair behind ----------
+    setF(hairDark);
+    if (style==='long') { E(cx, cy+faceH*0.4, faceW*1.2, faceH*1.15); ctx.fill(); }
+    else if (style==='bob') { E(cx, cy+faceH*0.12, faceW*1.16, faceH*0.98); ctx.fill(); }
+    else if (style==='pony') { E(cx+faceW*0.95, cy+faceH*0.35, faceW*0.3, faceH*0.72, -0.35); ctx.fill(); }
+    else if (style==='bun') { E(cx, cy-faceH*1.05, faceW*0.32, faceW*0.32); ctx.fill(); }
+
+    // ---------- shoulders ----------
+    setF(cloth);
+    ctx.beginPath();
+    ctx.moveTo(cx-faceW*1.75, cy+faceH*2.3);
+    ctx.quadraticCurveTo(cx-faceW*1.45, cy+faceH*1.12, cx, cy+faceH*1.02);
+    ctx.quadraticCurveTo(cx+faceW*1.45, cy+faceH*1.12, cx+faceW*1.75, cy+faceH*2.3);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle='rgba(0,0,0,0.08)';
+    ctx.beginPath();
+    ctx.moveTo(cx-faceW*0.5, cy+faceH*1.0);
+    ctx.quadraticCurveTo(cx, cy+faceH*1.28, cx+faceW*0.5, cy+faceH*1.0);
+    ctx.quadraticCurveTo(cx, cy+faceH*1.1, cx-faceW*0.5, cy+faceH*1.0);
+    ctx.fill();
+
+    // ---------- neck + ears ----------
+    setF(shade(skin,-0.10));
+    ctx.fillRect(cx-faceW*0.25, cy+faceH*0.42, faceW*0.5, faceH*0.62);
+    ctx.fillStyle='rgba(0,0,0,0.10)'; E(cx, cy+faceH*0.6, faceW*0.4, faceH*0.12); ctx.fill();
+    for (const s of [-1,1]) {
+      setF(skin); E(cx+s*faceW*0.95, cy+faceH*0.06, faceW*0.15, faceH*0.17); ctx.fill();
+      ctx.fillStyle='rgba(0,0,0,0.09)'; E(cx+s*faceW*0.95, cy+faceH*0.07, faceW*0.07, faceH*0.09); ctx.fill();
+    }
+
+    // ---------- head + shading ----------
+    const head = headPath();
+    setF(skin); ctx.fill(head);
+    ctx.save(); ctx.clip(head);
+    let g1 = ctx.createRadialGradient(cx-faceW*0.35, cy-faceH*0.45, faceW*0.1, cx-faceW*0.35, cy-faceH*0.45, faceW*1.8);
+    g1.addColorStop(0, rgba(shade(skin,0.22),0.55)); g1.addColorStop(1, rgba(shade(skin,0.22),0));
+    ctx.fillStyle = g1; ctx.fillRect(cx-faceW*1.4, cy-faceH*1.4, faceW*2.8, faceH*3);
+    let g2 = ctx.createRadialGradient(cx+faceW*0.55, cy+faceH*0.65, faceW*0.1, cx+faceW*0.55, cy+faceH*0.65, faceW*1.7);
+    g2.addColorStop(0, rgba(shade(skin,-0.26),0.5)); g2.addColorStop(1, rgba(shade(skin,-0.26),0));
+    ctx.fillStyle = g2; ctx.fillRect(cx-faceW*1.4, cy-faceH*1.4, faceW*2.8, faceH*3);
+    ctx.restore();
+
+    // ---------- hair front ----------
+    if (style==='bald') {
+      // side/back ring only; shiny pate
+      setF(hair);
+      for (const s of [-1,1]) { E(cx+s*faceW*0.86, cy-faceH*0.05, faceW*0.26, faceH*0.4); ctx.fill(); }
+      ctx.save(); ctx.clip(head);
+      const sh = ctx.createRadialGradient(cx-faceW*0.2, cy-faceH*0.7, faceW*0.05, cx-faceW*0.2, cy-faceH*0.7, faceW*0.9);
+      sh.addColorStop(0,'rgba(255,255,255,0.28)'); sh.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.fillStyle=sh; ctx.fillRect(cx-faceW*1.2, cy-faceH*1.3, faceW*2.4, faceH); ctx.restore();
+    } else if (style==='receding') {
+      setF(hair);
+      ctx.beginPath();
+      ctx.moveTo(cx-faceW*1.04, cy+faceH*0.05);
+      ctx.bezierCurveTo(cx-faceW*1.04, cy-faceH*1.05, cx+faceW*1.04, cy-faceH*1.05, cx+faceW*1.04, cy+faceH*0.05);
+      ctx.bezierCurveTo(cx+faceW*0.72, cy-faceH*0.35, cx+faceW*0.4, cy-faceH*0.72, cx, cy-faceH*0.55);
+      ctx.bezierCurveTo(cx-faceW*0.4, cy-faceH*0.72, cx-faceW*0.72, cy-faceH*0.35, cx-faceW*1.04, cy+faceH*0.05);
+      ctx.fill();
+    } else if (style==='buzz') {
+      ctx.globalAlpha = 0.72; capHair(cy-faceH*0.52, cy-faceH*0.08, 1.0); ctx.globalAlpha = 1;
+    } else if (style==='curly') {
+      setF(hair);
+      const pts = [[-0.75,-0.55],[-0.45,-0.85],[0,-0.98],[0.45,-0.85],[0.75,-0.55],[-0.95,-0.15],[0.95,-0.15],[-0.6,-0.25],[0.6,-0.25]];
+      for (const [px,py] of pts) { E(cx+px*faceW, cy+py*faceH, faceW*0.34, faceH*0.32); ctx.fill(); }
+    } else if (style==='sidePart') {
+      capHair(cy-faceH*(0.4-child*0.08), cy+faceH*0.06);
+      setF(shade(hair,-0.18));
+      ctx.beginPath();
+      ctx.moveTo(cx-faceW*0.15, cy-faceH*0.92);
+      ctx.quadraticCurveTo(cx+faceW*0.9, cy-faceH*0.8, cx+faceW*0.75, cy-faceH*0.2);
+      ctx.quadraticCurveTo(cx+faceW*0.2, cy-faceH*0.55, cx-faceW*0.15, cy-faceH*0.92);
+      ctx.fill();
+    } else if (style==='bun' || style==='pony') {
+      capHair(cy-faceH*0.5, cy-faceH*0.05); // sleek pulled-back
+    } else {
+      // short / long / bob front cap
+      capHair(cy-faceH*(0.4-child*0.08), cy+faceH*0.06);
+      if (style==='long' || style==='bob') {
+        setF(hair);
+        const dropY = style==='bob' ? cy+faceH*0.7 : cy+faceH*1.2;
+        for (const s of [-1,1]) {
+          ctx.beginPath();
+          ctx.moveTo(cx+s*faceW*1.02, cy-faceH*0.2);
+          ctx.quadraticCurveTo(cx+s*faceW*1.2, cy+faceH*0.3, cx+s*faceW*0.9, dropY);
+          ctx.quadraticCurveTo(cx+s*faceW*0.78, cy+faceH*0.2, cx+s*faceW*0.86, cy-faceH*0.2);
+          ctx.fill();
+        }
+      }
+    }
+
+    // ---------- features ----------
+    const eyeY = cy - faceH*0.02;
+    const eyeDX = faceW*0.4;
+    const ew = faceW*0.2, eh = faceW*0.13;
+
+    // brows
+    for (const s of [-1,1]) {
+      const ex = cx+s*eyeDX, by = eyeY - eh*1.9 - wrinkle*faceH*0.01;
+      setF(mix(hair,[50,38,34],0.3));
+      ctx.beginPath();
+      ctx.moveTo(ex-ew*0.9, by+eh*0.35);
+      ctx.quadraticCurveTo(ex, by-eh*0.4, ex+ew*0.9, by);
+      ctx.quadraticCurveTo(ex, by+eh*0.15, ex-ew*0.9, by+eh*0.35);
+      ctx.closePath(); ctx.fill();
+    }
+
+    // eyes
+    for (const s of [-1,1]) {
+      const ex = cx+s*eyeDX;
+      setF('#ffffff'); E(ex, eyeY, ew, eh); ctx.fill();
+      ctx.save();
+      E(ex, eyeY, ew, eh); ctx.clip();
+      const ir = eh*0.98;
+      setF(eyeCol); E(ex, eyeY+eh*0.05, ir*0.82, ir); ctx.fill();
+      setF('#1a1210'); E(ex, eyeY+eh*0.05, ir*0.42, ir*0.5); ctx.fill();
+      setF('rgba(255,255,255,0.92)'); E(ex-ir*0.28, eyeY-ir*0.25, ir*0.2, ir*0.2); ctx.fill();
+      ctx.restore();
+      ctx.strokeStyle='rgba(45,30,24,0.85)'; ctx.lineWidth=Math.max(1.5,faceW*0.028); ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(ex-ew, eyeY-eh*0.15);
+      ctx.quadraticCurveTo(ex, eyeY-eh*1.2, ex+ew, eyeY-eh*0.15); ctx.stroke();
+      ctx.strokeStyle='rgba(45,30,24,0.22)'; ctx.lineWidth=Math.max(1,faceW*0.02);
+      ctx.beginPath(); ctx.moveTo(ex-ew*0.8, eyeY+eh*0.55);
+      ctx.quadraticCurveTo(ex, eyeY+eh, ex+ew*0.8, eyeY+eh*0.55); ctx.stroke();
+    }
+
+    // nose
+    ctx.fillStyle='rgba(0,0,0,0.09)';
+    ctx.beginPath();
+    ctx.moveTo(cx, eyeY+eh*1.3);
+    ctx.quadraticCurveTo(cx-faceW*0.11, cy+faceH*0.16, cx, cy+faceH*0.22);
+    ctx.quadraticCurveTo(cx+faceW*0.07, cy+faceH*0.17, cx, eyeY+eh*1.3);
+    ctx.fill();
+    ctx.fillStyle='rgba(0,0,0,0.16)';
+    for (const s of [-1,1]) { E(cx+s*faceW*0.06, cy+faceH*0.22, faceW*0.028, faceW*0.018); ctx.fill(); }
+
+    // beard (under features, over cheeks)
+    const mY = cy + faceH*0.46;
+    if (beard) {
+      const bc = mix(hair,[26,22,20],0.15);
+      if (beardStyle==='full' || beardStyle==='stubble') {
+        ctx.save(); ctx.clip(head);
+        ctx.fillStyle = beardStyle==='stubble' ? rgba(bc,0.34) : rgb(bc);
+        ctx.beginPath();
+        ctx.moveTo(cx-faceW*1.0, cy);
+        ctx.quadraticCurveTo(cx-faceW*0.95, cy+faceH*1.02, cx, cy+faceH*1.04);
+        ctx.quadraticCurveTo(cx+faceW*0.95, cy+faceH*1.02, cx+faceW*1.0, cy);
+        ctx.quadraticCurveTo(cx, cy+faceH*0.42, cx-faceW*1.0, cy);
+        ctx.fill(); ctx.restore();
+      } else if (beardStyle==='goatee') {
+        setF(bc); E(cx, cy+faceH*0.72, faceW*0.2, faceH*0.16); ctx.fill();
+      }
+      if (beardStyle==='full' || beardStyle==='mustache') {
+        setF(bc);
+        ctx.beginPath();
+        ctx.moveTo(cx-faceW*0.32, mY-faceH*0.02);
+        ctx.quadraticCurveTo(cx, mY-faceH*0.12, cx+faceW*0.32, mY-faceH*0.02);
+        ctx.quadraticCurveTo(cx, mY+faceH*0.02, cx-faceW*0.32, mY-faceH*0.02);
+        ctx.fill();
+      }
+    }
+
+    // lips
+    const lipW = faceW*0.32;
+    const lip = mix(skin,[188,92,92],0.5);
+    setF(mix(lip,[0,0,0],0.05));
+    ctx.beginPath();
+    ctx.moveTo(cx-lipW, mY);
+    ctx.quadraticCurveTo(cx, mY+faceH*0.11, cx+lipW, mY);
+    ctx.quadraticCurveTo(cx, mY+faceH*0.03, cx-lipW, mY);
+    ctx.fill();
+    setF(mix(lip,[0,0,0],0.12));
+    ctx.beginPath();
+    ctx.moveTo(cx-lipW, mY);
+    ctx.quadraticCurveTo(cx-lipW*0.4, mY-faceH*0.05, cx, mY-faceH*0.008);
+    ctx.quadraticCurveTo(cx+lipW*0.4, mY-faceH*0.05, cx+lipW, mY);
+    ctx.quadraticCurveTo(cx, mY+faceH*0.02, cx-lipW, mY);
+    ctx.fill();
+    ctx.strokeStyle='rgba(90,40,40,0.5)'; ctx.lineWidth=Math.max(1,faceW*0.02); ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(cx-lipW, mY);
+    ctx.quadraticCurveTo(cx, mY+faceH*(0.06-old*0.03), cx+lipW, mY); ctx.stroke();
+
+    // glasses
+    if (glasses) {
+      ctx.strokeStyle='rgba(30,30,36,0.78)'; ctx.lineWidth=Math.max(2,faceW*0.035);
+      for (const s of [-1,1]) {
+        ctx.beginPath();
+        ctx.moveTo(cx+s*eyeDX-ew*1.15, eyeY);
+        ctx.rect(cx+s*eyeDX-ew*1.15, eyeY-eh*1.15, ew*2.3, eh*2.3);
+        ctx.stroke();
+      }
+      ctx.beginPath(); ctx.moveTo(cx-eyeDX+ew*1.15, eyeY-eh*0.2);
+      ctx.quadraticCurveTo(cx, eyeY-eh*0.5, cx+eyeDX-ew*1.15, eyeY-eh*0.2); ctx.stroke();
+    }
+
+    // aging lines
+    if (wrinkle > 0.05) {
+      ctx.strokeStyle = rgba([120,85,65], 0.10 + wrinkle*0.30);
+      ctx.lineWidth = Math.max(1, faceW*0.018); ctx.lineCap='round';
+      for (let i=0;i<Math.round(wrinkle*3);i++){
+        const y = cy-faceH*0.45 + i*faceH*0.08;
+        ctx.beginPath(); ctx.moveTo(cx-faceW*0.45,y);
+        ctx.quadraticCurveTo(cx, y-faceH*0.02, cx+faceW*0.45, y); ctx.stroke();
+      }
+      for (const s of [-1,1]) { // nasolabial
+        ctx.beginPath();
+        ctx.moveTo(cx+s*faceW*0.2, eyeY+eh*1.5);
+        ctx.quadraticCurveTo(cx+s*faceW*0.44, mY-faceH*0.08, cx+s*faceW*0.34, mY+faceH*0.02);
+        ctx.stroke();
+      }
+      if (old > 0.3) for (const s of [-1,1]) { // crow's feet
+        ctx.beginPath();
+        ctx.moveTo(cx+s*(eyeDX+ew*0.9), eyeY-eh*0.4);
+        ctx.lineTo(cx+s*(eyeDX+ew*1.5), eyeY-eh*0.6);
+        ctx.moveTo(cx+s*(eyeDX+ew*0.9), eyeY);
+        ctx.lineTo(cx+s*(eyeDX+ew*1.55), eyeY); ctx.stroke();
+      }
+    }
+
+    // blush (kids)
+    if (child > 0.15) {
+      ctx.fillStyle = rgba([255,120,120], 0.12 + child*0.18);
+      for (const s of [-1,1]) { E(cx+s*faceW*0.5, cy+faceH*0.24, faceW*0.16, faceH*0.1); ctx.fill(); }
+    }
+  }
+
+  // ---- Game state (scoring ported from GameViewModel.swift) ----
+  const el = id => document.getElementById(id);
+  const canvas = el('face');
+  const optEls = [...document.querySelectorAll('.opt')];
+  const state = { score:0, rounds:0, correct:0, streak:0, best:0, age:0, seed:0, opts:null, answered:false };
+
+  function randAge() { return 3 + Math.floor(Math.random()*83); } // cartoon: all ages 3..85
+  function randSeed() { return (Math.random()*2**31) >>> 0; }
+
+  function setStat(id, val, flash) {
+    const node = el(id); node.querySelector('b').textContent = val;
+    if (flash) { node.classList.remove('flash'); void node.offsetWidth; node.classList.add('flash'); }
+  }
+  function renderScores(flash) {
+    setStat('s-score', state.score, flash);
+    setStat('s-streak', state.streak);
+    setStat('s-best', state.best);
+    const acc = state.rounds ? Math.round(state.correct/state.rounds*100) : 0;
+    setStat('s-acc', acc + '%');
+  }
+
+  function newRound() {
+    state.age = randAge(); state.seed = randSeed(); state.answered = false;
+    state.opts = makeOptions(state.age, rngFrom(state.seed ^ 0x9e3779b9));
+    const card = el('card'); card.classList.remove('reveal-in'); void card.offsetWidth; card.classList.add('reveal-in');
+    drawFace(canvas, state.age, state.seed);
+    el('options').classList.remove('answered');
+    optEls.forEach((b,i) => {
+      b.textContent = state.opts.values[i];
+      b.className = 'opt'; b.disabled = false;
+    });
+    el('prompt').innerHTML = '<div class="ask">How old is this person?</div>';
+    el('next').hidden = true;
+  }
+
+  function answer(i) {
+    if (state.answered) return;
+    state.answered = true; state.rounds++;
+    const correctIdx = state.opts.correctIndex;
+    const isRight = i === correctIdx;
+    if (isRight) {
+      state.correct++; state.streak++; state.best = Math.max(state.best, state.streak);
+      state.score += 10 + Math.min(state.streak - 1, 10);
+    } else {
+      state.streak = 0;
+    }
+    el('options').classList.add('answered');
+    optEls.forEach((b,idx) => {
+      b.disabled = true;
+      if (idx === correctIdx) b.classList.add('correct');
+      else if (idx === i) b.classList.add('wrong');
+      else b.classList.add('dim');
+    });
+    el('prompt').innerHTML = isRight
+      ? '<div><div class="verdict good">Correct!</div><div class="sub">Drawn at age ' + state.age + '</div></div>'
+      : '<div><div class="verdict bad">Actual age: ' + state.age + '</div><div class="sub">+0 — streak reset</div></div>';
+    el('next').hidden = false;
+    renderScores(isRight);
+  }
+
+  optEls.forEach((b,i) => b.addEventListener('click', () => answer(i)));
+  el('next').addEventListener('click', newRound);
+  el('restart').addEventListener('click', () => {
+    Object.assign(state, { score:0, rounds:0, correct:0, streak:0, best:0 });
+    renderScores(false); newRound();
+  });
+  el('play').addEventListener('click', () => { el('start').classList.add('hidden'); newRound(); });
+
+  let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { drawFace(canvas, state.age, state.seed); }, 120); });
+
+  renderScores(false);
+  drawFace(canvas, 34, 12345);
+})();
+</script>
+</body>
+</html>
