@@ -25,7 +25,7 @@ GuessAge/Resources/Generated/*.jpg
 GuessAge/Resources/Generated/*.webp
 GuessAge/Resources/manifest.json
 
-# Local generator preview output (tools/generate_faces_local.py --preview)
+# Local render-harness / preview output
 /preview/
 
 # Python

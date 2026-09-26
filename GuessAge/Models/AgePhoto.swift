@@ -53,11 +53,11 @@ struct AgePhoto: Codable, Identifiable, Equatable, Hashable {
 enum FaceStyle: String, CaseIterable, Identifiable {
     /// Illustrated faces drawn in-app (includes children).
     case cartoon
-    /// AI-generated / real photographs from the dataset (adults only).
+    /// Real photographs with verified ages from the dataset (adults only).
     case photo
 
     var id: String { rawValue }
-    var label: String { self == .cartoon ? "Cartoon" : "Anime" }
+    var label: String { self == .cartoon ? "Cartoon" : "Photos" }
 }
 
 /// Top-level shape of a `seed.json` / `manifest.json` document.

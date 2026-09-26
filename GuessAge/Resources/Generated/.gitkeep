@@ -1,3 +1,3 @@
-# Generated (non-seed) AI face images land here when you run
-# tools/generate_faces.py. Kept in git so the folder exists; the images
-# themselves are gitignored — host them and reference via manifest.json.
+# Optional generated/streamed photo assets land here. Kept in git so the folder
+# exists; the images themselves are gitignored — host them and reference via
+# manifest.json. Build a verified-photo dataset with tools/build_dataset.py.

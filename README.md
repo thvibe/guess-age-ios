@@ -3,16 +3,14 @@
 A solo, never-ending iOS game: look at a photo of a real person and tap which of
 four ages is correct. Built in SwiftUI, no third-party dependencies.
 
-> **Two face styles the player picks from — both royalty-free.**
+> **The player picks a face style — both royalty-free.**
 > - **Cartoon** — illustrated faces drawn in-app (SwiftUI `Canvas`), **all ages
->   incl. children**, works fully offline, no data needed.
-> - **Anime** — hand-drawn-style AI illustrations from `gpt-image-1`
->   (portrait, **adults 18+**), depicting no real person, so no likeness/
->   copyright/royalty concerns. The correct answer is the age each face was made at.
->   (`--art-style photo` generates photorealistic instead.)
->
-> A real-photo path (royalty-free Wikimedia photos with *documented* ages) is also
-> available if you prefer real subjects.
+>   incl. children**, works fully offline, no data needed. This is the primary,
+>   always-available mode.
+> - **Photos** (optional) — real people from royalty-free Wikimedia with
+>   *documented* ages (portrait, **adults 18+**). The subject's name is hidden
+>   while guessing and credited on the answer screen. Needs a dataset built with
+>   `tools/build_dataset.py`.
 
 ## What's here
 
@@ -38,28 +36,19 @@ Out of the box it plays on a **placeholder seed** (procedurally drawn faces) so
 you can try the whole game loop offline immediately. Press **⌘U** to run the unit
 tests.
 
-## Add real faces
+## Add real photos (optional)
 
-The bundled faces are procedural stand-ins. To fill the game with real content
-(run on your Mac, not a locked-down sandbox):
-
-**AI-generated people (primary)** — needs an image-model API key:
-
-```bash
-export IMAGE_API_KEY=sk-...
-python3 tools/generate_faces.py --count 200 --seed-count 50 \
-  --image-base-url https://your-cdn.example.com/faces
-```
-
-**Real, documented photos (alternative)** — royalty-free Wikimedia, no key:
+Cartoon mode needs no data. To also offer **Photos** mode, build a royalty-free
+dataset of real people with *documented* ages (run on your Mac, not a
+locked-down sandbox) — Wikimedia, no API key:
 
 ```bash
 python3 tools/build_dataset.py --target 400 --seed-count 50
 ```
 
-Either writes a bundled offline `seed.json` (+ `Seed/` images) and a full
+It writes a bundled offline `seed.json` (+ `Seed/` images) and a full
 `manifest.json`. Re-run the app to see them. See **[tools/README.md](tools/README.md)**
-for setup, hosting, and the trade-offs between the two.
+for setup and hosting.
 
 ## Play in a browser (GitHub Pages)
 
@@ -72,7 +61,7 @@ to GitHub Pages by [`.github/workflows/pages.yml`](.github/workflows/pages.yml):
 
 Open that URL on an iPhone in Safari → **Share → Add to Home Screen** to play it
 full-screen like an app. This is the free, no-Mac way to try the gameplay; the
-native app and the Anime style still live in Xcode.
+native app also lives in Xcode.
 
 ## Get it on your iPhone (TestFlight)
 
@@ -94,7 +83,7 @@ Apple Developer Program). See **[docs/TESTFLIGHT.md](docs/TESTFLIGHT.md)**.
   (window widens with age), with the truth always included. Pure and unit-tested.
 - `GameViewModel` keeps a shuffled queue, refills it endlessly, and tracks score,
   streak, best streak, and accuracy. Streaks grant bonus points.
-- AI faces carry no name; if you use the real-photo path instead, the subject's
+- Cartoon faces carry no name. If you load the real-photo dataset, the subject's
   **name is hidden while guessing** (it would give recognizable people away) and
   revealed with credit on the answer screen.
 

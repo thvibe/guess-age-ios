@@ -1,6 +1,7 @@
 # Dataset tools
 
-Scripts that produce the photo/face data the app plays with.
+Scripts that produce the photo data the app plays with. (Cartoon mode is drawn
+in-app and needs none of this — these are only for the optional **Photos** mode.)
 
 ## `gen_placeholder_seed.py` — runs anywhere, no network
 
@@ -12,87 +13,9 @@ runs before you generate real content.
 python3 tools/gen_placeholder_seed.py
 ```
 
-## `generate_faces.py` — AI-generated faces (primary)
+## `build_dataset.py` — real, verified photos
 
-Generates synthetic people at target ages using an OpenAI-compatible Images API.
-By default it produces **hand-drawn anime-style illustrations** (Studio-Ghibli /
-Makoto-Shinkai feel); pass `--art-style photo` for photorealistic instead. These
-faces depict no real person, so there are no likeness/copyright/royalty concerns.
-The age is the *intended/apparent* age each face was generated at.
-
-**Adults only (18+) by design** — the tool will not generate images of minors.
-
-Default backend is OpenAI's **`gpt-image-1`**.
-
-```bash
-export IMAGE_API_KEY=sk-...            # required
-python3 tools/generate_faces.py --count 200 --seed-count 50 \
-  --quality medium --size 1024x1536 \
-  --image-base-url https://your-cdn.example.com/faces
-```
-
-Useful flags / env (flags win over env):
-
-| Flag / env | Default | Notes |
-|------------|---------|-------|
-| `--quality` / `IMAGE_QUALITY` | `medium` | `low` / `medium` / `high`. Drives cost. |
-| `--size` / `IMAGE_SIZE` | `1024x1536` (portrait) | or `1024x1024` / `1536x1024`. |
-| `--art-style` / `IMAGE_ART_STYLE` | `anime` | `anime` hand-drawn illustration (Ghibli-esque) or `photo` photorealistic. |
-| `--output-format` / `IMAGE_OUTPUT_FORMAT` | `jpeg` | `jpeg` / `png` / `webp`. |
-| `IMAGE_MODEL` | `gpt-image-1` | any OpenAI-compatible model. |
-| `IMAGE_API_BASE` | `https://api.openai.com/v1` | point at Azure/gateway to switch backend. |
-
-**gpt-image-1 notes:** it requires a **verified OpenAI organization**, and each
-image costs money — roughly `~$0.01` (low) / `~$0.04` (medium) / `~$0.17` (high)
-per 1024x1024; portrait/landscape cost more. The script prints a rough estimate
-before running. Start with a small `--count` to confirm quality and spend.
-
-Outputs:
-
-| File | Purpose |
-|------|---------|
-| `GuessAge/Resources/Seed/ai-*.png` | Bundled offline faces (first `--seed-count`). |
-| `GuessAge/Resources/seed.json` | Bundled subset; references local images. Plays offline. |
-| `GuessAge/Resources/Generated/ai-*.png` | The rest of the generated images. **Host these.** |
-| `GuessAge/Resources/manifest.json` | Full set; image URLs = `--image-base-url` + filename. Point `AppConfig.manifestURL` at the hosted copy for the endless streamed pool. |
-
-Point `IMAGE_API_BASE` at Azure OpenAI, a gateway, or any OpenAI-compatible
-Images endpoint to use a different backend/model.
-
-> The age label is what the model was asked to render, so it can drift a few
-> years from how the face actually reads. For a casual guessing game that's fine;
-> if you want tighter labels, run an age-estimation pass over the results and
-> store the estimate instead.
-
-## `generate_faces_local.py` — anime faces, LOCAL & free (no API)
-
-Runs Stable Diffusion on your own machine (Apple Silicon / NVIDIA / CPU) with an
-anime checkpoint — no account, no key, no per-image cost, fully private. Same
-output shape as `generate_faces.py`. Adults only (18+).
-
-```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r tools/requirements-local.txt
-python3 tools/generate_faces_local.py --count 20 --seed-count 20
-```
-
-- First run downloads the model (~6-7 GB) from Hugging Face and caches it.
-- Default model is an anime **SDXL** checkpoint (`cagliostrolab/animagine-xl-3.1`).
-  Override with `--model` (any diffusers text-to-image model). For a lighter/faster
-  **SD1.5** anime model, also pass `--size 512x768`.
-- Tuning: `--steps`, `--guidance`, `--size WxH`, `--device`, `--dtype`.
-- On Apple Silicon expect ~20-60s per image (MPS backend, auto-detected).
-- **Try `--preview` first:** `python3 tools/generate_faces_local.py --preview` renders
-  three sample faces (young / adult / old) into `./preview/` with timings and exits,
-  so you can check quality and speed before committing to a full batch.
-
-Then bundle `Seed/` for offline play, host `Generated/` + `manifest.json` for the
-streamed pool, and point `AppConfig.manifestURL` at it — same as the other tools.
-
-## `build_dataset.py` — real, verified photos (alternative)
-
-If you'd rather use **real** people with **documented** ages (and want to include
-children, whom the AI path excludes), this pulls royalty-free photos from
+Pulls royalty-free photos of **real** people with **documented** ages from
 **Wikidata + Wikimedia Commons** and computes `age = capture_year − birth_year`
 from the subject's birth date and the photo's EXIF capture date. Only
 public-domain / CC0 / CC BY / CC BY-SA images are kept, with author + license
@@ -106,8 +29,7 @@ Requires outbound access to Wikimedia (run on your machine, not a locked-down
 sandbox). CC BY / BY-SA require the attribution the app shows on the reveal and
 in **About the images** — keep it intact.
 
----
-
-Both real and AI data use the same JSON shape (`{version, photos:[{id, age,
-imageURL?, localImageName?, name?, attribution?}]}`), so the app consumes either
-without code changes, and you can even mix them.
+Outputs the same JSON shape the app expects (`{version, photos:[{id, age,
+imageURL?, localImageName?, name?, attribution?}]}`): a bundled offline
+`seed.json` (+ `Seed/` images) for launch, and a full `manifest.json` you can
+host and point `AppConfig.manifestURL` at for an endless streamed pool.

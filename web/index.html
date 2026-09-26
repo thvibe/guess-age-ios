@@ -113,28 +113,8 @@
     border-radius: 50%; overflow: hidden;
     box-shadow: var(--shadow); background: var(--fill);
   }
-  /* Both the cartoon canvas and the anime image are absolute layers that fill
-     the card, so the card size never depends on which one is showing. */
-  #face, #animeImg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
-  #animeImg { display: none; }
-  #card.anime #face { display: none; }
-  #card.anime #animeImg { display: block; }
-  .spinner { position:absolute; inset:0; display:none; place-items:center; }
-  #card.loading .spinner { display:grid; }
-  .spinner div { width:36px; height:36px; border-radius:50%;
-    border:3px solid rgba(255,255,255,.35); border-top-color:#fff; animation:spin .8s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .modes { display:flex; gap:8px; }
-  .mode { flex:1; appearance:none; border:0; border-radius:12px; padding:9px 0; cursor:pointer;
-    font-family:var(--round); font-weight:800; font-size:14px; background:var(--fill); color:var(--text-2);
-    transition:background .15s, color .15s; }
-  .mode.active { background:var(--accent); color:#fff; }
-  .card-tag {
-    position: absolute; left: 50%; transform: translateX(-50%); bottom: 6%; font-size: 11px; font-weight: 600;
-    color: #fff; background: rgba(0,0,0,.34); backdrop-filter: blur(6px);
-    padding: 5px 9px; border-radius: 999px; letter-spacing: .01em;
-    display: flex; align-items: center; gap: 5px;
-  }
+  /* The cartoon canvas fills the circular card. */
+  #face { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
   #card.reveal-in #face { animation: fade .28s ease; }
   @keyframes fade { from { opacity: 0; transform: scale(1.02); } to { opacity: 1; transform: none; } }
 
@@ -211,17 +191,9 @@
     <div class="stat" id="s-acc"><b>0%</b><span>Accuracy</span></div>
   </div>
 
-  <div class="modes" id="modes">
-    <button class="mode active" data-mode="cartoon">Cartoon</button>
-    <button class="mode" data-mode="anime">Anime · AI</button>
-  </div>
-
   <div class="card-wrap">
     <div id="card">
       <canvas id="face"></canvas>
-      <img id="animeImg" alt="anime face">
-      <div class="spinner"><div></div></div>
-      <div class="card-tag" id="cardTag">✎ cartoon style</div>
     </div>
   </div>
 
@@ -235,7 +207,7 @@
   <button class="next is-hidden" id="next">Next</button>
 
   <div class="foot">
-    <b>Cartoon</b> is instant · <b>Anime · AI</b> generates each round (18+, needs a connection).
+    Endless · a miss just resets your <b>streak</b>.
   </div>
 </div>
 
@@ -245,7 +217,7 @@
     <h1>Guess the Age</h1>
     <p class="tag">Look at the face. Tap the right age. Keep going.</p>
     <div class="rules">
-      <div class="rule"><div class="n">1</div><span>Each round shows a <b>synthetic face</b> — pick which of <b>four ages</b> is right. (The app offers Cartoon or AI-photo faces.)</span></div>
+      <div class="rule"><div class="n">1</div><span>Each round draws a <b>cartoon face</b> — pick which of <b>four ages</b> is right.</span></div>
       <div class="rule"><div class="n">2</div><span>Build a <b>streak</b> for bonus points. A miss resets it.</span></div>
       <div class="rule"><div class="n">3</div><span>There's no finish line. It just <b>keeps going</b>.</span></div>
     </div>
@@ -806,49 +778,9 @@
   const optEls = [...document.querySelectorAll('.opt')];
   const state = { score:0, rounds:0, correct:0, streak:0, best:0, age:0, seed:0, opts:null, answered:false };
 
-  let mode = 'cartoon';
-  let staticFaces = []; // pre-generated anime set (web/faces/manifest.json)
-  const animeImg = el('animeImg');
-
-  // Cartoon spans all ages; Anime (AI) is adults only (18+).
-  function randAge() { return mode === 'anime' ? 18 + Math.floor(Math.random()*68) : 3 + Math.floor(Math.random()*83); }
-  function randSeed() { return (Math.random()*2**31) >>> 0; }
-
-  // Free, no-key AI image generation (Pollinations). Loads in the browser on the
-  // hosted site (GitHub Pages); external images are blocked in the claude.ai preview.
-  function animeURL(age, seed) {
-    const g = ['man','woman'][Math.floor(Math.random()*2)];
-    const hair = ['short hair','long hair','ponytail','wavy hair','messy hair'][Math.floor(Math.random()*5)];
-    const p = `anime portrait illustration, upper body, a ${age} year old ${g}, ${hair}, `
-            + `soft cel shading, clean lineart, studio ghibli style, simple background, `
-            + `one person, looking at viewer, safe for work, no text`;
-    // Smaller image = faster + fewer timeouts on the free service.
-    return `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=384&height=512&nologo=true&model=flux&seed=${seed}`;
-  }
-
-  // The free image service rate-limits / times out, so retry a few times with
-  // backoff before falling back to a cartoon. A token cancels stale rounds.
-  let animeToken = 0;
-  function loadAnime(age, seed, attempt) {
-    attempt = attempt || 0;
-    const myToken = ++animeToken;
-    const card = el('card');
-    card.classList.add('anime', 'loading');
-    el('cardTag').textContent = attempt ? `✨ anime · AI (retry ${attempt})` : '✨ anime · AI';
-    animeImg.onload = () => { if (myToken === animeToken) card.classList.remove('loading'); };
-    animeImg.onerror = () => {
-      if (myToken !== animeToken) return; // superseded by a newer round
-      if (attempt < 3) {
-        setTimeout(() => { if (myToken === animeToken) loadAnime(age, seed + attempt + 1, attempt + 1); },
-                   900 * (attempt + 1));
-      } else {
-        card.classList.remove('anime', 'loading');
-        el('cardTag').textContent = '✎ cartoon (AI busy — Next to retry)';
-        state.age = age; state.seed = seed; startFaceAnim();
-      }
-    };
-    animeImg.src = animeURL(age, seed);
-  }
+  // Ages span 3..85 — the procedural cartoon renderer covers the whole range.
+  function randAge() { return 3 + Math.floor(Math.random() * 83); }
+  function randSeed() { return (Math.random() * 2 ** 31) >>> 0; }
 
   function setStat(id, val, flash) {
     const node = el(id); node.querySelector('b').textContent = val;
@@ -902,46 +834,15 @@
   // Pause the loop when the tab is hidden.
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) stopFaceAnim();
-    else if (mode === 'cartoon') startFaceAnim();
+    else startFaceAnim();
   });
 
   function newRound() {
     state.seed = randSeed(); state.answered = false;
     const card = el('card'); card.classList.remove('reveal-in'); void card.offsetWidth; card.classList.add('reveal-in');
-
-    // In anime mode, prefer a pre-generated static image (reliable + instant).
-    let staticFile = null;
-    if (mode === 'anime' && staticFaces.length) {
-      const p = staticFaces[Math.floor(Math.random() * staticFaces.length)];
-      state.age = p.age; staticFile = p.file;
-    } else {
-      state.age = randAge();
-    }
+    state.age = randAge();
     state.opts = makeOptions(state.age, rngFrom(state.seed ^ 0x9e3779b9));
-
-    if (mode === 'anime' && staticFile) {
-      stopFaceAnim();
-      animeToken++;
-      const myToken = animeToken;
-      card.classList.add('anime', 'loading');
-      el('cardTag').textContent = '✨ anime';
-      animeImg.onload = () => { if (myToken === animeToken) card.classList.remove('loading'); };
-      animeImg.onerror = () => {
-        if (myToken !== animeToken) return;
-        card.classList.remove('anime', 'loading');
-        el('cardTag').textContent = '✎ cartoon';
-        startFaceAnim();
-      };
-      animeImg.src = 'faces/' + staticFile;
-    } else if (mode === 'anime') {
-      stopFaceAnim();
-      loadAnime(state.age, state.seed); // live fallback until the set is generated
-    } else {
-      animeToken++; // cancel any in-flight anime load
-      card.classList.remove('anime', 'loading');
-      el('cardTag').textContent = '✎ cartoon style';
-      startFaceAnim();
-    }
+    startFaceAnim();
     el('options').classList.remove('answered');
     optEls.forEach((b,i) => {
       b.textContent = state.opts.values[i];
@@ -984,22 +885,7 @@
   });
   el('play').addEventListener('click', () => { el('start').classList.add('hidden'); newRound(); });
 
-  document.querySelectorAll('.mode').forEach(btn => btn.addEventListener('click', () => {
-    if (btn.dataset.mode === mode) return;
-    mode = btn.dataset.mode;
-    document.querySelectorAll('.mode').forEach(b => b.classList.toggle('active', b === btn));
-    Object.assign(state, { score:0, rounds:0, correct:0, streak:0, best:0 });
-    renderScores(false); newRound();
-  }));
-
-  let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (mode !== 'anime') drawFace(canvas, state.age, state.seed); }, 120); });
-
-  // Load the pre-generated anime set if it exists (populated by the
-  // "Generate faces" GitHub Action). Until then, Anime mode generates live.
-  fetch('faces/manifest.json', { cache: 'no-store' })
-    .then(r => r.ok ? r.json() : null)
-    .then(d => { if (d && Array.isArray(d.photos)) staticFaces = d.photos; })
-    .catch(() => {});
+  let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { drawFace(canvas, state.age, state.seed); }, 120); });
 
   renderScores(false);
   state.age = 34; state.seed = 12345;

@@ -9,7 +9,7 @@ struct AboutView: View {
     var body: some View {
         List {
             Section {
-                Text("Cartoon faces are drawn in the app. Anime faces are AI-generated illustrations. Both are synthetic and depict no real people — each is created at a target age, which is the correct answer. Because no real person is shown, there are no likeness or copyright concerns.")
+                Text("Cartoon faces are drawn in the app — synthetic, depicting no real people, each created at a target age (the correct answer). Photo mode, if you load a dataset, shows real people whose ages are verified from public records; those are credited below.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
