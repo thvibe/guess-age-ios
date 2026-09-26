@@ -61,6 +61,12 @@ Either writes a bundled offline `seed.json` (+ `Seed/` images) and a full
 `manifest.json`. Re-run the app to see them. See **[tools/README.md](tools/README.md)**
 for setup, hosting, and the trade-offs between the two.
 
+## Get it on your iPhone (TestFlight)
+
+A GitHub Actions workflow can build the app in the cloud and deliver it to your
+iPhone via TestFlight — no Mac needed after a one-time setup (requires the paid
+Apple Developer Program). See **[docs/TESTFLIGHT.md](docs/TESTFLIGHT.md)**.
+
 ## Hybrid delivery (offline + streaming)
 
 - **Offline seed:** `GuessAge/Resources/seed.json` loads at launch — the game

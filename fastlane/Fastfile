@@ -1,0 +1,37 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Build the app and upload a build to TestFlight (uses an App Store Connect API key)"
+  lane :beta do
+    api_key = app_store_connect_api_key(
+      key_id: ENV.fetch("ASC_KEY_ID"),
+      issuer_id: ENV.fetch("ASC_ISSUER_ID"),
+      key_content: ENV.fetch("ASC_KEY_P8"),
+      is_key_content_base64: true
+    )
+
+    # Archive with cloud (automatic) signing. Xcode creates/downloads the
+    # signing assets on the fly using the same API key, so no certificates or
+    # provisioning profiles need to be checked into the repo.
+    build_app(
+      project: "GuessAge.xcodeproj",
+      scheme: "GuessAge",
+      export_method: "app-store",
+      output_directory: "build",
+      clean: true,
+      xcargs: [
+        "-allowProvisioningUpdates",
+        "-authenticationKeyID #{ENV.fetch('ASC_KEY_ID')}",
+        "-authenticationKeyIssuerID #{ENV.fetch('ASC_ISSUER_ID')}",
+        "-authenticationKeyPath #{ENV.fetch('ASC_KEY_PATH')}",
+        "DEVELOPMENT_TEAM=#{ENV.fetch('APPLE_TEAM_ID')}",
+        "CURRENT_PROJECT_VERSION=#{ENV.fetch('BUILD_NUMBER', Time.now.to_i.to_s)}"
+      ].join(" ")
+    )
+
+    upload_to_testflight(
+      api_key: api_key,
+      skip_waiting_for_build_processing: true
+    )
+  end
+end
