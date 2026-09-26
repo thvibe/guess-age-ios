@@ -133,7 +133,7 @@
   #card.reveal-in #face { animation: fade .28s ease; }
   @keyframes fade { from { opacity: 0; transform: scale(1.02); } to { opacity: 1; transform: none; } }
 
-  .prompt { text-align: center; min-height: 46px; display: grid; place-items: center; }
+  .prompt { text-align: center; min-height: 62px; display: grid; place-items: center; }
   .prompt .ask { color: var(--text-2); font-weight: 600; font-size: 15px; }
   .prompt .verdict { font-family: var(--round); font-weight: 800; font-size: 21px; letter-spacing: -.01em; }
   .prompt .verdict.good { color: var(--good); }
@@ -162,7 +162,7 @@
     box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 45%, transparent);
   }
   .next:active { transform: scale(.98); background: var(--accent-press); }
-  .next[hidden] { display: none; }
+  .next.is-hidden { visibility: hidden; pointer-events: none; } /* reserve space, no jump */
 
   .foot { text-align: center; color: var(--text-3); font-size: 11px; line-height: 1.5; }
   .foot b { color: var(--text-2); font-weight: 700; }
@@ -227,7 +227,7 @@
     <button class="opt"></button><button class="opt"></button>
   </div>
 
-  <button class="next" id="next" hidden>Next</button>
+  <button class="next is-hidden" id="next">Next</button>
 
   <div class="foot">
     <b>Cartoon</b> draws instantly on your device (all ages). <b>Anime · AI</b> generates a
@@ -692,7 +692,7 @@
       b.className = 'opt'; b.disabled = false;
     });
     el('prompt').innerHTML = '<div class="ask">How old is this person?</div>';
-    el('next').hidden = true;
+    el('next').classList.add('is-hidden');
   }
 
   function answer(i) {
@@ -716,7 +716,7 @@
     el('prompt').innerHTML = isRight
       ? '<div><div class="verdict good">Correct!</div><div class="sub">Drawn at age ' + state.age + '</div></div>'
       : '<div><div class="verdict bad">Actual age: ' + state.age + '</div><div class="sub">+0 — streak reset</div></div>';
-    el('next').hidden = false;
+    el('next').classList.remove('is-hidden');
     renderScores(isRight);
   }
 
