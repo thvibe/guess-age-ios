@@ -82,6 +82,9 @@ python3 tools/generate_faces_local.py --count 20 --seed-count 20
   **SD1.5** anime model, also pass `--size 512x768`.
 - Tuning: `--steps`, `--guidance`, `--size WxH`, `--device`, `--dtype`.
 - On Apple Silicon expect ~20-60s per image (MPS backend, auto-detected).
+- **Try `--preview` first:** `python3 tools/generate_faces_local.py --preview` renders
+  three sample faces (young / adult / old) into `./preview/` with timings and exits,
+  so you can check quality and speed before committing to a full batch.
 
 Then bundle `Seed/` for offline play, host `Generated/` + `manifest.json` for the
 streamed pool, and point `AppConfig.manifestURL` at it — same as the other tools.

@@ -26,6 +26,7 @@ import json
 import os
 import random
 import sys
+import time
 
 # --- Prompt building (danbooru-style tags suit anime checkpoints) ---
 GENDERS = [("1girl", "woman"), ("1boy", "man")]
@@ -63,6 +64,11 @@ def build_prompt(age, rnd):
     )
 
 
+def render(pipe, gen, prompt, steps, guidance, h, w):
+    return pipe(prompt=prompt, negative_prompt=NEG, num_inference_steps=steps,
+                guidance_scale=guidance, height=h, width=w, generator=gen).images[0]
+
+
 def pick_device(torch):
     if torch.cuda.is_available():
         return "cuda"
@@ -88,6 +94,9 @@ def main():
     ap.add_argument("--dtype", default="", help="float16 | float32 (default: fp16 on gpu, fp32 on cpu)")
     ap.add_argument("--image-base-url", default="", help="URL prefix for the streaming manifest")
     ap.add_argument("--res-dir", default=RES_DIR)
+    ap.add_argument("--preview", action="store_true",
+                    help="render a few sample images (young/adult/old) into ./preview and exit, "
+                         "without writing the dataset — use it to check quality and speed first")
     args = ap.parse_args()
 
     min_age = max(18, args.min_age)  # adults only
@@ -122,12 +131,32 @@ def main():
         except Exception:  # noqa: BLE001 - optional memory helpers
             pass
 
+    rnd = random.Random()
+
+    if args.preview:
+        preview_dir = os.path.join(REPO_ROOT, "preview")
+        os.makedirs(preview_dir, exist_ok=True)
+        ages = sorted({min_age, (min_age + args.max_age) // 2, args.max_age})
+        print(f"Preview: {len(ages)} sample images -> {preview_dir}", file=sys.stderr)
+        for age in ages:
+            gen = torch.Generator("cpu").manual_seed(rnd.randint(0, 2**31 - 1))
+            start = time.time()
+            try:
+                image = render(pipe, gen, build_prompt(age, rnd), args.steps, args.guidance, h, w)
+            except Exception as e:  # noqa: BLE001
+                print(f"  failed age {age}: {e}", file=sys.stderr)
+                continue
+            path = os.path.join(preview_dir, f"preview-{age}.png")
+            image.save(path)
+            print(f"  age {age}: {time.time() - start:.1f}s -> {path}")
+        print("Eyeball the preview/ folder. If it looks good, re-run without --preview "
+              "to generate the full dataset.")
+        return
+
     seed_dir = os.path.join(args.res_dir, "Seed")
     gen_dir = os.path.join(args.res_dir, "Generated")
     os.makedirs(seed_dir, exist_ok=True)
     os.makedirs(gen_dir, exist_ok=True)
-
-    rnd = random.Random()
     all_records, seed_records = [], []
 
     for i in range(args.count):
@@ -136,8 +165,7 @@ def main():
         img_seed = rnd.randint(0, 2**31 - 1)
         gen = torch.Generator("cpu").manual_seed(img_seed)  # cpu generator works on all backends
         try:
-            image = pipe(prompt=prompt, negative_prompt=NEG, num_inference_steps=args.steps,
-                         guidance_scale=args.guidance, height=h, width=w, generator=gen).images[0]
+            image = render(pipe, gen, prompt, args.steps, args.guidance, h, w)
         except Exception as e:  # noqa: BLE001 - best effort per image
             print(f"  skip ai-{i:04d}: {e}", file=sys.stderr)
             continue
