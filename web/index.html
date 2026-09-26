@@ -668,14 +668,18 @@
     const eyeDX = faceW*0.42;
     const ew = faceW*0.225, eh = faceW*0.16;   // larger, more expressive
 
-    // brows
+    // brows — furrow down-and-in when frowning (smile < 0)
+    const furrow = Math.max(0, -smile);   // 0 neutral .. 1 full frown
     for (const s of [-1,1]) {
-      const ex = cx+s*eyeDX, by = eyeY - eh*1.95 - wrinkle*faceH*0.008;
+      const ex = cx+s*eyeDX;
+      const baseY = eyeY - eh*1.95 - wrinkle*faceH*0.008 + furrow*eh*0.6;
+      const innerX = ex - s*ew*0.9, innerY = baseY + furrow*eh*1.0;   // toward the nose
+      const outerX = ex + s*ew*0.9, outerY = baseY - furrow*eh*0.1;   // away from nose
       setF(mix(hair,[46,34,32],0.35));
       ctx.beginPath();
-      ctx.moveTo(ex-ew*0.95, by+eh*0.5);
-      ctx.quadraticCurveTo(ex-ew*0.05, by-eh*0.5, ex+ew*0.95, by+eh*0.02);
-      ctx.quadraticCurveTo(ex, by+eh*0.4, ex-ew*0.95, by+eh*0.5);
+      ctx.moveTo(innerX, innerY);
+      ctx.quadraticCurveTo(ex, baseY - eh*0.5, outerX, outerY);
+      ctx.quadraticCurveTo(ex, baseY + eh*0.2, innerX, innerY + eh*0.55);
       ctx.closePath(); ctx.fill();
     }
 
@@ -733,26 +737,27 @@
       }
     }
 
-    // mouth — a soft smile at rest that widens into a toothy grin (animated)
+    // mouth — smiles when smile>0, frowns when smile<0 (animated on answer)
     const sm = smile;
-    const lipW = faceW*(0.30 + 0.06*sm);
-    const cornerLift = faceH*(0.02 + 0.05*sm);
-    const depth = faceH*(0.085 - old*0.02) + faceH*0.075*sm;
+    const lipW = faceW*(0.30 + 0.05*Math.abs(sm));
     const lip = mix(skin,[184,88,88],0.55);
-    const Lx = cx-lipW, Rx2 = cx+lipW, Ly = mY - cornerLift;
-    const mouthPath = () => { ctx.beginPath(); ctx.moveTo(Lx, Ly); ctx.quadraticCurveTo(cx, mY+depth, Rx2, Ly); ctx.quadraticCurveTo(cx, mY+depth*0.32, Lx, Ly); ctx.closePath(); };
-    if (sm > 0.12) {
+    const Lx = cx-lipW, Rx2 = cx+lipW;
+    const cornerY = mY - faceH*(0.05*sm) + faceH*(old*0.01);       // corners up (smile) / down (frown)
+    const ctrlY = cornerY + faceH*(0.02 + 0.075*sm);               // control below corners = smile, above = frown
+    const backY = cornerY + (ctrlY - cornerY)*0.32;
+    const mouthPath = () => { ctx.beginPath(); ctx.moveTo(Lx, cornerY); ctx.quadraticCurveTo(cx, ctrlY, Rx2, cornerY); ctx.quadraticCurveTo(cx, backY, Lx, cornerY); ctx.closePath(); };
+    if (sm > 0.4) {
       // open grin: dark interior + a growing white teeth strip
       setF(mix(lip,[30,10,10],0.5)); mouthPath(); ctx.fill();
       ctx.save(); mouthPath(); ctx.clip();
-      setF('rgba(255,255,255,' + (0.92*Math.min(1,(sm-0.12)/0.4)).toFixed(3) + ')');
-      ctx.fillRect(Lx, Ly - faceH*0.03, lipW*2, depth*0.85);
+      setF('rgba(255,255,255,' + (0.92*Math.min(1,(sm-0.4)/0.4)).toFixed(3) + ')');
+      ctx.fillRect(Lx, cornerY - faceH*0.03, lipW*2, (ctrlY - cornerY) + faceH*0.05);
       ctx.restore();
     } else {
       setF(mix(lip,[0,0,0],0.06)); mouthPath(); ctx.fill();
     }
     strokeInk(Math.max(1.5, faceW*0.02), 0.85);
-    ctx.beginPath(); ctx.moveTo(Lx, Ly); ctx.quadraticCurveTo(cx, mY+depth, Rx2, Ly); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(Lx, cornerY); ctx.quadraticCurveTo(cx, ctrlY, Rx2, cornerY); ctx.stroke();
 
     // glasses
     if (glasses) {
@@ -834,6 +839,9 @@
   // breaks into a grin now and then, with a whisper of head tilt.
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   let animOn = false, animRAF = 0, lastFrame = 0, blinkStart = -1, nextBlink = 0, grinStart = -1, nextGrin = 0;
+  // Answer reaction: 'good' = big smile + head bop, 'bad' = frown. Held until the
+  // next round clears it (reactType = null).
+  let reactType = null, reactStart = 0;
   function faceFrame(now) {
     if (!animOn) { animRAF = 0; return; }
     animRAF = requestAnimationFrame(faceFrame);
@@ -841,7 +849,7 @@
     lastFrame = now;
     const t = now / 1000;
     const sway = Math.sin(t * 0.7 + 1.3) * 0.45;   // subtle side tilt only
-    let blink = 0, smile = 0;
+    let blink = 0, smile = 0, bob = 0;
     if (blinkStart >= 0) {
       const bt = now - blinkStart, dur = 150;
       if (bt <= dur) blink = Math.sin(Math.PI * (bt / dur)); // 0 -> 1 -> 0
@@ -849,16 +857,37 @@
     } else if (now >= nextBlink) {
       blinkStart = now;
     }
-    if (grinStart >= 0) {
+    if (reactType) {
+      // Answer reaction overrides the idle grin.
+      const rt = now - reactStart;
+      if (reactType === 'good') {
+        smile = 1;                                  // big held smile
+        const B = 620;                              // one springy head bop, decaying
+        if (rt < B) bob = Math.sin(rt / B * Math.PI * 2) * (1 - rt / B) * 2.6;
+      } else {
+        smile = -1;                                 // frown, held
+        const B = 380;
+        if (rt < B) bob = -Math.sin(rt / B * Math.PI) * (1 - rt / B) * 1.2; // small slump
+      }
+    } else if (grinStart >= 0) {
       const gt = now - grinStart, dur = 1600;
-      if (gt <= dur) smile = Math.sin(Math.PI * (gt / dur)); // ease up into a grin and back
+      if (gt <= dur) smile = Math.sin(Math.PI * (gt / dur)); // idle: ease up into a grin and back
       else { grinStart = -1; nextGrin = now + 2800 + Math.random() * 4200; }
     } else if (now >= nextGrin) {
       grinStart = now;
     }
-    drawFace(canvas, state.age, state.seed, { bob: 0, sway, blink, smile });
+    drawFace(canvas, state.age, state.seed, { bob, sway, blink, smile });
+  }
+  // Trigger the correct/wrong reaction (cartoon only).
+  function reactFace(correct) {
+    reactType = correct ? 'good' : 'bad';
+    reactStart = performance.now();
+    grinStart = -1;                                 // cancel any idle grin
+    if (reduceMotion) { drawFace(canvas, state.age, state.seed, { smile: correct ? 1 : -1 }); return; }
+    if (!animOn) { animOn = true; animRAF = requestAnimationFrame(faceFrame); }
   }
   function startFaceAnim() {
+    reactType = null;                               // fresh round starts neutral
     if (reduceMotion) { drawFace(canvas, state.age, state.seed); return; }
     const now = performance.now();
     nextBlink = now + 1200 + Math.random() * 2000;
@@ -914,6 +943,8 @@
     } else {
       state.streak = 0;
     }
+    // Cartoon face reacts: big smile + head bop when right, a frown when wrong.
+    if (!state.photo) reactFace(isRight);
     el('options').classList.add('answered');
     optEls.forEach((b,idx) => {
       b.disabled = true;
