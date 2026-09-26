@@ -50,7 +50,7 @@ struct CartoonFace: View {
 
     static func draw(in ctx: inout GraphicsContext, size: CGSize, age: Int, seed: UInt32) {
         var g = SeededGenerator(seed: seed)
-        let W = size.width, H = size.height
+        let W = Double(size.width), H = Double(size.height)
         let unit = min(W, H)
         let cx = W/2, cy = H*0.5
 
