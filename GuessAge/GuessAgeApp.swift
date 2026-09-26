@@ -12,7 +12,7 @@ struct GuessAgeApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(store)
-                .tint(.indigo)
+                .tint(.teal)
                 .task {
                     // Grow the pool from the remote manifest once at launch.
                     await store.loadRemoteIfAvailable()
