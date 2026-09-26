@@ -2,13 +2,19 @@ name: Generate faces
 
 # Pre-generates a set of anime face images on GitHub's runner (which can reach
 # the internet), commits them to web/faces/, and Pages redeploys to serve them.
-# Run it from the Actions tab: "Generate faces" -> Run workflow.
+# Run it from the Actions tab ("Generate faces" -> Run workflow), or just push a
+# change to this workflow or the generator script and it regenerates the set.
 on:
   workflow_dispatch:
     inputs:
       count:
         description: "How many anime faces to generate"
-        default: "60"
+        default: "80"
+  push:
+    branches: [claude/age-guessing-game-ios-4rs8x2]
+    paths:
+      - "tools/fetch_pollinations.py"
+      - ".github/workflows/generate-faces.yml"
 
 permissions:
   contents: write
@@ -27,7 +33,7 @@ jobs:
           python-version: "3.11"
 
       - name: Generate anime faces
-        run: python tools/fetch_pollinations.py --count ${{ github.event.inputs.count }}
+        run: python tools/fetch_pollinations.py --count ${{ github.event.inputs.count || '80' }}
 
       - name: Commit the generated set
         run: |
