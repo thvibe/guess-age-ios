@@ -30,6 +30,7 @@ import random
 import re
 import sys
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -60,36 +61,39 @@ def http_get(url, params=None, accept="application/json", retries=4, timeout=60)
         try:
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 return resp.read()
+        except urllib.error.HTTPError as e:
+            last_err = e
+            retry_after = e.headers.get("Retry-After") if e.headers else None
+            if retry_after and str(retry_after).isdigit():
+                time.sleep(min(int(retry_after), 60))   # respect throttling
+            else:
+                time.sleep(min((2 ** attempt) * 3, 45))
         except Exception as e:  # noqa: BLE001 - network is best-effort
             last_err = e
             time.sleep(2 ** attempt)
     raise RuntimeError(f"GET failed for {url}: {last_err}")
 
 
-def sparql_people(year, limit):
-    """Fetch humans born in `year` that have an image.
+def sparql_people(limit):
+    """One light query for humans that have a birth date and an image.
 
-    Querying one birth year at a time keeps each request small and bounded (a
-    broad "all humans with an image, ordered by id" query times out on the
-    Wikidata Query Service). A failed/slow year is skipped, not fatal.
+    Crucially: no ORDER BY and no filters. The query service streams the first
+    `limit` matches quickly; an ORDER BY (or a birth-year range FILTER) forces it
+    to materialise/sort the whole ~3M-row set and it times out. We keep only the
+    photos whose Commons file carries an EXIF capture date — that's where the
+    verified age comes from — so we over-fetch candidates here.
     """
     query = f"""
     SELECT ?person ?personLabel ?birth ?image WHERE {{
       ?person wdt:P31 wd:Q5 ;
               wdt:P569 ?birth ;
               wdt:P18 ?image .
-      FILTER(?birth >= "{year}-01-01T00:00:00Z"^^xsd:dateTime &&
-             ?birth <  "{year + 1}-01-01T00:00:00Z"^^xsd:dateTime)
       SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }}
     }}
     LIMIT {limit}
     """
-    try:
-        raw = http_get(SPARQL_ENDPOINT, {"query": query, "format": "json"},
-                       accept="application/sparql-results+json", retries=2, timeout=45)
-    except Exception as e:  # noqa: BLE001 - one slow year shouldn't kill the run
-        print(f"  SPARQL year {year} failed: {e}", file=sys.stderr)
-        return []
+    raw = http_get(SPARQL_ENDPOINT, {"query": query, "format": "json"},
+                   accept="application/sparql-results+json", retries=3, timeout=55)
     data = json.loads(raw)
     out = []
     for b in data.get("results", {}).get("bindings", []):
@@ -221,9 +225,8 @@ def main():
     ap.add_argument("--seed-count", type=int, default=50, help="how many to bundle offline")
     ap.add_argument("--per-person", type=int, default=1, help="max photos per person")
     ap.add_argument("--thumb-width", type=int, default=512)
-    ap.add_argument("--batch", type=int, default=150, help="people fetched per birth year")
-    ap.add_argument("--min-year", type=int, default=1935, help="earliest birth year to sample")
-    ap.add_argument("--max-year", type=int, default=2007, help="latest birth year to sample")
+    ap.add_argument("--candidates", type=int, default=2000,
+                    help="how many people to pull from Wikidata and scan for dated photos")
     ap.add_argument("--delay", type=float, default=0.5, help="seconds between API calls")
     ap.add_argument("--res-dir", default=RES_DIR)
     ap.add_argument("--web-dir", default=None,
@@ -240,47 +243,40 @@ def main():
     per_person = {}
     start = time.time()
 
-    # Sweep birth years in random order so the set spans a range of ages and
-    # isn't the same people every run.
-    years = list(range(args.min_year, args.max_year + 1))
-    random.shuffle(years)
+    # One cheap query for a big pool of candidates, shuffled for variety, then
+    # kept only if Commons has an EXIF capture date (that yields the age).
+    people = sparql_people(args.candidates)
+    print(f"Fetched {len(people)} candidates from Wikidata.", file=sys.stderr)
+    random.shuffle(people)
 
-    for year in years:
+    for i in range(0, len(people), 50):
         if len(collected) >= args.target:
             break
         if args.budget and time.time() - start > args.budget:
             print(f"Time budget ({args.budget}s) reached; stopping with "
                   f"{len(collected)} photos.", file=sys.stderr)
             break
-        people = sparql_people(year, args.batch)
-        if not people:
-            continue
-        random.shuffle(people)
+        chunk = people[i:i + 50]
+        files = [p["file"] for p in chunk]
+        info_by_file = commons_imageinfo(files, args.thumb_width)
+        time.sleep(args.delay)
 
-        # Look up Commons metadata in chunks of <=50 titles.
-        for i in range(0, len(people), 50):
-            chunk = people[i:i + 50]
-            files = [p["file"] for p in chunk]
-            info_by_file = commons_imageinfo(files, args.thumb_width)
-            time.sleep(args.delay)
-
-            for p in chunk:
-                if per_person.get(p["qid"], 0) >= args.per_person:
-                    continue
-                info = info_by_file.get(p["file"])
-                if not info:
-                    continue
-                rec = build_record(p, info)
-                if not rec:
-                    continue
-                per_person[p["qid"]] = per_person.get(p["qid"], 0) + 1
-                collected.append(rec)
-                if len(collected) >= args.target:
-                    break
+        for p in chunk:
+            if per_person.get(p["qid"], 0) >= args.per_person:
+                continue
+            info = info_by_file.get(p["file"])
+            if not info:
+                continue
+            rec = build_record(p, info)
+            if not rec:
+                continue
+            per_person[p["qid"]] = per_person.get(p["qid"], 0) + 1
+            collected.append(rec)
             if len(collected) >= args.target:
                 break
 
-        print(f"Collected {len(collected)}/{args.target}...", file=sys.stderr)
+        print(f"Collected {len(collected)}/{args.target} "
+              f"(scanned {min(i + 50, len(people))}/{len(people)})", file=sys.stderr)
 
     if not collected:
         print("Collected nothing — check network access to Wikimedia.", file=sys.stderr)
