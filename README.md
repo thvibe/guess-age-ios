@@ -6,9 +6,10 @@ four ages is correct. Built in SwiftUI, no third-party dependencies.
 > **Two face styles the player picks from — both royalty-free.**
 > - **Cartoon** — illustrated faces drawn in-app (SwiftUI `Canvas`), **all ages
 >   incl. children**, works fully offline, no data needed.
-> - **AI Photos** — photorealistic synthetic people from `gpt-image-1`
+> - **Anime** — hand-drawn-style AI illustrations from `gpt-image-1`
 >   (portrait, **adults 18+**), depicting no real person, so no likeness/
 >   copyright/royalty concerns. The correct answer is the age each face was made at.
+>   (`--art-style photo` generates photorealistic instead.)
 >
 > A real-photo path (royalty-free Wikimedia photos with *documented* ages) is also
 > available if you prefer real subjects.

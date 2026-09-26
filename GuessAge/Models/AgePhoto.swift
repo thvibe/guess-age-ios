@@ -57,7 +57,7 @@ enum FaceStyle: String, CaseIterable, Identifiable {
     case photo
 
     var id: String { rawValue }
-    var label: String { self == .cartoon ? "Cartoon" : "AI Photos" }
+    var label: String { self == .cartoon ? "Cartoon" : "Anime" }
 }
 
 /// Top-level shape of a `seed.json` / `manifest.json` document.
