@@ -19,7 +19,7 @@ enum ImageLoader {
     /// downloads them), then the bundle root.
     static func bundledImage(named name: String) -> UIImage? {
         if let asset = UIImage(named: name) { return asset }
-        let exts = ["jpg", "jpeg", "png"]
+        let exts = ["jpg", "jpeg", "png", "webp"]
         for ext in exts {
             if let url = Bundle.main.url(forResource: name, withExtension: ext, subdirectory: "Seed"),
                let data = try? Data(contentsOf: url) {

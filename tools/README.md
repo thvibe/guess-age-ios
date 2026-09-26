@@ -20,15 +20,29 @@ concerns. The age is the *intended/apparent* age each face was generated at.
 
 **Adults only (18+) by design** — the tool will not generate images of minors.
 
+Default backend is OpenAI's **`gpt-image-1`**.
+
 ```bash
 export IMAGE_API_KEY=sk-...            # required
-# optional overrides:
-# export IMAGE_API_BASE=https://api.openai.com/v1
-# export IMAGE_MODEL=gpt-image-1
-# export IMAGE_SIZE=1024x1024
 python3 tools/generate_faces.py --count 200 --seed-count 50 \
+  --quality medium --size 1024x1024 \
   --image-base-url https://your-cdn.example.com/faces
 ```
+
+Useful flags / env (flags win over env):
+
+| Flag / env | Default | Notes |
+|------------|---------|-------|
+| `--quality` / `IMAGE_QUALITY` | `medium` | `low` / `medium` / `high`. Drives cost. |
+| `--size` / `IMAGE_SIZE` | `1024x1024` | or `1024x1536` (portrait) / `1536x1024`. |
+| `--output-format` / `IMAGE_OUTPUT_FORMAT` | `jpeg` | `jpeg` / `png` / `webp`. |
+| `IMAGE_MODEL` | `gpt-image-1` | any OpenAI-compatible model. |
+| `IMAGE_API_BASE` | `https://api.openai.com/v1` | point at Azure/gateway to switch backend. |
+
+**gpt-image-1 notes:** it requires a **verified OpenAI organization**, and each
+image costs money — roughly `~$0.01` (low) / `~$0.04` (medium) / `~$0.17` (high)
+per 1024x1024; portrait/landscape cost more. The script prints a rough estimate
+before running. Start with a small `--count` to confirm quality and spend.
 
 Outputs:
 

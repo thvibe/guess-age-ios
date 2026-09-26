@@ -9,20 +9,27 @@ The age is an *intended/apparent* age, not a documented one.
 RESPONSIBLE USE: this tool generates ADULTS ONLY (min age 18). Generating
 photorealistic images of minors is out of scope by design.
 
-Provider: any OpenAI-compatible Images API (`POST {base}/images/generations`
-returning `data[].b64_json` or `data[].url`). Configure via env:
-  IMAGE_API_KEY   (required)  your API key
-  IMAGE_API_BASE  (default https://api.openai.com/v1)
-  IMAGE_MODEL     (default gpt-image-1)
-  IMAGE_SIZE      (default 1024x1024)
+Provider: OpenAI's `gpt-image-1` (or any OpenAI-compatible Images API at
+`POST {base}/images/generations` returning `data[].b64_json`). Configure via env
+(all optional except the key; CLI flags override env):
+  IMAGE_API_KEY        (required)  your API key
+  IMAGE_API_BASE       (default https://api.openai.com/v1)
+  IMAGE_MODEL          (default gpt-image-1)
+  IMAGE_SIZE           (default 1024x1024; gpt-image-1: 1024x1024|1024x1536|1536x1024)
+  IMAGE_QUALITY        (default medium; gpt-image-1: low|medium|high) — drives cost
+  IMAGE_OUTPUT_FORMAT  (default jpeg; jpeg|png|webp)
 Point IMAGE_API_BASE at Azure OpenAI, a gateway, or another compatible service
 to use a different backend.
+
+Note: gpt-image-1 requires a verified OpenAI organization, and each image costs
+money (roughly ~$0.01 low / ~$0.04 medium / ~$0.17 high per 1024x1024 — check
+current OpenAI pricing). Start small with --count.
 
 Needs outbound network + a funded key. Run on your machine, not a locked sandbox.
 
 Usage:
   export IMAGE_API_KEY=sk-...
-  python3 tools/generate_faces.py --count 200 --seed-count 50
+  python3 tools/generate_faces.py --count 200 --seed-count 50 --quality medium
 """
 import argparse
 import base64
@@ -64,30 +71,37 @@ def build_prompt(age, rnd):
     )
 
 
+EXT = {"jpeg": "jpg", "png": "png", "webp": "webp"}
+
+
 def generate_one(prompt, cfg):
-    body = json.dumps({
+    """Return (image_bytes, file_extension) for one generated portrait."""
+    payload = {
         "model": cfg["model"],
         "prompt": prompt,
         "size": cfg["size"],
+        "quality": cfg["quality"],
+        "output_format": cfg["fmt"],
         "n": 1,
-    }).encode()
+    }
     req = urllib.request.Request(
         cfg["base"].rstrip("/") + "/images/generations",
-        data=body,
+        data=json.dumps(payload).encode(),
         headers={
             "Authorization": f"Bearer {cfg['key']}",
             "Content-Type": "application/json",
         },
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=180) as resp:
+    with urllib.request.urlopen(req, timeout=300) as resp:
         data = json.loads(resp.read())
     item = data["data"][0]
+    ext = EXT.get(cfg["fmt"], "png")
     if item.get("b64_json"):
-        return base64.b64decode(item["b64_json"])
-    if item.get("url"):
+        return base64.b64decode(item["b64_json"]), ext
+    if item.get("url"):  # some compatible backends return a URL instead
         with urllib.request.urlopen(item["url"], timeout=120) as r:
-            return r.read()
+            return r.read(), ext
     raise RuntimeError("API response had neither b64_json nor url")
 
 
@@ -100,6 +114,14 @@ def main():
     ap.add_argument("--max-age", type=int, default=85)
     ap.add_argument("--image-base-url", default="", help="URL prefix where you'll host "
                     "generated images, for the streaming manifest (e.g. https://cdn/faces/)")
+    ap.add_argument("--size", default=os.environ.get("IMAGE_SIZE", "1024x1024"),
+                    choices=["1024x1024", "1024x1536", "1536x1024", "auto"],
+                    help="gpt-image-1 image size (default 1024x1024; 1024x1536 = portrait)")
+    ap.add_argument("--quality", default=os.environ.get("IMAGE_QUALITY", "medium"),
+                    choices=["low", "medium", "high", "auto"],
+                    help="gpt-image-1 quality; higher costs more (default medium)")
+    ap.add_argument("--output-format", default=os.environ.get("IMAGE_OUTPUT_FORMAT", "jpeg"),
+                    choices=["jpeg", "png", "webp"], help="image format (default jpeg)")
     ap.add_argument("--res-dir", default=RES_DIR)
     ap.add_argument("--delay", type=float, default=1.0, help="seconds between API calls")
     args = ap.parse_args()
@@ -112,11 +134,19 @@ def main():
         "key": os.environ.get("IMAGE_API_KEY"),
         "base": os.environ.get("IMAGE_API_BASE", "https://api.openai.com/v1"),
         "model": os.environ.get("IMAGE_MODEL", "gpt-image-1"),
-        "size": os.environ.get("IMAGE_SIZE", "1024x1024"),
+        "size": args.size,
+        "quality": args.quality,
+        "fmt": args.output_format,
     }
     if not cfg["key"]:
         print("Set IMAGE_API_KEY (see --help).", file=sys.stderr)
         sys.exit(2)
+
+    # Rough cost heads-up (per 1024x1024; check current OpenAI pricing).
+    rate = {"low": 0.02, "medium": 0.04, "high": 0.17, "auto": 0.04}.get(args.quality, 0.04)
+    print(f"About to generate up to {args.count} images with {cfg['model']} at "
+          f"{args.quality} quality (~${rate * args.count:.2f} est.; verify pricing).",
+          file=sys.stderr)
 
     seed_dir = os.path.join(args.res_dir, "Seed")
     gen_dir = os.path.join(args.res_dir, "Generated")
@@ -131,7 +161,7 @@ def main():
         prompt = build_prompt(age, rnd)
         name = f"ai-{i:04d}"
         try:
-            png = generate_one(prompt, cfg)
+            img, ext = generate_one(prompt, cfg)
         except Exception as e:  # noqa: BLE001 - best effort per image
             print(f"  skip {name}: {e}", file=sys.stderr)
             time.sleep(args.delay)
@@ -139,14 +169,15 @@ def main():
 
         is_seed = len(seed_records) < args.seed_count
         target_dir = seed_dir if is_seed else gen_dir
-        with open(os.path.join(target_dir, name + ".png"), "wb") as f:
-            f.write(png)
+        filename = f"{name}.{ext}"
+        with open(os.path.join(target_dir, filename), "wb") as f:
+            f.write(img)
 
         record = {"id": name, "age": age}  # synthetic: no name, no attribution
         if is_seed:
             seed_records.append({**record, "localImageName": name})
-        manifest_url = (args.image_base_url.rstrip("/") + "/" + name + ".png") \
-            if args.image_base_url else (name + ".png")
+        manifest_url = (args.image_base_url.rstrip("/") + "/" + filename) \
+            if args.image_base_url else filename
         all_records.append({**record, "imageURL": manifest_url})
 
         if (i + 1) % 10 == 0:

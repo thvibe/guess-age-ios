@@ -19,7 +19,10 @@ Packages/
 GuessAge/Resources/Seed/*.jpg
 GuessAge/Resources/Seed/*.jpeg
 GuessAge/Resources/Seed/*.png
+GuessAge/Resources/Seed/*.webp
 GuessAge/Resources/Generated/*.png
+GuessAge/Resources/Generated/*.jpg
+GuessAge/Resources/Generated/*.webp
 GuessAge/Resources/manifest.json
 
 # Python
