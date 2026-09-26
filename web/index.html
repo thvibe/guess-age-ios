@@ -1,5 +1,4 @@
 <!doctype html>
-<!-- pages deploy trigger -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -635,7 +634,32 @@
     const p = `anime portrait illustration, upper body, a ${age} year old ${g}, ${hair}, `
             + `soft cel shading, clean lineart, studio ghibli style, simple background, `
             + `one person, looking at viewer, safe for work, no text`;
-    return `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=512&height=624&nologo=true&model=flux&seed=${seed}`;
+    // Smaller image = faster + fewer timeouts on the free service.
+    return `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=384&height=512&nologo=true&model=flux&seed=${seed}`;
+  }
+
+  // The free image service rate-limits / times out, so retry a few times with
+  // backoff before falling back to a cartoon. A token cancels stale rounds.
+  let animeToken = 0;
+  function loadAnime(age, seed, attempt) {
+    attempt = attempt || 0;
+    const myToken = ++animeToken;
+    const card = el('card');
+    card.classList.add('anime', 'loading');
+    el('cardTag').textContent = attempt ? `✨ anime · AI (retry ${attempt})` : '✨ anime · AI';
+    animeImg.onload = () => { if (myToken === animeToken) card.classList.remove('loading'); };
+    animeImg.onerror = () => {
+      if (myToken !== animeToken) return; // superseded by a newer round
+      if (attempt < 3) {
+        setTimeout(() => { if (myToken === animeToken) loadAnime(age, seed + attempt + 1, attempt + 1); },
+                   900 * (attempt + 1));
+      } else {
+        card.classList.remove('anime', 'loading');
+        el('cardTag').textContent = '✎ cartoon (AI busy — Next to retry)';
+        drawFace(canvas, age, seed);
+      }
+    };
+    animeImg.src = animeURL(age, seed);
   }
 
   function setStat(id, val, flash) {
@@ -655,16 +679,9 @@
     state.opts = makeOptions(state.age, rngFrom(state.seed ^ 0x9e3779b9));
     const card = el('card'); card.classList.remove('reveal-in'); void card.offsetWidth; card.classList.add('reveal-in');
     if (mode === 'anime') {
-      card.classList.add('anime', 'loading');
-      el('cardTag').textContent = '✨ anime · AI';
-      animeImg.onload = () => card.classList.remove('loading');
-      animeImg.onerror = () => { // AI unavailable this round: fall back to a cartoon
-        card.classList.remove('anime', 'loading');
-        el('cardTag').textContent = '✎ cartoon (AI unavailable)';
-        drawFace(canvas, state.age, state.seed);
-      };
-      animeImg.src = animeURL(state.age, state.seed);
+      loadAnime(state.age, state.seed);
     } else {
+      animeToken++; // cancel any in-flight anime load
       card.classList.remove('anime', 'loading');
       el('cardTag').textContent = '✎ cartoon style';
       drawFace(canvas, state.age, state.seed);
