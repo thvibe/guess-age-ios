@@ -16,6 +16,8 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				Resources/Seed/.gitkeep,
+				Resources/Generated/.gitkeep,
 			);
 			target = A1A1A1A1A1A1A1A1A1A10008 /* GuessAge */;
 		};
