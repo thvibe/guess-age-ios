@@ -399,19 +399,41 @@
       p.closePath();
       return p;
     }
-    // Front hair cap with a softly shaped hairline (centre dip so it reads as
-    // hair, not a helmet), a flat highlight streak, and a clean outline.
+    // Front hair cap: a rounded crown, a soft layered fringe across the brow, a
+    // crown highlight band and a few strand lines — reads as styled hair.
     function capHair(browY, sideY, w, doHi) {
       w = w || 1.06; if (doHi === undefined) doHi = true;
+      const hy = browY;
       const p = new Path2D();
       p.moveTo(cx-faceW*w, sideY);
-      p.bezierCurveTo(cx-faceW*w, cy-faceH*1.15, cx+faceW*w, cy-faceH*1.15, cx+faceW*w, sideY);
-      p.bezierCurveTo(cx+faceW*0.80, browY, cx+faceW*0.34, browY-faceH*0.03, cx+faceW*0.12, browY+faceH*0.04);
-      p.quadraticCurveTo(cx, browY+faceH*0.075, cx-faceW*0.12, browY+faceH*0.04);
-      p.bezierCurveTo(cx-faceW*0.34, browY-faceH*0.03, cx-faceW*0.80, browY, cx-faceW*w, sideY);
+      p.bezierCurveTo(cx-faceW*w, cy-faceH*1.20, cx+faceW*w, cy-faceH*1.20, cx+faceW*w, sideY);
+      p.lineTo(cx+faceW*0.88, hy-faceH*0.02);
+      // layered fringe: overlapping locks dipping onto the forehead
+      p.quadraticCurveTo(cx+faceW*0.60, hy+faceH*0.12, cx+faceW*0.40, hy+faceH*0.01);
+      p.quadraticCurveTo(cx+faceW*0.22, hy+faceH*0.14, cx+faceW*0.05, hy+faceH*0.02);
+      p.quadraticCurveTo(cx-faceW*0.14, hy+faceH*0.15, cx-faceW*0.34, hy+faceH*0.01);
+      p.quadraticCurveTo(cx-faceW*0.58, hy+faceH*0.12, cx-faceW*0.88, hy-faceH*0.02);
+      p.lineTo(cx-faceW*w, sideY);
       p.closePath();
       setF(hair); ctx.fill(p);
-      if (doHi) { ctx.save(); ctx.clip(p); setF(hairLt); E(cx-faceW*0.36, cy-faceH*0.82, faceW*0.40, faceH*0.22, -0.5); ctx.fill(); ctx.restore(); }
+      ctx.save(); ctx.clip(p);
+      if (doHi) {   // curved crown highlight band
+        setF(hairLt);
+        ctx.beginPath();
+        ctx.moveTo(cx-faceW*0.58, cy-faceH*0.72);
+        ctx.quadraticCurveTo(cx-faceW*0.10, cy-faceH*1.05, cx+faceW*0.52, cy-faceH*0.66);
+        ctx.quadraticCurveTo(cx-faceW*0.02, cy-faceH*0.85, cx-faceW*0.58, cy-faceH*0.72);
+        ctx.fill();
+      }
+      // strand lines flowing from the crown to the fringe
+      ctx.strokeStyle = rgba(hairSh, 0.55); ctx.lineWidth = Math.max(1, faceW*0.012); ctx.lineCap = 'round';
+      for (const sx of [-0.52,-0.22,0.14,0.44]) {
+        ctx.beginPath();
+        ctx.moveTo(cx+sx*faceW, cy-faceH*1.06);
+        ctx.quadraticCurveTo(cx+(sx+0.14)*faceW, cy-faceH*0.6, cx+(sx+0.06)*faceW, hy+faceH*0.03);
+        ctx.stroke();
+      }
+      ctx.restore();
       strokeInk(); ctx.stroke(p);
       return p;
     }
@@ -507,17 +529,35 @@
     } else if (style==='buzz') {
       ctx.globalAlpha = 0.85; capHair(cy-faceH*0.52, cy-faceH*0.08, 1.0, false); ctx.globalAlpha = 1;
     } else if (style==='curly') {
-      const pts = [[-0.76,-0.54],[-0.46,-0.86],[0,-1.0],[0.46,-0.86],[0.76,-0.54],[-0.96,-0.14],[0.96,-0.14],[-0.62,-0.26],[0.62,-0.26]];
-      const R = faceW*0.37;
-      setF(hair); for (const [px,py] of pts) { E(cx+px*faceW, cy+py*faceH, R, faceH*0.35); ctx.fill(); }
-      strokeInk(LW*0.9); for (const [px,py] of pts) { E(cx+px*faceW, cy+py*faceH, R, faceH*0.35); ctx.stroke(); }
-      // crescent highlights on a few curls (kept inside each curl so they read as sheen, not patches)
-      setF(hairLt);
-      for (const [px,py] of [[-0.46,-0.86],[0.46,-0.86],[0,-1.0]]) {
-        ctx.save(); E(cx+px*faceW, cy+py*faceH, R, faceH*0.35); ctx.clip();
-        E(cx+px*faceW-R*0.28, cy+py*faceH-faceH*0.14, R*0.42, faceH*0.12); ctx.fill();
-        ctx.restore();
+      // Scalloped curl silhouette: outward-bulging arcs over the crown and a
+      // layered fringe, then soft C-curl texture and sheen inside.
+      const cyh = cy - faceH*0.34, Rx = faceW*0.99, Ry = faceH*0.90, N = 9;
+      const hy = cy - faceH*0.30, start = Math.PI*0.86, end = Math.PI*0.14;
+      const P = (ang, r) => [cx + Math.cos(ang)*Rx*(r||1), cyh - Math.sin(ang)*Ry*(r||1)];
+      const p = new Path2D();
+      let [sx,sy] = P(start); p.moveTo(sx,sy);
+      for (let i=1;i<=N;i++){
+        const [x,y] = P(start + (end-start)*(i/N));
+        const [mx,my] = P(start + (end-start)*((i-0.5)/N), 1.22); // bulge = curl bump
+        p.quadraticCurveTo(mx,my,x,y);
       }
+      p.quadraticCurveTo(cx+faceW*0.92, cy-faceH*0.04, cx+faceW*0.70, hy);
+      p.quadraticCurveTo(cx+faceW*0.50, hy+faceH*0.14, cx+faceW*0.32, hy+faceH*0.02);
+      p.quadraticCurveTo(cx+faceW*0.14, hy+faceH*0.15, cx, hy+faceH*0.03);
+      p.quadraticCurveTo(cx-faceW*0.14, hy+faceH*0.15, cx-faceW*0.32, hy+faceH*0.02);
+      p.quadraticCurveTo(cx-faceW*0.50, hy+faceH*0.14, cx-faceW*0.70, hy);
+      p.quadraticCurveTo(cx-faceW*0.92, cy-faceH*0.04, sx, sy);
+      p.closePath();
+      setF(hair); ctx.fill(p);
+      ctx.save(); ctx.clip(p);
+      ctx.strokeStyle = rgba(hairSh, 0.5); ctx.lineWidth = Math.max(1, faceW*0.014); ctx.lineCap = 'round';
+      for (const [gx,gy] of [[-0.5,-0.55],[-0.15,-0.72],[0.25,-0.62],[0.55,-0.42],[-0.35,-0.3],[0.1,-0.36],[0.46,-0.16],[-0.62,-0.22]]) {
+        ctx.beginPath(); ctx.arc(cx+gx*faceW, cy+gy*faceH, faceW*0.12, Math.PI*0.15, Math.PI*1.15); ctx.stroke();
+      }
+      setF('rgba(255,255,255,0.10)');
+      for (const [gx,gy] of [[-0.4,-0.7],[0.16,-0.82]]) { E(cx+gx*faceW, cy+gy*faceH, faceW*0.14, faceH*0.08, -0.4); ctx.fill(); }
+      ctx.restore();
+      strokeInk(); ctx.stroke(p);
     } else if (style==='sidePart') {
       capHair(cy-faceH*(0.42-child*0.08), cy+faceH*0.06, 1.06, true);
       setF(hairSh);  // part line sweep
@@ -536,10 +576,19 @@
         for (const s of [-1,1]) {
           const q = new Path2D();
           q.moveTo(cx+s*faceW*1.02, cy-faceH*0.2);
-          q.quadraticCurveTo(cx+s*faceW*1.22, cy+faceH*0.3, cx+s*faceW*0.9, dropY);
-          q.quadraticCurveTo(cx+s*faceW*0.76, cy+faceH*0.2, cx+s*faceW*0.86, cy-faceH*0.2);
+          q.quadraticCurveTo(cx+s*faceW*1.24, cy+faceH*0.32, cx+s*faceW*0.92, dropY);
+          q.quadraticCurveTo(cx+s*faceW*0.82, cy+faceH*0.5, cx+s*faceW*0.74, dropY-faceH*0.06);
+          q.quadraticCurveTo(cx+s*faceW*0.78, cy+faceH*0.2, cx+s*faceW*0.86, cy-faceH*0.2);
           q.closePath();
           setF(hair); ctx.fill(q); strokeInk(); ctx.stroke(q);
+        }
+        // flowing strand lines down each side
+        ctx.strokeStyle = rgba(hairSh, 0.55); ctx.lineWidth = Math.max(1, faceW*0.014); ctx.lineCap = 'round';
+        for (const s of [-1,1]) {
+          ctx.beginPath();
+          ctx.moveTo(cx+s*faceW*0.96, cy-faceH*0.05);
+          ctx.quadraticCurveTo(cx+s*faceW*1.08, cy+faceH*0.3, cx+s*faceW*0.88, dropY-faceH*0.08);
+          ctx.stroke();
         }
       }
     }
