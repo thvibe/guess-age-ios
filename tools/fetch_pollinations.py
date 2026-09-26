@@ -30,14 +30,14 @@ def prompt_for(age):
     )
 
 
-def fetch(age, seed, dest, tries=4):
+def fetch(age, seed, dest, tries=3):
     p = urllib.parse.quote(prompt_for(age))
     url = (f"https://image.pollinations.ai/prompt/{p}"
            f"?width=512&height=640&nologo=true&model=flux&seed={seed}")
     for i in range(tries):
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "guess-age-faces/1.0"})
-            with urllib.request.urlopen(req, timeout=150) as r:
+            with urllib.request.urlopen(req, timeout=75) as r:
                 data = r.read()
             if data and len(data) > 3000:  # a real image, not an error page
                 with open(dest, "wb") as f:
@@ -55,12 +55,18 @@ def main():
     ap.add_argument("--min-age", type=int, default=18)
     ap.add_argument("--max-age", type=int, default=85)
     ap.add_argument("--delay", type=float, default=1.5)
+    ap.add_argument("--budget", type=float, default=900,
+                    help="wall-clock seconds ceiling; stop early and keep what we have")
     args = ap.parse_args()
     min_age = max(18, args.min_age)
 
     os.makedirs(OUT, exist_ok=True)
     photos = []
+    start = time.time()
     for i in range(args.count):
+        if time.time() - start > args.budget:
+            print(f"Time budget ({args.budget}s) reached at {i}/{args.count}; stopping early.")
+            break
         age = random.randint(min_age, args.max_age)
         name = f"ai-{i:03d}.jpg"
         if fetch(age, random.randint(0, 2**31 - 1), os.path.join(OUT, name)):
