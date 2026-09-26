@@ -12,7 +12,7 @@ photorealistic images of minors is out of scope by design.
 Provider: OpenAI's `gpt-image-1` (or any OpenAI-compatible Images API at
 `POST {base}/images/generations` returning `data[].b64_json`). Configure via env
 (all optional except the key; CLI flags override env):
-  IMAGE_API_KEY        (required)  your API key
+  IMAGE_API_KEY        (required)  your API key (OPENAI_API_KEY also accepted)
   IMAGE_API_BASE       (default https://api.openai.com/v1)
   IMAGE_MODEL          (default gpt-image-1)
   IMAGE_SIZE           (default 1024x1536 portrait; also 1024x1024|1536x1024)
@@ -131,7 +131,7 @@ def main():
         ap.error("--max-age must be >= 18 and >= --min-age")
 
     cfg = {
-        "key": os.environ.get("IMAGE_API_KEY"),
+        "key": os.environ.get("IMAGE_API_KEY") or os.environ.get("OPENAI_API_KEY"),
         "base": os.environ.get("IMAGE_API_BASE", "https://api.openai.com/v1"),
         "model": os.environ.get("IMAGE_MODEL", "gpt-image-1"),
         "size": args.size,
