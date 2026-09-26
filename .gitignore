@@ -31,3 +31,4 @@ GuessAge/Resources/manifest.json
 # Python
 __pycache__/
 *.pyc
+.render/
