@@ -35,7 +35,9 @@ import urllib.parse
 import urllib.request
 
 USER_AGENT = "GuessAgeDatasetBuilder/0.1 (https://github.com/thvibe/guess-age-ios; contact: maintainer)"
-SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
+# QLever is a fast public Wikidata SPARQL endpoint that (unlike the official
+# query.wikidata.org service) does not aggressively rate-limit shared CI IPs.
+SPARQL_ENDPOINT = "https://qlever.cs.uni-freiburg.de/api/wikidata"
 COMMONS_API = "https://commons.wikimedia.org/w/api.php"
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -83,17 +85,23 @@ def sparql_people(limit):
     photos whose Commons file carries an EXIF capture date — that's where the
     verified age comes from — so we over-fetch candidates here.
     """
+    # Plain prefixes + rdfs:label (QLever doesn't support the Blazegraph-only
+    # `SERVICE wikibase:label`). Label is OPTIONAL so people without an English
+    # label are still kept (name just shows as blank on the reveal).
     query = f"""
+    PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+    PREFIX wd: <http://www.wikidata.org/entity/>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
     SELECT ?person ?personLabel ?birth ?image WHERE {{
       ?person wdt:P31 wd:Q5 ;
               wdt:P569 ?birth ;
               wdt:P18 ?image .
-      SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }}
+      OPTIONAL {{ ?person rdfs:label ?personLabel . FILTER(LANG(?personLabel) = "en") }}
     }}
     LIMIT {limit}
     """
     raw = http_get(SPARQL_ENDPOINT, {"query": query, "format": "json"},
-                   accept="application/sparql-results+json", retries=3, timeout=55)
+                   accept="application/sparql-results+json", retries=3, timeout=45)
     data = json.loads(raw)
     out = []
     for b in data.get("results", {}).get("bindings", []):
