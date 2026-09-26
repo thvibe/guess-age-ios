@@ -26,6 +26,7 @@ import argparse
 import html
 import json
 import os
+import random
 import re
 import sys
 import time
@@ -47,7 +48,7 @@ REJECTED_LICENSE_HINTS = ("nc", "nd", "noncommercial", "no derivative")
 MIN_AGE, MAX_AGE = 1, 100
 
 
-def http_get(url, params=None, accept="application/json", retries=4):
+def http_get(url, params=None, accept="application/json", retries=4, timeout=60):
     if params:
         url = url + "?" + urllib.parse.urlencode(params)
     last_err = None
@@ -57,7 +58,7 @@ def http_get(url, params=None, accept="application/json", retries=4):
             "Accept": accept,
         })
         try:
-            with urllib.request.urlopen(req, timeout=60) as resp:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
                 return resp.read()
         except Exception as e:  # noqa: BLE001 - network is best-effort
             last_err = e
@@ -65,21 +66,30 @@ def http_get(url, params=None, accept="application/json", retries=4):
     raise RuntimeError(f"GET failed for {url}: {last_err}")
 
 
-def sparql_people(batch, offset):
-    """Fetch a page of humans that have both a birth date and an image."""
+def sparql_people(year, limit):
+    """Fetch humans born in `year` that have an image.
+
+    Querying one birth year at a time keeps each request small and bounded (a
+    broad "all humans with an image, ordered by id" query times out on the
+    Wikidata Query Service). A failed/slow year is skipped, not fatal.
+    """
     query = f"""
     SELECT ?person ?personLabel ?birth ?image WHERE {{
       ?person wdt:P31 wd:Q5 ;
               wdt:P569 ?birth ;
               wdt:P18 ?image .
-      FILTER(YEAR(?birth) > 1900)
+      FILTER(?birth >= "{year}-01-01T00:00:00Z"^^xsd:dateTime &&
+             ?birth <  "{year + 1}-01-01T00:00:00Z"^^xsd:dateTime)
       SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }}
     }}
-    ORDER BY ?person
-    LIMIT {batch} OFFSET {offset}
+    LIMIT {limit}
     """
-    raw = http_get(SPARQL_ENDPOINT, {"query": query, "format": "json"},
-                   accept="application/sparql-results+json")
+    try:
+        raw = http_get(SPARQL_ENDPOINT, {"query": query, "format": "json"},
+                       accept="application/sparql-results+json", retries=2, timeout=45)
+    except Exception as e:  # noqa: BLE001 - one slow year shouldn't kill the run
+        print(f"  SPARQL year {year} failed: {e}", file=sys.stderr)
+        return []
     data = json.loads(raw)
     out = []
     for b in data.get("results", {}).get("bindings", []):
@@ -211,7 +221,9 @@ def main():
     ap.add_argument("--seed-count", type=int, default=50, help="how many to bundle offline")
     ap.add_argument("--per-person", type=int, default=1, help="max photos per person")
     ap.add_argument("--thumb-width", type=int, default=512)
-    ap.add_argument("--batch", type=int, default=200, help="SPARQL page size")
+    ap.add_argument("--batch", type=int, default=150, help="people fetched per birth year")
+    ap.add_argument("--min-year", type=int, default=1935, help="earliest birth year to sample")
+    ap.add_argument("--max-year", type=int, default=2007, help="latest birth year to sample")
     ap.add_argument("--delay", type=float, default=0.5, help="seconds between API calls")
     ap.add_argument("--res-dir", default=RES_DIR)
     ap.add_argument("--web-dir", default=None,
@@ -226,19 +238,24 @@ def main():
 
     collected = []
     per_person = {}
-    offset = 0
     start = time.time()
 
-    while len(collected) < args.target:
+    # Sweep birth years in random order so the set spans a range of ages and
+    # isn't the same people every run.
+    years = list(range(args.min_year, args.max_year + 1))
+    random.shuffle(years)
+
+    for year in years:
+        if len(collected) >= args.target:
+            break
         if args.budget and time.time() - start > args.budget:
             print(f"Time budget ({args.budget}s) reached; stopping with "
                   f"{len(collected)} photos.", file=sys.stderr)
             break
-        people = sparql_people(args.batch, offset)
+        people = sparql_people(year, args.batch)
         if not people:
-            print("No more results from Wikidata.", file=sys.stderr)
-            break
-        offset += args.batch
+            continue
+        random.shuffle(people)
 
         # Look up Commons metadata in chunks of <=50 titles.
         for i in range(0, len(people), 50):
