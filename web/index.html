@@ -132,8 +132,7 @@
 
   header.bar { display: flex; align-items: center; justify-content: space-between; }
   .title { display: flex; align-items: center; gap: 8px; font-family: var(--round); font-weight: 800; font-size: 19px; letter-spacing: -.01em; }
-  .title .mark { width: 27px; height: 24px; flex: none; display: block; }
-  .title .mark path { fill: var(--teal); stroke: var(--text); stroke-width: 6; stroke-linejoin: round; }
+  .title .mark { width: 28px; height: 28px; flex: none; display: block; }
   .title small { color: var(--text-2); font-weight: 700; }
   .icon-btn {
     appearance: none; border: 0; background: var(--fill); color: var(--text);
@@ -247,12 +246,17 @@
   .answered .opt { cursor: default; }
   .answered .opt:active { transform: none; }
 
-  /* Black reveal overlay: on answer the screen dims to black and the solid
-     green/red buttons + the verdict + Next sit above it. */
-  .scrim { position: fixed; inset: 0; background: rgba(0,0,0,.66); opacity: 0;
-    visibility: hidden; transition: opacity .25s ease; z-index: 4; pointer-events: none; }
+  /* Black reveal overlay: on answer the game dims to black and the solid
+     green/red buttons + the verdict + Next sit above it. The scrim lives INSIDE
+     #phone so it shares one stacking context with the reveal elements — z-index
+     works no matter what else (the Play animation) makes #phone a context. */
+  .scrim { position: absolute; inset: 0;
+    /* Spotlight: a soft light pool over the answer area, darkening up toward the
+       image so the eye is drawn to the answer. */
+    background: radial-gradient(125% 62% at 50% 82%, rgba(0,0,0,.06) 0%, rgba(0,0,0,.5) 52%, rgba(0,0,0,.84) 100%);
+    opacity: 0; visibility: hidden; transition: opacity .28s ease; z-index: 3; pointer-events: none; }
   body.revealed .scrim { opacity: 1; visibility: visible; }
-  body.revealed #options, body.revealed .prompt, body.revealed #next { position: relative; z-index: 6; }
+  body.revealed #options, body.revealed .prompt, body.revealed #next { position: relative; z-index: 4; }
 
   .next {
     appearance: none; border: 0; border-radius: 16px; padding: 12px; cursor: pointer;
@@ -405,10 +409,10 @@
   <i class="ring" style="bottom:20vh;right:7vw;width:22px;height:22px;border:4px solid #f0653a;opacity:.4"></i>
   <i class="dot" style="bottom:8vh;left:52vw;width:12px;height:12px;background:#6d5efc;opacity:.4"></i>
 </div>
-<div class="scrim" aria-hidden="true"></div>
 <div id="phone" aria-hidden="true">
+  <div class="scrim" aria-hidden="true"></div>
   <header class="bar">
-    <div class="title"><svg class="mark" viewBox="0 0 100 88" aria-hidden="true"><path d="M10 8h80a9 9 0 0 1 9 9v40a9 9 0 0 1-9 9H50L28 82V66H10a9 9 0 0 1-9-9V17a9 9 0 0 1 9-9z"/><text x="50" y="52" font-family="'Fredoka','Trebuchet MS',system-ui,sans-serif" font-size="44" font-weight="700" fill="#fff" text-anchor="middle">?</text></svg><span>How Old? <small>· demo</small></span></div>
+    <div class="title"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><rect x="2" y="2" width="96" height="96" rx="24" fill="#1c1830"/><path d="M20 24h60a9 9 0 0 1 9 9v30a9 9 0 0 1-9 9H47L29 85V72h-9a9 9 0 0 1-9-9V33a9 9 0 0 1 9-9z" fill="#10b5aa"/><text x="50" y="59" font-family="'Fredoka','Trebuchet MS',system-ui,sans-serif" font-size="42" font-weight="700" fill="#fff" text-anchor="middle">?</text></svg><span>How Old? <small>· demo</small></span></div>
     <div class="bar-btns">
       <button class="icon-btn msym" id="themeBtn" title="Light / dark" aria-label="Toggle light or dark mode">dark_mode</button>
       <button class="icon-btn msym" id="historyBtn" title="Score history" aria-label="Score history">leaderboard</button>
