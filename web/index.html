@@ -213,11 +213,23 @@
   .opt .unit { font-size: 10.5px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: .07em; }
   .opt:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--btn-edge), 0 4px 10px rgba(16,60,70,.18); }
   .opt:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-  .opt.correct { border-color: var(--good); background: var(--good-fill); box-shadow: 0 5px 0 var(--good), 0 10px 20px rgba(22,179,100,.26); }
-  .opt.correct .unit { color: var(--good); }
+  .opt.correct { border-color: var(--good); background: var(--good-fill); color: var(--good);
+    position: relative; z-index: 2;
+    box-shadow: 0 7px 0 var(--good), 0 14px 26px rgba(22,179,100,.38);
+    animation: popCorrect .5s cubic-bezier(.34,1.56,.64,1) both; }
+  .opt.correct .num, .opt.correct .unit { color: var(--good); }
+  /* Quick bounce toward the viewer on a correct answer — a clear "got it, next!". */
+  @keyframes popCorrect {
+    0%   { transform: translateY(0) scale(1); }
+    35%  { transform: translateY(-10px) scale(1.16); }
+    60%  { transform: translateY(0) scale(1.02); }
+    80%  { transform: translateY(-3px) scale(1.05); }
+    100% { transform: translateY(0) scale(1); }
+  }
   .opt.wrong { border-color: var(--bad); background: var(--bad-fill); box-shadow: 0 5px 0 var(--bad), 0 10px 20px rgba(255,59,92,.26); }
   .opt.wrong .unit { color: var(--bad); }
-  .opt.dim { opacity: .4; box-shadow: 0 3px 0 var(--btn-edge); }
+  /* Other buttons step back a little (not a heavy dull overlay) so the green pops. */
+  .opt.dim { opacity: .6; box-shadow: 0 3px 0 var(--btn-edge); }
   .answered .opt { cursor: default; }
   .answered .opt:active { transform: none; }
 
