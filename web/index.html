@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="How Old?">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" id="theme-color-meta" content="#ffc2da">
+<meta name="theme-color" id="theme-color-meta" content="#ffddb8">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -39,6 +39,7 @@
     --shadow: 0 12px 30px rgba(60,40,20,.18), 0 2px 6px rgba(60,40,20,.10);
     --app-grad: radial-gradient(135% 108% at 50% 44%, #fff6e6 0%, #ffdcb4 55%, #ffc2da 100%);  /* Sunset Party — glow centred so top & bottom edges match */
     --sun: rgba(255,214,120,.55);
+    --edge: #ffddb8;             /* warm solid that matches the gradient's edges */
     --sans: -apple-system, "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif;
     --round: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, "Segoe UI", sans-serif;
   }
@@ -65,6 +66,7 @@
       --hair-line: rgba(255,255,255,.08);
       --app-grad: radial-gradient(135% 108% at 50% 44%, #2a2140 0%, #191426 58%, #241426 100%);  /* Sunset Party — night, centred glow */
       --sun: rgba(227,15,116,.30);
+      --edge: #201628;
       --shadow: 0 12px 30px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.4);
     }
   }
@@ -74,7 +76,7 @@
     --fill-press:#e5d9c0;--btn-face:#e9f7f6;--btn-edge:#10b5aa;--btn-border:#bfe4e2;
     --text:#241f2b;--text-2:#6c6355;--text-3:#a99f8a;
     --hair-line:rgba(36,31,43,.08);--shadow:0 12px 30px rgba(60,40,20,.18),0 2px 6px rgba(60,40,20,.10);
-    --app-grad:radial-gradient(135% 108% at 50% 44%, #fff6e6 0%, #ffdcb4 55%, #ffc2da 100%);--sun:rgba(255,214,120,.55);
+    --app-grad:radial-gradient(135% 108% at 50% 44%, #fff6e6 0%, #ffdcb4 55%, #ffc2da 100%);--sun:rgba(255,214,120,.55);--edge:#ffddb8;
   }
   :root[data-theme="dark"] {
     --accent:#e30f74;--accent-press:#c50f65;--teal:#22d3c4;--good:#2ed47f;--good-fill:rgba(46,212,127,.20);
@@ -82,7 +84,7 @@
     --fill-press:#3a3350;--btn-face:#223140;--btn-edge:#0f9c92;--btn-border:#37506a;
     --text:#f6eefb;--text-2:#b6a7c4;--text-3:#7d7090;
     --hair-line:rgba(255,255,255,.08);--shadow:0 12px 30px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.4);
-    --app-grad:radial-gradient(135% 108% at 50% 44%, #2a2140 0%, #191426 58%, #241426 100%);--sun:rgba(227,15,116,.30);
+    --app-grad:radial-gradient(135% 108% at 50% 44%, #2a2140 0%, #191426 58%, #241426 100%);--sun:rgba(227,15,116,.30);--edge:#201628;
   }
 
   * { box-sizing: border-box; }
@@ -92,8 +94,7 @@
      overscroll-behavior:none removes the rubber-band gutter. No white bars. */
   html {
     min-height: 100%;
-    background: var(--app-grad);
-    background-color: var(--bg);   /* solid fallback for the safe-area edges */
+    background: var(--edge);   /* warm solid behind the fixed gradient layer (#bg) */
   }
   body {
     background: transparent;
@@ -105,7 +106,10 @@
     min-height: 100dvh;
   }
   /* Decorative Memphis confetti + warm sun glow, fixed behind everything. */
-  #bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+  /* The Sunset gradient lives on this FIXED full-screen layer so it paints the
+     whole viewport — including behind the iOS status bar and home indicator —
+     with no seam at the safe-area edges. */
+  #bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: var(--app-grad); }
   #bg .sun { position: absolute; left: 50%; top: -8%; transform: translateX(-50%);
     width: min(130vw, 760px); height: 48vh;
     background: radial-gradient(circle at 50% 50%, var(--sun), transparent 68%); }
@@ -1315,8 +1319,8 @@
     renderScores(false); newRound();
   });
   function startGame() {
-    const home = el('home');
-    home.classList.add('hidden'); home.setAttribute('aria-hidden', 'true');
+    document.body.classList.add('playing');   // reveals #phone, hides #home
+    el('home').setAttribute('aria-hidden', 'true');
     el('phone').setAttribute('aria-hidden', 'false');
     newRound();
   }
@@ -1336,7 +1340,7 @@
     const ht = el('homeTheme'); if (ht) ht.textContent = dark ? 'light_mode' : 'dark_mode';
     // Keep Safari's UI bar colour matched to the app background edge so there's
     // no mismatched (white) bar on iOS.
-    const tc = el('theme-color-meta'); if (tc) tc.setAttribute('content', dark ? '#241426' : '#ffc2da');
+    const tc = el('theme-color-meta'); if (tc) tc.setAttribute('content', dark ? '#201628' : '#ffddb8');
   }
   function applyTheme(t) {
     if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
@@ -1414,7 +1418,7 @@
     if (stream && Array.isArray(stream.photos)) add(stream.photos);
     if (pool.length) {
       photos = pool;
-      if (mode === 'photo' && !state.answered && el('home').classList.contains('hidden')) newRound();
+      if (mode === 'photo' && !state.answered && document.body.classList.contains('playing')) newRound();
     } else disablePhotos();
   }).catch(disablePhotos);
 
