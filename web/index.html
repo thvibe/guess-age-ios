@@ -21,7 +21,7 @@
     --accent: #e30f74;            /* deep neon magenta — white text passes AA */
     --accent-press: #c50f65;
     --teal: #10b5aa;
-    --logo-blue: #6d5efc;         /* the indigo confetti piece from the logo */
+    --blue: #3b82f6;              /* clear blue used to highlight the best run */
     --good: #12b26a;
     --good-fill: rgba(18,178,106,.16);
     --bad: #d92d20;              /* clear red for a wrong answer (distinct from the pink accent) */
@@ -366,8 +366,8 @@
   .hist-row .h-meta { color: var(--text-2); font-size: 11.5px; margin-left: auto; text-align: right; line-height: 1.35; }
   /* Highlight the best run with an INSET ring (not an outline — an outline is
      clipped by the scrolling list) in the logo's blue, plus a blue tint. */
-  .hist-row.best { background: rgba(109,94,252,.12); background: color-mix(in srgb, var(--logo-blue) 14%, var(--fill));
-    box-shadow: inset 0 0 0 2px var(--logo-blue); }
+  .hist-row.best { background: rgba(59,130,246,.13); background: color-mix(in srgb, var(--blue) 15%, var(--fill));
+    box-shadow: inset 0 0 0 2px var(--blue); }
   .hist-empty { color: var(--text-2); font-size: 14px; padding: 22px 6px; text-align: center; line-height: 1.4; }
   .hist-actions { display: flex; gap: 10px; }
   .ghost { appearance: none; border: 2px solid var(--btn-border); background: transparent; color: var(--text-2);
@@ -1201,7 +1201,7 @@
         const row = document.createElement('div');
         row.className = 'hist-row' + (r.score === best ? ' best' : '');
         row.innerHTML = `<div class="rank">${idx + 1}</div>`
-          + `<div><div class="h-score">${r.score}${r.score === best ? ' <span class="msym" style="font-size:16px;vertical-align:-3px;color:var(--logo-blue)">emoji_events</span>' : ''}</div>`
+          + `<div><div class="h-score">${r.score}${r.score === best ? ' <span class="msym" style="font-size:16px;vertical-align:-3px;color:var(--blue)">emoji_events</span>' : ''}</div>`
           + `<div class="h-when">${escapeHtml(fmtWhen(r.ts))} · ${r.mode}</div></div>`
           + `<div class="h-meta">${r.rounds} rounds · ${acc}%<br>best streak ${r.best}</div>`;
         list.appendChild(row);
