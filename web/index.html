@@ -277,7 +277,8 @@
     background: radial-gradient(135% 78% at 50% 86%, rgba(0,0,0,.02) 0%, rgba(0,0,0,.26) 55%, rgba(0,0,0,.5) 100%);
     opacity: 0; visibility: hidden; transition: opacity .28s ease; z-index: 3; pointer-events: none; }
   body.revealed .scrim { opacity: 1; visibility: visible; }
-  body.revealed #options, body.revealed .prompt, body.revealed #next { position: relative; z-index: 4; }
+  body.revealed #options, body.revealed .prompt, body.revealed #next,
+  body.revealed .scores, body.revealed header.bar { position: relative; z-index: 4; }
 
   .next {
     appearance: none; border: 0; border-radius: 16px; padding: 12px; cursor: pointer;
