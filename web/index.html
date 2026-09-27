@@ -120,12 +120,13 @@
   @keyframes pop { 0%{transform:scale(1)} 40%{transform:scale(1.22)} 100%{transform:scale(1)} }
 
   .card-wrap { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; }
-  /* Fixed circular avatar. Its size depends only on viewport constants (never on
-     leftover space), so nothing else changing height can resize it or make the
-     layout jump. The card-wrap just centers it and soaks up any slack. */
+  /* Circular avatar sized to the SMALLER of the container width and the leftover
+     height (capped at 340px), so it can never exceed its area and cover the
+     controls above it. Every surrounding row is fixed-height, so the leftover is
+     constant — the card doesn't resize or make the layout jump between rounds. */
   #card {
-    position: relative; flex: none; aspect-ratio: 1 / 1;
-    width: min(80vw, 44dvh, 340px);
+    position: relative; aspect-ratio: 1 / 1;
+    width: 100%; max-width: 340px; max-height: 100%;
     border-radius: 50%; overflow: hidden;
     box-shadow: var(--shadow); background: var(--fill);
   }
@@ -249,6 +250,7 @@
   <header class="bar">
     <div class="title">Guess the Age <small>· demo</small></div>
     <div class="bar-btns">
+      <button class="icon-btn" id="themeBtn" title="Light / dark" aria-label="Toggle light or dark mode">🌙</button>
       <button class="icon-btn" id="historyBtn" title="Score history" aria-label="Score history">📊</button>
       <button class="icon-btn" id="restart" title="Restart" aria-label="Restart">↺</button>
     </div>
@@ -1089,6 +1091,29 @@
   el('historyBtn').addEventListener('click', openHistory);
   el('histClose').addEventListener('click', closeHistory);
   el('histClear').addEventListener('click', () => { if (confirm('Clear all score history?')) { saveHistory([]); openHistory(); } });
+
+  // ---- Light / dark toggle (sun / moon). Defaults to the system theme. ----
+  const TKEY = 'guessage.theme';
+  const systemDark = () => matchMedia('(prefers-color-scheme: dark)').matches;
+  const currentTheme = () => document.documentElement.dataset.theme || (systemDark() ? 'dark' : 'light');
+  function updateThemeIcon() { el('themeBtn').textContent = currentTheme() === 'dark' ? '☀️' : '🌙'; }
+  function applyTheme(t) {
+    if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+    else delete document.documentElement.dataset.theme;
+    updateThemeIcon();
+  }
+  try { applyTheme(localStorage.getItem(TKEY)); } catch (e) { updateThemeIcon(); }
+  el('themeBtn').addEventListener('click', () => {
+    const next = currentTheme() === 'dark' ? 'light' : 'dark';
+    try { localStorage.setItem(TKEY, next); } catch (e) {}
+    applyTheme(next);
+  });
+  // Follow the system if the user hasn't picked one explicitly.
+  const mq = matchMedia('(prefers-color-scheme: dark)');
+  (mq.addEventListener ? mq.addEventListener.bind(mq, 'change') : mq.addListener.bind(mq))(() => {
+    let saved = null; try { saved = localStorage.getItem(TKEY); } catch (e) {}
+    if (!saved) updateThemeIcon();
+  });
 
   const modeBtns = [...document.querySelectorAll('.mode')];
   function setActiveMode(m) {
