@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0,0&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Luckiest+Guy&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0,0&display=swap" rel="stylesheet">
 <style>
   /* 90s neo-retro / Memphis: hot magenta + teal on warm cream. */
   :root {
@@ -331,6 +331,51 @@
     .foot { display: none; }
   }
 
+  /* ---- Home screen (hero): replaces the modal. Fully transparent so the Sunset
+     gradient runs edge-to-edge under the iOS safe areas — nothing opaque = no
+     white bars. ---- */
+  #home {
+    position: fixed; inset: 0; z-index: 5;
+    /* Same background as the app: transparent so the <html> Sunset gradient +
+       confetti show through, edge-to-edge. The game is hidden behind it. */
+    background: transparent;
+    display: flex; flex-direction: column;
+    padding: max(14px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(22px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  }
+  #home.hidden { display: none; }
+  /* Home and game are mutually exclusive: hide the game behind the home layer
+     until Play, and remove the home layer once playing. */
+  body.playing #home { display: none; }
+  body:not(.playing) #phone { visibility: hidden; }
+  .home-top { display: flex; align-items: center; justify-content: space-between; }
+  .home-top-right { display: flex; gap: 8px; }
+  #home .icon-btn { width: 44px; height: 44px; font-size: 20px; }
+  #home .icon-btn:focus-visible, .home-play:focus-visible { outline: 3px solid var(--text); outline-offset: 3px; }
+  .home-hero { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center; }
+  .home-logo { width: clamp(150px, 46vw, 188px); height: auto;
+    filter: drop-shadow(0 12px 24px rgba(60,40,20,.28)); animation: logoBob 4s ease-in-out infinite; }
+  .home-title { margin: 0; font-family: 'Luckiest Guy', var(--round); font-weight: 400;
+    font-size: clamp(46px, 14vw, 60px); color: var(--accent); letter-spacing: 1px; line-height: 1;
+    text-shadow: 0 3px 0 rgba(0,0,0,.16), 0 7px 16px rgba(0,0,0,.14); }
+  .home-tag { margin: 2px 0 0; font-size: 15px; font-weight: 600; color: var(--text); max-width: 280px; line-height: 1.35; }
+  .home-bottom { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .home-teaser { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--text-2); background: var(--card); padding: 7px 14px; border-radius: 999px; box-shadow: var(--shadow); }
+  .home-play { appearance: none; border: 0; width: min(320px, 100%); height: 60px; border-radius: 18px; cursor: pointer;
+    background: var(--accent); color: #fff; font-family: var(--round); font-weight: 800; font-size: 19px;
+    box-shadow: 0 6px 0 var(--accent-press), 0 12px 24px color-mix(in srgb, var(--accent) 40%, transparent);
+    transition: transform .08s, box-shadow .08s; }
+  .home-play:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--accent-press), 0 6px 14px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .home-caption { font-size: 12px; color: var(--text); opacity: .62; letter-spacing: .05em; }
+  @keyframes logoBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+  @media (max-height: 640px) { .home-teaser { display: none; } .home-hero { gap: 10px; } }
+  @media (orientation: landscape) and (max-height: 600px) {
+    .home-logo { width: clamp(84px, 20vh, 120px); animation: none; }
+    .home-title { font-size: clamp(28px, 7vh, 38px); }
+    .home-teaser { display: none; }
+    .home-hero { gap: 8px; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     * { animation: none !important; transition: none !important; }
   }
@@ -348,7 +393,7 @@
   <i class="dot" style="bottom:8vh;left:52vw;width:12px;height:12px;background:#6d5efc;opacity:.4"></i>
 </div>
 <div class="scrim" aria-hidden="true"></div>
-<div id="phone" aria-hidden="false">
+<div id="phone" aria-hidden="true">
   <header class="bar">
     <div class="title"><svg class="mark" viewBox="0 0 100 88" aria-hidden="true"><path d="M10 8h80a9 9 0 0 1 9 9v40a9 9 0 0 1-9 9H50L28 82V66H10a9 9 0 0 1-9-9V17a9 9 0 0 1 9-9z"/><text x="50" y="52" font-family="'Fredoka','Trebuchet MS',system-ui,sans-serif" font-size="44" font-weight="700" fill="#fff" text-anchor="middle">?</text></svg><span>How Old? <small>· demo</small></span></div>
     <div class="bar-btns">
@@ -404,17 +449,27 @@
   </div>
 </div>
 
-<div id="start">
-  <div class="sheet">
-    <div class="badge"><span class="msym" style="font-size:15px">sports_esports</span> solo · endless</div>
-    <h1>How Old?</h1>
-    <p class="tag">Look at the face. Tap the right age. Keep going.</p>
-    <div class="rules">
-      <div class="rule"><div class="n">1</div><span>Each round shows a face — a <b>real photo</b> (verified age) or a <b>cartoon</b> — pick which of <b>four ages</b> is right.</span></div>
-      <div class="rule"><div class="n">2</div><span>Build a <b>streak</b> for bonus points. A miss resets it.</span></div>
-      <div class="rule"><div class="n">3</div><span>There's no finish line. It just <b>keeps going</b>.</span></div>
+<div id="home">
+  <div class="home-top">
+    <button class="icon-btn msym" id="homeHistory" title="Your scores" aria-label="Your scores">leaderboard</button>
+    <div class="home-top-right">
+      <button class="icon-btn msym" id="homeMode" title="Photos or Cartoon" aria-label="Switch mode">photo_camera</button>
+      <button class="icon-btn msym" id="homeTheme" title="Light / dark" aria-label="Toggle light or dark mode">dark_mode</button>
     </div>
-    <button class="next" id="play" style="width:100%">Play</button>
+  </div>
+  <div class="home-hero">
+    <svg class="home-logo" viewBox="0 0 100 100" role="img" aria-label="How Old? logo">
+      <rect x="2" y="2" width="96" height="96" rx="24" fill="#1c1830"/>
+      <path d="M20 24h60a9 9 0 0 1 9 9v30a9 9 0 0 1-9 9H47L29 85V72h-9a9 9 0 0 1-9-9V33a9 9 0 0 1 9-9z" fill="#10b5aa"/>
+      <text x="50" y="59" font-family="'Fredoka','Trebuchet MS',system-ui,sans-serif" font-size="42" font-weight="700" fill="#fff" text-anchor="middle">?</text>
+    </svg>
+    <h1 class="home-title">How Old?</h1>
+    <p class="home-tag">One face, four ages — trust your gut.</p>
+  </div>
+  <div class="home-bottom">
+    <div class="home-teaser" id="homeTeaser">First run — set the record.</div>
+    <button class="home-play" id="play">Play</button>
+    <div class="home-caption">solo · endless</div>
   </div>
 </div>
 
@@ -1248,7 +1303,13 @@
     startNewSession();
     renderScores(false); newRound();
   });
-  el('play').addEventListener('click', () => { el('start').classList.add('hidden'); newRound(); });
+  function startGame() {
+    const home = el('home');
+    home.classList.add('hidden'); home.setAttribute('aria-hidden', 'true');
+    el('phone').setAttribute('aria-hidden', 'false');
+    newRound();
+  }
+  el('play').addEventListener('click', startGame);
 
   el('historyBtn').addEventListener('click', openHistory);
   el('histClose').addEventListener('click', closeHistory);
@@ -1261,8 +1322,9 @@
   function updateThemeIcon() {
     const dark = currentTheme() === 'dark';
     el('themeBtn').textContent = dark ? 'light_mode' : 'dark_mode';
-    // Keep Safari's UI bar colour matched to the top of the app background so
-    // there's no mismatched (white) bar at the top on iOS.
+    const ht = el('homeTheme'); if (ht) ht.textContent = dark ? 'light_mode' : 'dark_mode';
+    // Keep Safari's UI bar colour matched to the app background edge so there's
+    // no mismatched (white) bar on iOS.
     const tc = el('theme-color-meta'); if (tc) tc.setAttribute('content', dark ? '#241426' : '#ffc2da');
   }
   function applyTheme(t) {
@@ -1297,12 +1359,33 @@
     renderScores(false); newRound();
   }));
 
+  // ---- Home screen (hero) wiring ----
+  function updateHomeModeIcon() {
+    const b = el('homeMode'); if (!b) return;
+    const isPhoto = mode === 'photo';
+    b.textContent = isPhoto ? 'photo_camera' : 'brush';
+    b.setAttribute('aria-label', isPhoto ? 'Mode: Photos — tap for Cartoon' : 'Mode: Cartoon — tap for Photos');
+  }
+  function updateHomeTeaser() {
+    const t = el('homeTeaser'); if (!t) return;
+    const a = loadHistory();
+    if (!a.length) { t.textContent = 'First run — set the record.'; return; }
+    const bestStreak = Math.max(0, ...a.map(r => r.best || 0));
+    const high = Math.max(0, ...a.map(r => r.score || 0));
+    t.textContent = 'BEST STREAK ' + bestStreak + ' · HIGH ' + high;
+  }
+  el('homeHistory').addEventListener('click', openHistory);
+  el('homeTheme').addEventListener('click', () => el('themeBtn').click());
+  // Pre-game mode pick: flip the mode, update the glyph — do NOT start a round.
+  el('homeMode').addEventListener('click', () => { setActiveMode(mode === 'photo' ? 'cartoon' : 'photo'); updateHomeModeIcon(); });
+
   // Load the verified-age photo set. Until it exists, disable Photos and play
   // Cartoon; once it lands, Photos becomes the default.
   function disablePhotos() {
     const pb = modeBtns.find(b => b.dataset.mode === 'photo');
     if (pb) pb.disabled = true;
     if (mode === 'photo') setActiveMode('cartoon');
+    updateHomeModeIcon();
   }
   // Load both photo pools: the committed CORE (local cropped files, manifest.json)
   // and the STREAM (thousands of Wikimedia-hosted thumbnails, stream.json). Play
@@ -1320,7 +1403,7 @@
     if (stream && Array.isArray(stream.photos)) add(stream.photos);
     if (pool.length) {
       photos = pool;
-      if (mode === 'photo' && !state.answered && el('start').classList.contains('hidden')) newRound();
+      if (mode === 'photo' && !state.answered && el('home').classList.contains('hidden')) newRound();
     } else disablePhotos();
   }).catch(disablePhotos);
 
@@ -1330,6 +1413,8 @@
   renderScores(false);
   state.age = 34; state.seed = 12345;
   startFaceAnim();
+  updateHomeModeIcon();
+  updateHomeTeaser();
 
   // Dev-only export for the offline render harness (tools/render_faces.js).
   // Inert in normal use; only attached when the URL carries ?render.
