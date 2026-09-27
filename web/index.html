@@ -165,6 +165,33 @@
   .stat.flash b { animation: pop .35s ease; }
   @keyframes pop { 0%{transform:scale(1)} 40%{transform:scale(1.22)} 100%{transform:scale(1)} }
 
+  /* ---- Rank progression strip (always-visible "climbing something") ---- */
+  .rankstrip { display: flex; align-items: center; gap: 10px; background: var(--card);
+    border-radius: 14px; padding: 8px 12px; box-shadow: var(--shadow); }
+  .rankstrip .rk-badge { flex: none; width: 30px; height: 30px; display: block; }
+  .rankstrip .rk-mid { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; }
+  .rankstrip .rk-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .rankstrip .rk-name { font-family: var(--round); font-weight: 800; font-size: 13px; color: var(--text); }
+  .rankstrip .rk-xp { font-size: 11px; font-weight: 700; color: var(--text-2); font-variant-numeric: tabular-nums; }
+  .rankstrip .rk-xp .rk-plus { color: var(--good); font-weight: 800; }
+  .rankstrip .rk-track { display: block; height: 7px; border-radius: 999px; background: var(--fill); overflow: hidden; margin-top: 4px; }
+  .rankstrip .rk-fill { display: block; height: 100%; border-radius: 999px;
+    background: linear-gradient(90deg, var(--accent), var(--blue)); transition: width .6s cubic-bezier(.2,.8,.3,1); }
+  .rankstrip .rk-next { font-size: 10px; font-weight: 600; color: var(--text-3); margin-top: 3px; }
+
+  /* Set Recap + Rank Up overlays (content is rendered by JS into the sheet). */
+  #recap, #rankup { position: fixed; inset: 0; z-index: 7; display: grid; place-items: center; padding: 22px;
+    background: rgba(20,16,28,.55); background: color-mix(in srgb, var(--bg) 82%, transparent);
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+  #recap.hidden, #rankup.hidden { display: none; }
+  .recap-sheet { width: 100%; max-width: 380px; background: var(--card); border-radius: 26px; box-shadow: var(--shadow);
+    padding: 24px 22px 20px; display: flex; flex-direction: column; align-items: center; gap: 13px;
+    animation: gameIn .4s cubic-bezier(.2,.9,.3,1) both; }
+  #rankup { background: rgba(10,7,20,.72); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .rankup-sheet { width: 100%; max-width: 340px; display: flex; flex-direction: column; align-items: center;
+    gap: 18px; text-align: center; animation: spring .55s cubic-bezier(.2,1.4,.35,1) both; }
+  @keyframes spring { 0%{opacity:0;transform:scale(.6)} 62%{opacity:1;transform:scale(1.06)} 100%{opacity:1;transform:scale(1)} }
+
   .card-wrap { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; }
   /* Full-width image: fills the whole flexible row between the mode toggle and
      the prompt. object-fit: cover on the layers keeps it from distorting, and the
@@ -424,6 +451,7 @@
     }
     header.bar { grid-column: 1; grid-row: 1; }
     .scores    { grid-column: 1; grid-row: 2; }
+    .rankstrip { display: none; }   /* keep the compact landscape grid uncluttered */
     .prompt    { grid-column: 1; grid-row: 3; align-self: center; height: auto; }
     .subactions, #next { grid-column: 1; grid-row: 4; align-self: end; }
     /* Image fills the whole right side, top to bottom. */
@@ -522,6 +550,15 @@
     <div class="stat" id="s-acc"><b>0%</b><span>Accuracy</span></div>
   </div>
 
+  <div class="rankstrip" id="rankstrip">
+    <span class="rk-badge" id="rkBadge"></span>
+    <span class="rk-mid">
+      <span class="rk-top"><span class="rk-name" id="rkName">Rookie Eye</span><span class="rk-xp" id="rkXp">0 XP</span></span>
+      <span class="rk-track"><span class="rk-fill" id="rkFill" style="width:0%"></span></span>
+      <span class="rk-next" id="rkNext">300 XP to Keen Eye</span>
+    </span>
+  </div>
+
   <div class="card-wrap">
     <div id="card">
       <canvas id="face"></canvas>
@@ -561,6 +598,9 @@
     </div>
   </div>
 </div>
+
+<div id="recap" class="hidden" role="dialog" aria-label="Set recap"><div class="recap-sheet" id="recapSheet"></div></div>
+<div id="rankup" class="hidden" role="dialog" aria-label="Rank up"><div class="rankup-sheet" id="rankupSheet"></div></div>
 
 <div id="home">
   <div class="home-top">
@@ -1489,17 +1529,141 @@
     setTimeout(() => f.remove(), 1200);
   }
 
+  // ---- Progression: XP, Eye Ranks, and sets of 5 (engagement) -------------
+  const SET_SIZE = 5;
+  const RANKS = [
+    { name: 'Rookie Eye',    xp: 0,     acc: 0,    fill: '#10b5aa', ring: '#10b5aa' },
+    { name: 'Keen Eye',      xp: 300,   acc: 0,    fill: '#3b82f6', ring: '#3b82f6' },
+    { name: 'Sharp Eye',     xp: 800,   acc: 0.55, fill: '#6d5efc', ring: '#6d5efc' },
+    { name: 'Eagle Eye',     xp: 1800,  acc: 0.62, fill: '#f0653a', ring: '#f0653a' },
+    { name: 'Hawk Eye',      xp: 3500,  acc: 0.68, fill: '#e30f74', ring: '#e30f74' },
+    { name: 'Age Whisperer', xp: 6000,  acc: 0.72, fill: '#facc15', ring: '#e0a80f' },
+    { name: 'The Oracle',    xp: 10000, acc: 0.78, fill: '#facc15', ring: '#1c1830' },
+  ];
+  const RANK_BLURB = ['Welcome, Rookie Eye.', 'Getting the hang of it.', 'You can read a face now.',
+    "You're in the top 15% of players.", 'Rarely fooled.', 'Uncanny instincts.', 'You see the number before the face loads.'];
+  function rankBadge(i, size) {
+    const r = RANKS[i], oracle = i === RANKS.length - 1;
+    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 100 100" aria-hidden="true">'
+      + '<circle cx="50" cy="50" r="46" fill="none" stroke="' + r.ring + '" stroke-width="8"/>'
+      + '<path d="M22 50Q50 28 78 50Q50 72 22 50Z" fill="' + (oracle ? '#1c1830' : '#fffdf6') + '" stroke="#1c1830" stroke-width="3"/>'
+      + '<circle cx="50" cy="50" r="11" fill="' + r.fill + '"/>'
+      + '<circle cx="50" cy="50" r="4.5" fill="' + (oracle ? '#fffdf6' : '#1c1830') + '"/></svg>';
+  }
+  const PKEY = 'guessage.profile.v1';
+  function loadProfile() {
+    let p; try { p = JSON.parse(localStorage.getItem(PKEY)); } catch (e) {}
+    if (!p || typeof p.xp !== 'number') p = { xp: 0, correct: 0, rounds: 0, rank: 0 };
+    p.rank = Math.max(0, Math.min(RANKS.length - 1, p.rank | 0));
+    return p;
+  }
+  const saveProfile = () => { try { localStorage.setItem(PKEY, JSON.stringify(profile)); } catch (e) {} };
+  let profile = loadProfile();
+  let setRounds = 0, setCorrect = 0, setXp = 0, comboNow = 0, comboBest = 0, pendingRankUp = -1;
+  const lifeAcc = () => profile.rounds ? profile.correct / profile.rounds : 0;
+  const nextRank = () => profile.rank < RANKS.length - 1 ? RANKS[profile.rank + 1] : null;
+
+  function renderRankStrip() {
+    const r = RANKS[profile.rank], nx = nextRank();
+    el('rkBadge').innerHTML = rankBadge(profile.rank, 30);
+    el('rkName').textContent = r.name;
+    if (nx) {
+      const span = nx.xp - r.xp, into = Math.max(0, profile.xp - r.xp);
+      el('rkFill').style.width = Math.max(3, Math.min(100, Math.round(into / span * 100))) + '%';
+      el('rkXp').textContent = profile.xp.toLocaleString() + ' / ' + nx.xp.toLocaleString() + ' XP';
+      el('rkNext').textContent = Math.max(0, nx.xp - profile.xp).toLocaleString() + ' XP to ' + nx.name
+        + (nx.acc ? ' · keep ' + Math.round(nx.acc * 100) + '%+' : '');
+    } else {
+      el('rkFill').style.width = '100%';
+      el('rkXp').textContent = profile.xp.toLocaleString() + ' XP';
+      el('rkNext').textContent = 'Top rank — The Oracle';
+    }
+  }
+  function checkRankUp() {
+    let up = -1;
+    while (profile.rank < RANKS.length - 1) {
+      const nx = RANKS[profile.rank + 1];
+      if (profile.xp >= nx.xp && lifeAcc() >= nx.acc) { profile.rank++; up = profile.rank; } else break;
+    }
+    return up;
+  }
+  function showRankUp(i) {
+    const r = RANKS[i];
+    el('rankupSheet').innerHTML =
+      '<div style="font-family:\'Luckiest Guy\',var(--round);font-size:40px;color:#facc15;letter-spacing:1px;text-shadow:0 4px 0 rgba(0,0,0,.25)">Rank up!</div>'
+      + '<div style="filter:drop-shadow(0 14px 26px rgba(0,0,0,.45))">' + rankBadge(i, 168) + '</div>'
+      + '<div style="font-family:\'Luckiest Guy\',var(--round);font-size:32px;color:#fff;letter-spacing:.5px">' + r.name + '</div>'
+      + '<div style="font-size:13px;color:#c9bcd8">' + RANK_BLURB[i] + '</div>'
+      + '<button class="next" id="rankupGo" style="width:100%;max-width:300px">Keep climbing</button>';
+    el('rankup').classList.remove('hidden');
+    el('rankupGo').addEventListener('click', () => {
+      el('rankup').classList.add('hidden'); pendingRankUp = -1;
+      if (setRounds >= SET_SIZE) showRecap(); else newRound();
+    }, { once: true });
+  }
+  function showRecap() {
+    const pct = setRounds ? Math.round(setCorrect / setRounds * 100) : 0;
+    const C = 326.7, off = C * (1 - pct / 100);
+    const r = RANKS[profile.rank], nx = nextRank();
+    const bar = nx ? Math.max(3, Math.min(100, Math.round((profile.xp - r.xp) / (nx.xp - r.xp) * 100))) : 100;
+    const toNext = nx ? Math.max(0, nx.xp - profile.xp).toLocaleString() + ' XP to ' + nx.name : 'Top rank reached';
+    const cheer = pct === 100 ? 'Flawless set.' : pct >= 60 ? 'Nice set — keep it rolling.' : 'Shake it off, next set is yours.';
+    el('recapSheet').innerHTML =
+      '<div style="font-family:var(--round);font-weight:800;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-2)">Set complete</div>'
+      + '<div style="position:relative;width:140px;height:140px">'
+        + '<svg width="140" height="140" viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="var(--fill)" stroke-width="12"/>'
+        + '<circle cx="60" cy="60" r="52" fill="none" stroke="var(--good)" stroke-width="12" stroke-linecap="round" stroke-dasharray="' + C + '" stroke-dashoffset="' + off.toFixed(1) + '" transform="rotate(-90 60 60)"/></svg>'
+        + '<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">'
+        + '<div style="font-family:\'Luckiest Guy\',var(--round);font-size:34px;color:var(--text);line-height:1">' + pct + '%</div>'
+        + '<div style="font-size:11px;font-weight:700;color:var(--text-2)">' + setCorrect + ' / ' + setRounds + ' right</div></div></div>'
+      + '<div style="width:100%;background:var(--good-fill);border-radius:16px;padding:13px 15px;display:flex;justify-content:space-between;align-items:center">'
+        + '<span style="font-weight:700;font-size:14px;color:var(--good)">XP this set</span>'
+        + '<span style="font-family:\'Luckiest Guy\',var(--round);font-size:26px;color:var(--good)">+' + setXp + '</span></div>'
+      + (comboBest >= 2 ? '<div style="font-size:12.5px;color:var(--text-2)">Best combo <b style="color:var(--accent)">×' + comboBest + '</b></div>' : '')
+      + '<div style="width:100%;background:var(--card);border:1px solid var(--hair-line);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:10px">'
+        + '<span style="flex:none">' + rankBadge(profile.rank, 30) + '</span>'
+        + '<span style="flex-grow:1"><span style="display:flex;justify-content:space-between"><b style="font-size:13px;color:var(--text)">' + r.name + '</b><span style="font-size:11px;color:var(--text-2)">' + toNext + '</span></span>'
+        + '<span style="display:block;height:8px;border-radius:999px;background:var(--fill);overflow:hidden;margin-top:5px"><span style="display:block;height:100%;width:' + bar + '%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--blue))"></span></span></span></div>'
+      + '<div style="font-size:13px;color:var(--text-2)">' + cheer + '</div>'
+      + '<button class="next" id="recapNext" style="width:100%">Next 5 &rarr;</button>'
+      + '<button id="recapDone" style="border:0;background:none;color:var(--text-2);font-family:var(--round);font-weight:700;font-size:13px;padding:4px;cursor:pointer">Done for now</button>';
+    el('recap').classList.remove('hidden');
+    el('recapNext').addEventListener('click', () => { el('recap').classList.add('hidden'); resetSet(); newRound(); }, { once: true });
+    el('recapDone').addEventListener('click', () => { el('recap').classList.add('hidden'); resetSet(); goHome(); }, { once: true });
+  }
+  function resetSet() { setRounds = 0; setCorrect = 0; setXp = 0; comboNow = 0; comboBest = 0; }
+  function advance() {
+    if (pendingRankUp >= 0) { showRankUp(pendingRankUp); return; }
+    if (setRounds >= SET_SIZE) { showRecap(); return; }
+    newRound();
+  }
+  function goHome() {
+    recordSession();
+    document.body.classList.remove('playing', 'revealed');
+    el('home').setAttribute('aria-hidden', 'false');
+    el('phone').setAttribute('aria-hidden', 'true');
+    Object.assign(state, { score: 0, rounds: 0, correct: 0, streak: 0, best: 0, answered: false });
+    startNewSession(); renderScores(false); if (typeof updateHomeTeaser === 'function') updateHomeTeaser();
+  }
+
   function answer(i) {
     if (state.answered) return;
     state.answered = true; state.rounds++;
     const correctIdx = state.opts.correctIndex;
     const isRight = i === correctIdx;
+    let xpGain = 0;
     if (isRight) {
       state.correct++; state.streak++; state.best = Math.max(state.best, state.streak);
-      state.score += scoreForStreak(state.streak);
+      xpGain = scoreForStreak(state.streak);
+      state.score += xpGain;
+      profile.xp += xpGain; profile.correct++; setXp += xpGain; setCorrect++;
+      comboNow++; comboBest = Math.max(comboBest, comboNow);
     } else {
-      state.streak = 0;
+      state.streak = 0; comboNow = 0;
     }
+    profile.rounds++; setRounds++;
+    pendingRankUp = checkRankUp();
+    saveProfile();
     // Cartoon face reacts: big smile + head bop when right, a frown when wrong.
     if (!state.photo) reactFace(isRight);
     el('options').classList.add('answered');
@@ -1528,6 +1692,12 @@
       + '</div><div class="sub">' + sub + '</div></div>';
     el('next').classList.remove('is-hidden');
     renderScores(isRight);
+    renderRankStrip();
+    if (xpGain) {
+      el('rkXp').innerHTML = '<span class="rk-plus">+' + xpGain + ' XP</span>'
+        + (comboNow >= 2 ? ' <span style="color:var(--accent);font-weight:800">×' + comboNow + '</span>' : '');
+      setTimeout(renderRankStrip, 1300);
+    }
     if (isRight) {
       // The payoff: confetti from the winning button, +points off the score, a green bump.
       celebrate(optEls[correctIdx]);
@@ -1543,8 +1713,9 @@
   }
 
   optEls.forEach((b,i) => b.addEventListener('click', () => answer(i)));
-  el('next').addEventListener('click', newRound);
+  el('next').addEventListener('click', advance);            // XP -> rank-up / set-recap / next round
   el('skip').addEventListener('click', () => newRound());   // skip this face, no score change
+  renderRankStrip();                                        // show the rank strip from the saved profile
   function sendReport(p, k) {
     if (!REPORT_ENDPOINT) return;             // no endpoint configured -> local only
     const a = p.attribution || {};
