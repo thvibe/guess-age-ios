@@ -425,11 +425,6 @@
     <div class="stat" id="s-acc"><b>0%</b><span>Accuracy</span></div>
   </div>
 
-  <div class="modes" id="modes">
-    <button class="mode active" data-mode="photo">Photos</button>
-    <button class="mode" data-mode="cartoon">Cartoon</button>
-  </div>
-
   <div class="card-wrap">
     <div id="card">
       <canvas id="face"></canvas>
@@ -448,7 +443,7 @@
   <button class="next is-hidden" id="next">Next</button>
 
   <div class="foot">
-    <b>Photos</b> are real people with ages verified from public records · <b>Cartoon</b> is drawn, all ages.
+    <b>Photos</b> are real people with ages verified from public records.
   </div>
 </div>
 
@@ -468,7 +463,6 @@
   <div class="home-top">
     <button class="icon-btn msym" id="homeHistory" title="Your scores" aria-label="Your scores">leaderboard</button>
     <div class="home-top-right">
-      <button class="icon-btn msym" id="homeMode" title="Photos or Cartoon" aria-label="Switch mode">photo_camera</button>
       <button class="icon-btn msym" id="homeTheme" title="Light / dark" aria-label="Toggle light or dark mode">dark_mode</button>
     </div>
   </div>
@@ -1395,8 +1389,6 @@
   }
   el('homeHistory').addEventListener('click', openHistory);
   el('homeTheme').addEventListener('click', () => el('themeBtn').click());
-  // Pre-game mode pick: flip the mode, update the glyph — do NOT start a round.
-  el('homeMode').addEventListener('click', () => { setActiveMode(mode === 'photo' ? 'cartoon' : 'photo'); updateHomeModeIcon(); });
 
   // Load the verified-age photo set. Until it exists, disable Photos and play
   // Cartoon; once it lands, Photos becomes the default.
