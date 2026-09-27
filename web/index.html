@@ -1304,8 +1304,11 @@
     fetch('photos/stream.json',   { cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null),
   ]).then(([core, stream]) => {
     const pool = [];
-    if (core && Array.isArray(core.photos)) for (const p of core.photos) pool.push(p);
-    if (stream && Array.isArray(stream.photos)) for (const p of stream.photos) pool.push(p);
+    // Only ages the game can actually offer as options (5..99) — never show a
+    // toddler (<=4) or a >99 photo, whose clamped option wouldn't match the age.
+    const add = arr => { for (const p of arr) if (p && p.age >= MIN && p.age <= MAX) pool.push(p); };
+    if (core && Array.isArray(core.photos)) add(core.photos);
+    if (stream && Array.isArray(stream.photos)) add(stream.photos);
     if (pool.length) {
       photos = pool;
       if (mode === 'photo' && !state.answered && el('start').classList.contains('hidden')) newRound();

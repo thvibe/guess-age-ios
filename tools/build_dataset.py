@@ -48,7 +48,7 @@ ALLOWED_LICENSE_HINTS = ("cc0", "public domain", "cc by", "cc-by", "pd-")
 # Explicitly reject non-commercial / no-derivatives variants.
 REJECTED_LICENSE_HINTS = ("nc", "nd", "noncommercial", "no derivative")
 
-MIN_AGE, MAX_AGE = 1, 100
+MIN_AGE, MAX_AGE = 5, 99   # match the game's option range (no toddlers, no >99)
 
 
 def http_get(url, params=None, accept="application/json", retries=4, timeout=60):
@@ -422,7 +422,10 @@ def main():
             if args.append_stream and os.path.exists(args.stream_out):
                 try:
                     prev = json.load(open(args.stream_out, encoding="utf-8"))
-                    entries = prev.get("photos", [])
+                    # Drop any previously-collected out-of-range ages (e.g. from an
+                    # older MIN/MAX) so the accumulated pool stays 5..99.
+                    entries = [e for e in prev.get("photos", [])
+                               if MIN_AGE <= e.get("age", 0) <= MAX_AGE]
                     seen = {e.get("id") for e in entries if e.get("id")}
                 except Exception as e:  # noqa: BLE001
                     print(f"  (could not read existing stream {args.stream_out}: {e})", file=sys.stderr)
