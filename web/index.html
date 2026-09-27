@@ -15,7 +15,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Luckiest+Guy&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0,0&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Luckiest+Guy&family=Anton&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0,0&display=swap" rel="stylesheet">
 <style>
   /* 90s neo-retro / Memphis: hot magenta + teal on warm cream. */
   :root {
@@ -209,6 +209,23 @@
   #photo { display: none; object-position: center 28%; background: var(--fill); }
   #card.photo #face { display: none; }
   #card.photo #photo { display: block; }
+
+  /* ---- Baseball trivia: the question sits where the face card is ---- */
+  #quiz { position: absolute; inset: 0; display: none; flex-direction: column; gap: 14px;
+    align-items: center; justify-content: center; text-align: center; padding: 26px 22px;
+    background: radial-gradient(120% 90% at 50% 18%, #1f3a5c 0%, #14263e 62%, #0d1b2e 100%); color: #fff; }
+  body.trivia #quiz { display: flex; }
+  body.trivia #face, body.trivia #photo { display: none !important; }
+  #quiz .quiz-cat { display: inline-flex; align-items: center; gap: 6px; font-family: var(--round);
+    font-weight: 700; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: #ffd15c; }
+  #quiz .quiz-cat .msym { font-size: 18px; }
+  #quiz .quiz-q { font-family: 'Anton', 'Fredoka', sans-serif; font-weight: 400; text-transform: uppercase;
+    font-size: clamp(23px, 6.2vw, 33px); line-height: 1.08; letter-spacing: .5px; color: #fff;
+    text-shadow: 0 2px 0 rgba(0,0,0,.3); max-width: 16ch; }
+  /* Trivia answer buttons show a wrapped text answer instead of a big number. */
+  .opt-answer { font-family: var(--round); font-weight: 700; font-size: 16px; line-height: 1.12; padding: 0 8px; text-align: center; }
+  .opt.opt-trivia { padding: 8px 4px; }
+  body.trivia .foot { display: none; }   /* the photo-credit footer doesn't apply to trivia */
   #card.reveal-in #face, #card.reveal-in #photo { animation: fade .28s ease; }
   @keyframes fade { from { opacity: 0; transform: scale(1.02); } to { opacity: 1; transform: none; } }
   /* Photographer credit (CC attribution) — a small pill over the photo that
@@ -506,6 +523,12 @@
     box-shadow: 0 6px 0 var(--accent-press), 0 12px 24px rgba(227,15,116,.4);
     transition: transform .08s, box-shadow .08s; }
   .home-play:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--accent-press), 0 6px 14px rgba(227,15,116,.35); }
+  .home-alt { appearance: none; width: min(320px, 100%); height: 48px; border-radius: 15px; cursor: pointer;
+    background: var(--card); color: var(--text); border: 2px solid var(--btn-border);
+    font-family: var(--round); font-weight: 800; font-size: 15px; box-shadow: var(--shadow);
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: transform .08s; }
+  .home-alt .msym { font-size: 20px; color: var(--teal); }
+  .home-alt:active { transform: translateY(2px); }
   .home-caption { font-size: 12px; color: var(--text); opacity: .62; letter-spacing: .05em; }
   @keyframes logoBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
   @media (max-height: 720px) { .home-teaser { display: none; } }
@@ -564,6 +587,7 @@
     <div id="card">
       <canvas id="face"></canvas>
       <img id="photo" alt="">
+      <div id="quiz"></div>
       <div class="credit" id="credit"></div>
       <div id="crowd" aria-live="polite"></div>
     </div>
@@ -637,6 +661,7 @@
   <div class="home-bottom">
     <div class="home-teaser" id="homeTeaser">First run — set the record.</div>
     <button class="home-play" id="play">Play</button>
+    <button class="home-alt" id="playTrivia"><span class="msym">sports_baseball</span> Baseball trivia</button>
     <div class="home-caption">solo · endless</div>
   </div>
 </div>
@@ -1206,7 +1231,38 @@
   const state = { score:0, rounds:0, correct:0, streak:0, best:0, age:0, seed:0, opts:null, answered:false, photo:null };
 
   let mode = 'photo';        // Photos primary; falls back to Cartoon if none loaded.
+  let game = 'age';          // 'age' = guess-the-age, 'trivia' = baseball trivia
   let photos = [];           // verified-age real photos (core files + streamed URLs)
+
+  // ---- Baseball trivia questions (verified facts). correct = index into options. ----
+  const TRIVIA = [
+    { q: "Who holds MLB's career home-run record?", options: ['Barry Bonds', 'Hank Aaron', 'Babe Ruth', 'Alex Rodriguez'], correct: 0 },
+    { q: 'How many stitches are on a regulation baseball?', options: ['108', '88', '216', '120'], correct: 0 },
+    { q: 'Which team has won the most World Series titles?', options: ['NY Yankees', 'St. Louis Cardinals', 'Boston Red Sox', 'LA Dodgers'], correct: 0 },
+    { q: "Who broke baseball's color barrier in 1947?", options: ['Jackie Robinson', 'Larry Doby', 'Satchel Paige', 'Willie Mays'], correct: 0 },
+    { q: 'How many feet are between the bases?', options: ['90', '60', '100', '120'], correct: 0 },
+    { q: 'Which pitcher has the most career strikeouts?', options: ['Nolan Ryan', 'Randy Johnson', 'Roger Clemens', 'Steve Carlton'], correct: 0 },
+    { q: 'The "Curse of the Bambino" haunted which team?', options: ['Boston Red Sox', 'Chicago Cubs', 'Chicago White Sox', 'Cleveland'], correct: 0 },
+    { q: 'How many consecutive games did Cal Ripken Jr. play?', options: ['2,632', '2,130', '3,000', '1,999'], correct: 0 },
+    { q: 'How many innings are in a regulation game?', options: ['9', '7', '11', '6'], correct: 0 },
+    { q: 'Which legend was known as "The Iron Horse"?', options: ['Lou Gehrig', 'Babe Ruth', 'Joe DiMaggio', 'Ty Cobb'], correct: 0 },
+    { q: "Who is MLB's all-time hits leader?", options: ['Pete Rose', 'Ty Cobb', 'Hank Aaron', 'Derek Jeter'], correct: 0 },
+    { q: 'Who was first to hit 60 home runs in a season?', options: ['Babe Ruth', 'Roger Maris', 'Mark McGwire', 'Barry Bonds'], correct: 0 },
+    { q: 'The World Series is a best-of how many games?', options: ['7', '5', '9', '3'], correct: 0 },
+    { q: 'Which position wears the "tools of ignorance"?', options: ['Catcher', 'Pitcher', 'Shortstop', 'Umpire'], correct: 0 },
+    { q: 'Which team plays its home games at Wrigley Field?', options: ['Chicago Cubs', 'Chicago White Sox', 'Milwaukee Brewers', 'St. Louis Cardinals'], correct: 0 },
+    { q: 'What is the single-season home-run record?', options: ['73', '70', '61', '66'], correct: 0 },
+    { q: 'The "Green Monster" is a wall in which ballpark?', options: ['Fenway Park', 'Yankee Stadium', 'Wrigley Field', 'Dodger Stadium'], correct: 0 },
+    { q: "Who holds MLB's career RBI record?", options: ['Hank Aaron', 'Babe Ruth', 'Barry Bonds', 'Alex Rodriguez'], correct: 0 },
+  ];
+  let triviaQueue = [];
+  function nextTrivia() {
+    if (!triviaQueue.length) {
+      triviaQueue = TRIVIA.map((_, i) => i);
+      for (let i = triviaQueue.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [triviaQueue[i], triviaQueue[j]] = [triviaQueue[j], triviaQueue[i]]; }
+    }
+    return TRIVIA[triviaQueue.pop()];
+  }
   let photoFails = 0;        // consecutive streamed-image load failures
   photoImg.addEventListener('load', () => { photoFails = 0; });
 
@@ -1329,7 +1385,7 @@
     const a = loadHistory();
     const rec = { id: state.sessionId, ts: state.sessionTs || Date.now(), score: state.score,
                   rounds: state.rounds, correct: state.correct, best: state.best,
-                  mode: state.photo ? 'Photos' : 'Cartoon' };
+                  mode: game === 'trivia' ? 'Baseball' : (state.photo ? 'Photos' : 'Cartoon') };
     const i = a.findIndex(r => r.id === rec.id);
     if (i >= 0) a[i] = rec; else a.push(rec);
     a.sort((x, y) => y.ts - x.ts);
@@ -1439,6 +1495,12 @@
     el('s-score').classList.remove('win'); el('s-streak').classList.remove('win');
     el('crowd').innerHTML = '';   // reset the crowd chart for the next face
     const card = el('card'); card.classList.remove('reveal-in'); void card.offsetWidth; card.classList.add('reveal-in');
+    el('options').classList.remove('answered');
+    document.body.classList.remove('revealed');
+    el('next').classList.add('is-hidden');
+
+    if (game === 'trivia') { newTriviaRound(card); return; }
+    document.body.classList.remove('trivia');
 
     if (mode === 'photo' && photos.length) {
       stopFaceAnim();
@@ -1474,15 +1536,32 @@
     }
     state.opts = makeOptions(state.age, rngFrom(state.seed ^ 0x9e3779b9));
 
-    el('options').classList.remove('answered');
-    document.body.classList.remove('revealed');
     optEls.forEach((b,i) => {
       b.innerHTML = '<span class="opt-text"><span class="num">' + state.opts.values[i] + '</span><span class="unit">years old</span></span>';
       b.className = 'opt'; b.disabled = false;
     });
     el('prompt').innerHTML = '<div class="ask">How old am I?</div>';
-    el('next').classList.add('is-hidden');
     el('report').style.display = state.photo ? '' : 'none';   // only real photos are reportable
+  }
+  function newTriviaRound(card) {
+    stopFaceAnim();
+    card.classList.remove('photo');
+    document.body.classList.add('trivia');   // hides face/photo, shows #quiz
+    state.photo = null; state.age = 0;
+    const q = nextTrivia();
+    state.question = q;
+    const idx = q.options.map((_, i) => i);
+    const rnd = rngFrom(randSeed());
+    for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+    state.opts = { values: idx.map(i => q.options[i]), correctIndex: idx.indexOf(q.correct) };
+    el('quiz').innerHTML = '<div class="quiz-cat"><span class="msym">sports_baseball</span> Baseball</div>'
+      + '<div class="quiz-q">' + escapeHtml(q.q) + '</div>';
+    optEls.forEach((b, i) => {
+      b.innerHTML = '<span class="opt-text opt-answer">' + escapeHtml(state.opts.values[i]) + '</span>';
+      b.className = 'opt opt-trivia'; b.disabled = false;
+    });
+    el('prompt').innerHTML = '';    // the question lives in the card
+    el('report').style.display = 'none';
   }
 
   // ---- Reveal celebration (ported from the "Reveal Moment" design) ----
@@ -1644,7 +1723,7 @@
   }
   function goHome() {
     recordSession();
-    document.body.classList.remove('playing', 'revealed');
+    document.body.classList.remove('playing', 'revealed', 'trivia');
     el('home').setAttribute('aria-hidden', 'false');
     el('phone').setAttribute('aria-hidden', 'true');
     Object.assign(state, { score: 0, rounds: 0, correct: 0, streak: 0, best: 0, answered: false });
@@ -1670,7 +1749,7 @@
     pendingRankUp = checkRankUp();
     saveProfile();
     // Cartoon face reacts: big smile + head bop when right, a frown when wrong.
-    if (!state.photo) reactFace(isRight);
+    if (game === 'age' && !state.photo) reactFace(isRight);
     el('options').classList.add('answered');
     document.body.classList.add('revealed');
     optEls.forEach((b,idx) => {
@@ -1684,7 +1763,9 @@
       else b.classList.add('dim');
     });
     let sub;
-    if (state.photo) {
+    if (game === 'trivia') {
+      sub = 'Answer: ' + escapeHtml(state.opts.values[correctIdx]);
+    } else if (state.photo) {
       const p = state.photo, a = p.attribution || {};
       const who = p.name ? escapeHtml(p.name) + ' · age ' + state.age : 'Age ' + state.age;
       const src = a.sourceURL ? ' · <a href="' + escapeHtml(a.sourceURL) + '" target="_blank" rel="noopener">source</a>' : '';
@@ -1753,13 +1834,17 @@
     startNewSession();
     renderScores(false); newRound();
   });
-  function startGame() {
+  function startGame(g) {
+    game = (g === 'trivia') ? 'trivia' : 'age';
+    Object.assign(state, { score: 0, rounds: 0, correct: 0, streak: 0, best: 0, answered: false });
+    comboNow = 0; resetSet(); startNewSession(); renderScores(false);
     document.body.classList.add('playing');   // reveals #phone, hides #home
     el('home').setAttribute('aria-hidden', 'true');
     el('phone').setAttribute('aria-hidden', 'false');
     newRound();
   }
-  el('play').addEventListener('click', startGame);
+  el('play').addEventListener('click', () => startGame('age'));
+  el('playTrivia').addEventListener('click', () => startGame('trivia'));
 
   el('historyBtn').addEventListener('click', openHistory);
   el('histClose').addEventListener('click', closeHistory);
@@ -1837,7 +1922,7 @@
     if (stream && Array.isArray(stream.photos)) add(stream.photos);
     if (pool.length) {
       photos = pool;
-      if (mode === 'photo' && !state.answered && document.body.classList.contains('playing')) newRound();
+      if (game === 'age' && mode === 'photo' && !state.answered && document.body.classList.contains('playing')) newRound();
     } else disablePhotos();
   }).catch(disablePhotos);
 
