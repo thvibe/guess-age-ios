@@ -226,6 +226,50 @@ def download(url, dest):
         f.write(data)
 
 
+def face_crop(path, cascade, size, margin=1.6, eye_cascade=None):
+    """Overwrite `path` with a square crop centred on the largest *validated* face.
+
+    Returns True if a usable face was found and cropped, False otherwise (caller
+    should drop the image). Rejects images with no face (documents), textured
+    false positives (gravestones/rock — no eyes inside the "face"), and shots
+    where the biggest face is tiny relative to the frame (full-body / distant).
+    """
+    import cv2  # imported lazily so the tool still runs without OpenCV
+    img = cv2.imread(path)
+    if img is None:
+        return False
+    h, w = img.shape[:2]
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    m = max(28, int(w * 0.08))
+    faces = cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=7, minSize=(m, m))
+    # Keep only faces big enough AND that actually contain eyes — this rejects
+    # the textured false positives Haar cascades produce on rock/foliage.
+    valid = []
+    for (fx, fy, fw, fh) in faces:
+        if fw < 0.10 * w:
+            continue
+        if eye_cascade is not None:
+            roi = gray[fy:fy + int(fh * 0.7), fx:fx + fw]
+            eyes = eye_cascade.detectMultiScale(roi, scaleFactor=1.1, minNeighbors=6,
+                                                minSize=(max(10, int(fw * 0.12)),) * 2)
+            if len(eyes) < 1:
+                continue
+        valid.append((fx, fy, fw, fh))
+    if not valid:
+        return False
+    fx, fy, fw, fh = max(valid, key=lambda f: f[2] * f[3])
+    cx, cy = fx + fw / 2, fy + fh / 2 - fh * 0.1
+    half = fw * margin
+    x0 = int(max(0, min(cx - half, w - 1)))
+    y0 = int(max(0, min(cy - half, h - 1)))
+    side = int(min(half * 2, w - x0, h - y0))
+    if side < 60:
+        return False
+    face = cv2.resize(img[y0:y0 + side, x0:x0 + side], (size, size), interpolation=cv2.INTER_AREA)
+    cv2.imwrite(path, face, [cv2.IMWRITE_JPEG_QUALITY, 88])
+    return True
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -235,6 +279,9 @@ def main():
     ap.add_argument("--thumb-width", type=int, default=512)
     ap.add_argument("--candidates", type=int, default=2000,
                     help="how many people to pull from Wikidata and scan for dated photos")
+    ap.add_argument("--face-crop", action="store_true",
+                    help="detect a face in each web image and crop a square around it; "
+                         "reject images with no usable face (needs opencv-python-headless)")
     ap.add_argument("--delay", type=float, default=0.5, help="seconds between API calls")
     ap.add_argument("--res-dir", default=RES_DIR)
     ap.add_argument("--web-dir", default=None,
@@ -294,21 +341,42 @@ def main():
     # serves directly (no cross-origin hotlinking, works on GitHub Pages).
     if args.web_dir:
         os.makedirs(args.web_dir, exist_ok=True)
-        photos = []
+        cascade = eye_cascade = None
+        if args.face_crop:
+            try:
+                import cv2
+                cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
+                eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_eye.xml")
+            except Exception as e:  # noqa: BLE001
+                print(f"face-crop unavailable ({e}); keeping full images", file=sys.stderr)
+        photos, rejected = [], 0
         for rec in collected:
             fname = f"p-{rec['id']}.jpg"
+            dest = os.path.join(args.web_dir, fname)
             try:
-                download(rec["imageURL"], os.path.join(args.web_dir, fname))
+                download(rec["imageURL"], dest)
                 time.sleep(args.delay)
             except Exception as e:  # noqa: BLE001
                 print(f"  skip {fname}: {e}", file=sys.stderr)
                 continue
+            if cascade is not None:
+                # Keep only clear portraits: crop to the face, drop faceless
+                # images (gravestones/documents) and tiny-face full-body shots.
+                if not face_crop(dest, cascade, args.thumb_width, eye_cascade=eye_cascade):
+                    try:
+                        os.remove(dest)
+                    except OSError:
+                        pass
+                    rejected += 1
+                    continue
             photos.append({
                 "file": fname,
                 "age": rec["age"],
                 "name": rec["name"],
                 "attribution": rec["attribution"],
             })
+        if args.face_crop:
+            print(f"Face-crop kept {len(photos)}, rejected {rejected} (no usable face).", file=sys.stderr)
         with open(os.path.join(args.web_dir, "manifest.json"), "w", encoding="utf-8") as f:
             json.dump({"version": 1, "photos": photos}, f, indent=1, ensure_ascii=False)
             f.write("\n")
