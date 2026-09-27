@@ -348,7 +348,9 @@ def main():
                 cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
                 eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_eye.xml")
             except Exception as e:  # noqa: BLE001
-                print(f"face-crop unavailable ({e}); keeping full images", file=sys.stderr)
+                # Fail loudly rather than silently shipping uncropped full-body/junk.
+                print(f"ERROR: --face-crop requested but OpenCV is unavailable: {e}", file=sys.stderr)
+                sys.exit(2)
         photos, rejected = [], 0
         for rec in collected:
             fname = f"p-{rec['id']}.jpg"

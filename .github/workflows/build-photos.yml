@@ -33,7 +33,8 @@ jobs:
           python-version: "3.11"
 
       - name: Install OpenCV (for face-crop)
-        run: pip install --quiet opencv-python-headless
+        # Pin to 4.x — cv2 5.0 dropped the top-level CascadeClassifier the crop uses.
+        run: pip install --quiet "opencv-python-headless==4.10.0.84"
 
       - name: Collect verified-age photos
         run: |
