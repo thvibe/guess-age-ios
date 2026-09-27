@@ -192,7 +192,29 @@
     padding: 4px 10px; border-radius: 999px; opacity: 0; transition: opacity .2s;
   }
   #card.photo .credit { opacity: 1; }
+  body.revealed .credit { opacity: 0; }   /* the crowd chart takes this space; attribution moves to the sub-line */
   .credit a { color: #fff; }
+
+  /* "How others guessed" — a crowd age-band distribution that slides up over the
+     lower card on reveal. Reads over the image via a dark scrim; #card clips it. */
+  #crowd { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; display: none;
+    flex-direction: column; gap: 7px; padding: 26px 14px 13px;
+    background: linear-gradient(to top, rgba(10,7,16,.82) 0%, rgba(10,7,16,.72) 62%, rgba(10,7,16,0) 100%);
+    color: #fff; max-height: 66%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  body.revealed #crowd { display: flex; animation: crowdIn .34s ease .16s both; }
+  @keyframes crowdIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  #crowd .ch { font-family: var(--round); font-weight: 800; font-size: 11px; letter-spacing: .06em;
+    text-transform: uppercase; color: rgba(255,255,255,.82); }
+  #crowd .ch b { color: #fff; }
+  .cbar { display: grid; grid-template-columns: 50px 1fr 38px; align-items: center; gap: 9px; font-size: 12px; }
+  .cbar .cband { font-weight: 700; font-variant-numeric: tabular-nums; color: rgba(255,255,255,.9); }
+  .cbar .ctrack { height: 10px; border-radius: 999px; background: rgba(255,255,255,.16); overflow: hidden; }
+  .cbar .cfill { height: 100%; border-radius: 999px; background: rgba(255,255,255,.55); transition: width .5s cubic-bezier(.2,.8,.3,1); }
+  .cbar .cpct { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: rgba(255,255,255,.9); }
+  .cbar.is-true .cfill { background: var(--good); }
+  .cbar.is-true .cband { color: var(--good); }
+  .cbar.is-you .ctrack { box-shadow: inset 0 0 0 2px var(--blue); }
+  .cbar.is-you .cband { color: var(--blue); }
   /* Actions under the answer buttons: a Skip link + the report (thumbs-down). */
   .subactions { display: flex; align-items: center; justify-content: center; gap: 20px; min-height: 44px; }
   body.revealed .subactions { display: none; }
@@ -494,6 +516,7 @@
       <canvas id="face"></canvas>
       <img id="photo" alt="">
       <div class="credit" id="credit"></div>
+      <div id="crowd" aria-live="polite"></div>
     </div>
   </div>
 
@@ -1141,6 +1164,57 @@
   // Script web-app URL. Leave '' to only hide reported images on the device.
   const REPORT_ENDPOINT = '';
   const RKEY = 'guessage.reported.v1';
+
+  // ---- Crowd age guesses ("How others guessed") ----------------------------
+  // Each answer records which 10-year age band the player picked for this photo.
+  // Leave STATS_ENDPOINT '' to tally on THIS DEVICE only (labelled "your guesses");
+  // set it to a backend that accepts POST {id, band} and answers GET ?id=<id>
+  // with {"counts":[9 numbers]} to show the real crowd distribution.
+  const STATS_ENDPOINT = '';
+  const AGE_BANDS = [[5,14],[15,24],[25,34],[35,44],[45,54],[55,64],[65,74],[75,84],[85,99]];
+  const bandIndex = age => Math.min(8, Math.max(0, Math.floor((age - 5) / 10)));
+  const bandLabel = i => AGE_BANDS[i][0] + '–' + AGE_BANDS[i][1];
+  const GKEY = 'guessage.guesses.v1';
+  const loadGuesses = () => { try { return JSON.parse(localStorage.getItem(GKEY)) || {}; } catch (e) { return {}; } };
+  const saveGuesses = o => { try { localStorage.setItem(GKEY, JSON.stringify(o)); } catch (e) {} };
+  function postGuess(key, band) {
+    try { fetch(STATS_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: key, band }), keepalive: true }).catch(() => {}); } catch (e) {}
+  }
+  function fetchDist(key) {
+    const url = STATS_ENDPOINT + (STATS_ENDPOINT.indexOf('?') >= 0 ? '&' : '?') + 'id=' + encodeURIComponent(key);
+    return fetch(url, { cache: 'no-store' }).then(r => r.ok ? r.json() : null)
+      .then(d => (d && Array.isArray(d.counts) && d.counts.length === 9) ? d.counts : null).catch(() => null);
+  }
+  function renderCrowd(counts, youIdx, trueAge, isCrowd) {
+    const host = el('crowd'); if (!host) return;
+    const total = counts.reduce((s, c) => s + c, 0) || 1;
+    const trueIdx = bandIndex(trueAge);
+    const show = [];
+    for (let i = 0; i < 9; i++) if (counts[i] > 0 || i === trueIdx || i === youIdx) show.push(i);
+    const head = isCrowd
+      ? '<div class="ch">How players guessed · <b>' + total.toLocaleString() + '</b></div>'
+      : '<div class="ch">Your guesses on this face · <b>' + total + '</b></div>';
+    const rows = show.map(i => {
+      const pct = Math.round(counts[i] / total * 100);
+      const cls = 'cbar' + (i === trueIdx ? ' is-true' : '') + (i === youIdx ? ' is-you' : '');
+      return '<div class="' + cls + '"><span class="cband">' + bandLabel(i) + '</span>'
+        + '<span class="ctrack"><span class="cfill" style="width:' + pct + '%"></span></span>'
+        + '<span class="cpct">' + pct + '%</span></div>';
+    }).join('');
+    host.innerHTML = head + rows;
+  }
+  function recordGuess(key, chosenAge, trueAge) {
+    const you = bandIndex(chosenAge);
+    const g = loadGuesses();
+    const arr = (g[key] && g[key].length === 9) ? g[key] : new Array(9).fill(0);
+    arr[you] += 1; g[key] = arr; saveGuesses(g);
+    renderCrowd(arr, you, trueAge, false);            // device tally shows immediately
+    if (STATS_ENDPOINT) {                              // if wired up, replace with the real crowd
+      postGuess(key, you);
+      fetchDist(key).then(counts => { if (counts) renderCrowd(counts, you, trueAge, true); });
+    }
+  }
+
   let reported;
   try { reported = new Set(JSON.parse(localStorage.getItem(RKEY)) || []); } catch (e) { reported = new Set(); }
   const saveReported = () => { try { localStorage.setItem(RKEY, JSON.stringify([...reported])); } catch (e) {} };
@@ -1284,6 +1358,7 @@
     // Clear any lingering celebration bits so they can't bleed into the next round.
     el('phone').querySelectorAll('.confetti-layer, .plus-float').forEach(n => n.remove());
     el('s-score').classList.remove('win'); el('s-streak').classList.remove('win');
+    el('crowd').innerHTML = '';   // reset the crowd chart for the next face
     const card = el('card'); card.classList.remove('reveal-in'); void card.offsetWidth; card.classList.add('reveal-in');
 
     if (mode === 'photo' && photos.length) {
@@ -1423,6 +1498,9 @@
       sc.classList.add('win'); st.classList.add('win');
       setTimeout(() => { sc.classList.remove('win'); st.classList.remove('win'); }, 640);
     }
+    // Record which age band the player picked for this face + show the crowd chart.
+    // Only for real photos — a procedural cartoon face has no shared identity.
+    if (state.photo) recordGuess(photoKey(state.photo), state.opts.values[i], state.age);
     recordSession();   // keep this session's record live in history
   }
 
