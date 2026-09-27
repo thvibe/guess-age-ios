@@ -162,6 +162,7 @@
   .stat b { font-family: var(--round); font-weight: 800; font-size: 20px; display: block;
     font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
   .stat span { font-size: 10.5px; color: var(--text-2); text-transform: uppercase; letter-spacing: .05em; }
+  .stat.rank b { font-size: 15px; letter-spacing: 0; line-height: 1.35; }   /* rank name, not a number */
   .stat.flash b { animation: pop .35s ease; }
   @keyframes pop { 0%{transform:scale(1)} 40%{transform:scale(1.22)} 100%{transform:scale(1)} }
 
@@ -546,7 +547,7 @@
   <div class="scores">
     <div class="stat" id="s-score"><b>0</b><span>Score</span></div>
     <div class="stat" id="s-streak"><b>0</b><span>Streak</span></div>
-    <div class="stat" id="s-best"><b>0</b><span>Best</span></div>
+    <div class="stat rank" id="s-rank"><b>Rookie</b><span>Rank</span></div>
     <div class="stat" id="s-acc"><b>0%</b><span>Accuracy</span></div>
   </div>
 
@@ -1313,7 +1314,7 @@
   function renderScores(flash) {
     setStat('s-score', state.score, flash);
     setStat('s-streak', state.streak);
-    setStat('s-best', state.best);
+    if (typeof renderRankTile === 'function') renderRankTile();   // the Rank tile replaced Best
     const acc = state.rounds ? Math.round(state.correct/state.rounds*100) : 0;
     setStat('s-acc', acc + '%');
   }
@@ -1532,13 +1533,13 @@
   // ---- Progression: XP, Eye Ranks, and sets of 5 (engagement) -------------
   const SET_SIZE = 5;
   const RANKS = [
-    { name: 'Rookie Eye',    xp: 0,     acc: 0,    fill: '#10b5aa', ring: '#10b5aa' },
-    { name: 'Keen Eye',      xp: 300,   acc: 0,    fill: '#3b82f6', ring: '#3b82f6' },
-    { name: 'Sharp Eye',     xp: 800,   acc: 0.55, fill: '#6d5efc', ring: '#6d5efc' },
-    { name: 'Eagle Eye',     xp: 1800,  acc: 0.62, fill: '#f0653a', ring: '#f0653a' },
-    { name: 'Hawk Eye',      xp: 3500,  acc: 0.68, fill: '#e30f74', ring: '#e30f74' },
-    { name: 'Age Whisperer', xp: 6000,  acc: 0.72, fill: '#facc15', ring: '#e0a80f' },
-    { name: 'The Oracle',    xp: 10000, acc: 0.78, fill: '#facc15', ring: '#1c1830' },
+    { name: 'Rookie Eye',    short: 'Rookie',    xp: 0,     acc: 0,    fill: '#10b5aa', ring: '#10b5aa' },
+    { name: 'Keen Eye',      short: 'Keen',      xp: 300,   acc: 0,    fill: '#3b82f6', ring: '#3b82f6' },
+    { name: 'Sharp Eye',     short: 'Sharp',     xp: 800,   acc: 0.55, fill: '#6d5efc', ring: '#6d5efc' },
+    { name: 'Eagle Eye',     short: 'Eagle',     xp: 1800,  acc: 0.62, fill: '#f0653a', ring: '#f0653a' },
+    { name: 'Hawk Eye',      short: 'Hawk',      xp: 3500,  acc: 0.68, fill: '#e30f74', ring: '#e30f74' },
+    { name: 'Age Whisperer', short: 'Whisperer', xp: 6000,  acc: 0.72, fill: '#facc15', ring: '#e0a80f' },
+    { name: 'The Oracle',    short: 'Oracle',    xp: 10000, acc: 0.78, fill: '#facc15', ring: '#1c1830' },
   ];
   const RANK_BLURB = ['Welcome, Rookie Eye.', 'Getting the hang of it.', 'You can read a face now.',
     "You're in the top 15% of players.", 'Rarely fooled.', 'Uncanny instincts.', 'You see the number before the face loads.'];
@@ -1563,7 +1564,11 @@
   const lifeAcc = () => profile.rounds ? profile.correct / profile.rounds : 0;
   const nextRank = () => profile.rank < RANKS.length - 1 ? RANKS[profile.rank + 1] : null;
 
+  function renderRankTile() {
+    const t = el('s-rank'); if (t) t.querySelector('b').textContent = RANKS[profile.rank].short;
+  }
   function renderRankStrip() {
+    renderRankTile();
     const r = RANKS[profile.rank], nx = nextRank();
     el('rkBadge').innerHTML = rankBadge(profile.rank, 30);
     el('rkName').textContent = r.name;
