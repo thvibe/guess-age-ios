@@ -2,9 +2,14 @@ name: Pages
 
 # Publishes the web version (web/) to GitHub Pages.
 # One-time: repo Settings -> Pages -> Build and deployment -> Source: GitHub Actions.
+#
+# GitHub Pages deploys ONLY from the repo's default branch (the `github-pages`
+# environment rejects any other branch), so this workflow triggers only on the
+# default branch. If you promote a different branch to default (Settings ->
+# Branches), update the branch below to match so Pages keeps deploying.
 on:
   push:
-    branches: [main, claude/age-guessing-game-ios-4rs8x2]
+    branches: [claude/age-guessing-game-ios-4rs8x2]
     paths: ["web/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
