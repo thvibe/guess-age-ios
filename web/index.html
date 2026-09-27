@@ -8,63 +8,77 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Guess the Age">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#0ca5b5">
+<meta name="theme-color" content="#ff7a4d">
 <style>
+  /* 90s neo-retro / Memphis: hot magenta + teal on warm cream. */
   :root {
-    --accent: #0ca5b5;
-    --accent-press: #0b8d9b;
-    --good: #22c55e;
-    --good-fill: rgba(34,197,94,.16);
-    --bad: #ff4d6d;
-    --bad-fill: rgba(255,77,109,.16);
-    --bg: #eef7f7;
-    --card: #ffffff;
-    --fill: #dff0f1;
-    --fill-press: #cfe8ea;
-    --text: #10262a;
-    --text-2: #5c757a;
-    --text-3: #93a9ac;
-    --hair-line: rgba(16,38,42,.08);
-    --shadow: 0 12px 30px rgba(12,120,130,.16), 0 2px 6px rgba(12,120,130,.09);
+    --accent: #ff2e88;            /* hot retro magenta */
+    --accent-press: #e81d76;
+    --teal: #10b5aa;
+    --good: #12b26a;
+    --good-fill: rgba(18,178,106,.16);
+    --bad: #ff3b5c;
+    --bad-fill: rgba(255,59,92,.16);
+    --bg: #ecdfc7;                /* warm cream base */
+    --bg2: #f8f0df;              /* lighter top of the gradient */
+    --card: #fffdf6;             /* warm white */
+    --fill: #efe6d2;
+    --fill-press: #e5d9c0;
+    --btn-face: #fffdf6;
+    --btn-edge: #10b5aa;         /* teal 3D bottom edge on option buttons */
+    --btn-border: #e6dcc4;
+    --text: #241f2b;             /* deep retro ink */
+    --text-2: #6c6355;
+    --text-3: #a99f8a;
+    --hair-line: rgba(36,31,43,.08);
+    --shadow: 0 12px 30px rgba(60,40,20,.18), 0 2px 6px rgba(60,40,20,.10);
     --sans: -apple-system, "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif;
     --round: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, "Segoe UI", sans-serif;
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --accent: #17b7c2;
-      --accent-press: #139aa4;
-      --good: #34d399;
-      --good-fill: rgba(52,211,153,.18);
-      --bad: #ff6b85;
-      --bad-fill: rgba(255,107,133,.18);
-      --bg: #0c1618;
-      --card: #142226;
-      --fill: #1c2e33;
-      --fill-press: #274046;
-      --text: #eef7f8;
-      --text-2: #a7bcc0;
-      --text-3: #6f868b;
+      --accent: #ff4d9d;
+      --accent-press: #f0338a;
+      --teal: #22d3c4;
+      --good: #2ed47f;
+      --good-fill: rgba(46,212,127,.20);
+      --bad: #ff5c78;
+      --bad-fill: rgba(255,92,120,.20);
+      --bg: #14121c;             /* deep retro plum-navy */
+      --bg2: #201a2e;
+      --card: #211c2c;
+      --fill: #2a2438;
+      --fill-press: #3a3350;
+      --btn-face: #221c2e;
+      --btn-edge: #0f9c92;
+      --btn-border: #3d3652;
+      --text: #f6eefb;
+      --text-2: #b6a7c4;
+      --text-3: #7d7090;
       --hair-line: rgba(255,255,255,.08);
       --shadow: 0 12px 30px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.4);
     }
   }
   :root[data-theme="light"] {
-    --accent:#0ca5b5;--accent-press:#0b8d9b;--good:#22c55e;--good-fill:rgba(34,197,94,.16);
-    --bad:#ff4d6d;--bad-fill:rgba(255,77,109,.16);--bg:#eef7f7;--card:#fff;--fill:#dff0f1;
-    --fill-press:#cfe8ea;--text:#10262a;--text-2:#5c757a;--text-3:#93a9ac;
-    --hair-line:rgba(16,38,42,.08);--shadow:0 12px 30px rgba(12,120,130,.16),0 2px 6px rgba(12,120,130,.09);
+    --accent:#ff2e88;--accent-press:#e81d76;--teal:#10b5aa;--good:#12b26a;--good-fill:rgba(18,178,106,.16);
+    --bad:#ff3b5c;--bad-fill:rgba(255,59,92,.16);--bg:#ecdfc7;--bg2:#f8f0df;--card:#fffdf6;--fill:#efe6d2;
+    --fill-press:#e5d9c0;--btn-face:#fffdf6;--btn-edge:#10b5aa;--btn-border:#e6dcc4;
+    --text:#241f2b;--text-2:#6c6355;--text-3:#a99f8a;
+    --hair-line:rgba(36,31,43,.08);--shadow:0 12px 30px rgba(60,40,20,.18),0 2px 6px rgba(60,40,20,.10);
   }
   :root[data-theme="dark"] {
-    --accent:#17b7c2;--accent-press:#139aa4;--good:#34d399;--good-fill:rgba(52,211,153,.18);
-    --bad:#ff6b85;--bad-fill:rgba(255,107,133,.18);--bg:#0c1618;--card:#142226;--fill:#1c2e33;
-    --fill-press:#274046;--text:#eef7f8;--text-2:#a7bcc0;--text-3:#6f868b;
+    --accent:#ff4d9d;--accent-press:#f0338a;--teal:#22d3c4;--good:#2ed47f;--good-fill:rgba(46,212,127,.20);
+    --bad:#ff5c78;--bad-fill:rgba(255,92,120,.20);--bg:#14121c;--bg2:#201a2e;--card:#211c2c;--fill:#2a2438;
+    --fill-press:#3a3350;--btn-face:#221c2e;--btn-edge:#0f9c92;--btn-border:#3d3652;
+    --text:#f6eefb;--text-2:#b6a7c4;--text-3:#7d7090;
     --hair-line:rgba(255,255,255,.08);--shadow:0 12px 30px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.4);
   }
 
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; }
   body {
-    background: var(--bg);
+    background: radial-gradient(135% 95% at 50% -20%, var(--bg2), var(--bg));
+    background-attachment: fixed;
     color: var(--text);
     font-family: var(--sans);
     -webkit-font-smoothing: antialiased;
@@ -106,10 +120,12 @@
   @keyframes pop { 0%{transform:scale(1)} 40%{transform:scale(1.22)} 100%{transform:scale(1)} }
 
   .card-wrap { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; }
-  /* Circular avatar: as large as the leftover space allows, capped to a circle. */
+  /* Fixed circular avatar. Its size depends only on viewport constants (never on
+     leftover space), so nothing else changing height can resize it or make the
+     layout jump. The card-wrap just centers it and soaks up any slack. */
   #card {
-    position: relative; aspect-ratio: 1 / 1;
-    height: 100%; max-height: 78vw; max-width: 100%;
+    position: relative; flex: none; aspect-ratio: 1 / 1;
+    width: min(80vw, 44dvh, 340px);
     border-radius: 50%; overflow: hidden;
     box-shadow: var(--shadow); background: var(--fill);
   }
@@ -139,27 +155,36 @@
   .mode.active { background: var(--accent); color: #fff; }
   .mode:disabled { opacity: .45; cursor: default; }
 
-  .prompt { text-align: center; min-height: 50px; display: grid; place-items: center; }
+  .prompt { text-align: center; height: 56px; display: grid; place-items: center; overflow: hidden; }
   .prompt .ask { color: var(--text-2); font-weight: 600; font-size: 15px; }
   .prompt .verdict { font-family: var(--round); font-weight: 800; font-size: 21px; letter-spacing: -.01em; }
   .prompt .verdict.good { color: var(--good); }
   .prompt .verdict.bad { color: var(--bad); }
   .prompt .sub { color: var(--text-3); font-size: 12px; margin-top: 2px; }
 
-  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+  /* Chunky game-style buttons that clearly float above the background. */
   .opt {
-    appearance: none; border: 2px solid transparent; background: var(--card);
-    color: var(--text); border-radius: 16px; padding: 13px 0; cursor: pointer;
-    font-family: var(--round); font-weight: 800; font-size: 26px;
-    font-variant-numeric: tabular-nums; box-shadow: var(--shadow);
-    transition: transform .08s, background .15s, border-color .15s, color .15s, opacity .15s;
+    appearance: none; cursor: pointer;
+    background: var(--btn-face); color: var(--text);
+    border: 2px solid var(--btn-border); border-radius: 16px;
+    padding: 8px 0 10px;
+    font-family: var(--round);
+    box-shadow: 0 5px 0 var(--btn-edge), 0 10px 20px rgba(16,60,70,.22);
+    transition: transform .07s ease, box-shadow .07s ease, background .15s, border-color .15s, opacity .15s;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
   }
-  .opt:active { transform: scale(.97); }
+  .opt .num { font-size: 27px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.02em; line-height: 1.06; }
+  .opt .unit { font-size: 10.5px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: .07em; }
+  .opt:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--btn-edge), 0 4px 10px rgba(16,60,70,.18); }
   .opt:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-  .opt.correct { border-color: var(--good); background: var(--good-fill); }
-  .opt.wrong { border-color: var(--bad); background: var(--bad-fill); }
-  .opt.dim { opacity: .45; }
+  .opt.correct { border-color: var(--good); background: var(--good-fill); box-shadow: 0 5px 0 var(--good), 0 10px 20px rgba(22,179,100,.26); }
+  .opt.correct .unit { color: var(--good); }
+  .opt.wrong { border-color: var(--bad); background: var(--bad-fill); box-shadow: 0 5px 0 var(--bad), 0 10px 20px rgba(255,59,92,.26); }
+  .opt.wrong .unit { color: var(--bad); }
+  .opt.dim { opacity: .4; box-shadow: 0 3px 0 var(--btn-edge); }
   .answered .opt { cursor: default; }
+  .answered .opt:active { transform: none; }
 
   .next {
     appearance: none; border: 0; border-radius: 16px; padding: 12px; cursor: pointer;
@@ -193,6 +218,27 @@
   .badge { display:inline-flex; align-items:center; gap:6px; background: var(--fill); color: var(--text-2);
     font-size: 11.5px; font-weight:600; padding: 6px 11px; border-radius: 999px; margin-bottom: 14px; }
 
+  .bar-btns { display: flex; gap: 8px; }
+  /* Score history overlay */
+  #history { position: fixed; inset: 0; background: color-mix(in srgb, var(--bg) 86%, transparent);
+    backdrop-filter: blur(10px); display: grid; place-items: center; padding: 24px; z-index: 6; }
+  #history.hidden { display: none; }
+  #history .sheet { max-width: 400px; }
+  .hist-list { max-height: 46vh; overflow-y: auto; margin: 4px 0 16px; text-align: left;
+    display: flex; flex-direction: column; gap: 8px; -webkit-overflow-scrolling: touch; }
+  .hist-row { display: flex; align-items: center; gap: 10px; background: var(--fill);
+    border-radius: 14px; padding: 9px 12px; }
+  .hist-row .rank { font-family: var(--round); font-weight: 800; color: var(--text-3); width: 20px; text-align: center; font-size: 13px; }
+  .hist-row .h-score { font-family: var(--round); font-weight: 800; font-size: 20px; font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .hist-row .h-when { font-size: 11px; color: var(--text-3); }
+  .hist-row .h-meta { color: var(--text-2); font-size: 11.5px; margin-left: auto; text-align: right; line-height: 1.35; }
+  .hist-row.best { outline: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--fill)); }
+  .hist-empty { color: var(--text-2); font-size: 14px; padding: 22px 6px; text-align: center; line-height: 1.4; }
+  .hist-actions { display: flex; gap: 10px; }
+  .ghost { appearance: none; border: 2px solid var(--btn-border); background: transparent; color: var(--text-2);
+    border-radius: 14px; padding: 12px 16px; font-family: var(--round); font-weight: 700; font-size: 15px; cursor: pointer; }
+  .ghost:active { transform: scale(.97); }
+
   @media (prefers-reduced-motion: reduce) {
     * { animation: none !important; transition: none !important; }
   }
@@ -202,7 +248,10 @@
 <div id="phone" aria-hidden="false">
   <header class="bar">
     <div class="title">Guess the Age <small>· demo</small></div>
-    <button class="icon-btn" id="restart" title="Restart" aria-label="Restart">↺</button>
+    <div class="bar-btns">
+      <button class="icon-btn" id="historyBtn" title="Score history" aria-label="Score history">📊</button>
+      <button class="icon-btn" id="restart" title="Restart" aria-label="Restart">↺</button>
+    </div>
   </header>
 
   <div class="scores">
@@ -236,6 +285,18 @@
 
   <div class="foot">
     <b>Photos</b> are real people with ages verified from public records · <b>Cartoon</b> is drawn, all ages.
+  </div>
+</div>
+
+<div id="history" class="hidden">
+  <div class="sheet">
+    <h1>Your scores</h1>
+    <p class="tag" id="histSummary">No games yet.</p>
+    <div id="histList" class="hist-list"></div>
+    <div class="hist-actions">
+      <button class="ghost" id="histClear">Clear</button>
+      <button class="next" id="histClose" style="flex:2">Close</button>
+    </div>
   </div>
 </div>
 
@@ -834,6 +895,51 @@
     setStat('s-acc', acc + '%');
   }
 
+  // ---- Score history: each session (a run of play) is recorded to localStorage ----
+  const HKEY = 'guessage.history.v1';
+  const loadHistory = () => { try { return JSON.parse(localStorage.getItem(HKEY)) || []; } catch (e) { return []; } };
+  const saveHistory = (a) => { try { localStorage.setItem(HKEY, JSON.stringify(a)); } catch (e) {} };
+  function startNewSession() { state.sessionId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6); state.sessionTs = Date.now(); }
+  function recordSession() {
+    if (!state.rounds || !state.sessionId) return;   // nothing played this session
+    const a = loadHistory();
+    const rec = { id: state.sessionId, ts: state.sessionTs || Date.now(), score: state.score,
+                  rounds: state.rounds, correct: state.correct, best: state.best,
+                  mode: state.photo ? 'Photos' : 'Cartoon' };
+    const i = a.findIndex(r => r.id === rec.id);
+    if (i >= 0) a[i] = rec; else a.push(rec);
+    a.sort((x, y) => y.ts - x.ts);
+    if (a.length > 100) a.length = 100;
+    saveHistory(a);
+  }
+  const fmtWhen = (ts) => { const d = new Date(ts);
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' · ' +
+           d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); };
+  function openHistory() {
+    const a = loadHistory(), list = el('histList');
+    list.innerHTML = '';
+    if (!a.length) {
+      list.innerHTML = '<div class="hist-empty">No games recorded yet.<br>Play a round and your score lands here.</div>';
+      el('histSummary').textContent = 'No games yet.';
+    } else {
+      const best = Math.max(...a.map(r => r.score));
+      const avg = Math.round(a.reduce((s, r) => s + r.score, 0) / a.length);
+      el('histSummary').textContent = `${a.length} game${a.length > 1 ? 's' : ''} · best ${best} · avg ${avg}`;
+      a.forEach((r, idx) => {
+        const acc = r.rounds ? Math.round(r.correct / r.rounds * 100) : 0;
+        const row = document.createElement('div');
+        row.className = 'hist-row' + (r.score === best ? ' best' : '');
+        row.innerHTML = `<div class="rank">${idx + 1}</div>`
+          + `<div><div class="h-score">${r.score}${r.score === best ? ' 🏆' : ''}</div>`
+          + `<div class="h-when">${escapeHtml(fmtWhen(r.ts))} · ${r.mode}</div></div>`
+          + `<div class="h-meta">${r.rounds} rounds · ${acc}%<br>best streak ${r.best}</div>`;
+        list.appendChild(row);
+      });
+    }
+    el('history').classList.remove('hidden');
+  }
+  const closeHistory = () => el('history').classList.add('hidden');
+
   // ---- Idle animation for the cartoon face (blinking + occasional smile) ----
   // No vertical bob — the head stays put; only the eyes blink and the mouth
   // breaks into a grin now and then, with a whisper of head tilt.
@@ -895,11 +1001,12 @@
     if (!animOn) { animOn = true; animRAF = requestAnimationFrame(faceFrame); }
   }
   function stopFaceAnim() { animOn = false; if (animRAF) { cancelAnimationFrame(animRAF); animRAF = 0; } }
-  // Pause the loop when the tab is hidden (cartoon only).
+  // Pause the loop when the tab is hidden (cartoon only) + persist the session.
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) stopFaceAnim();
+    if (document.hidden) { stopFaceAnim(); recordSession(); }
     else if (mode === 'cartoon') startFaceAnim();
   });
+  window.addEventListener('pagehide', recordSession);
 
   function newRound() {
     state.seed = randSeed(); state.answered = false;
@@ -925,7 +1032,7 @@
 
     el('options').classList.remove('answered');
     optEls.forEach((b,i) => {
-      b.textContent = state.opts.values[i];
+      b.innerHTML = '<span class="num">' + state.opts.values[i] + '</span><span class="unit">years old</span>';
       b.className = 'opt'; b.disabled = false;
     });
     el('prompt').innerHTML = '<div class="ask">How old is this person?</div>';
@@ -966,15 +1073,22 @@
       : '<div><div class="verdict bad">Actual age: ' + state.age + '</div><div class="sub">' + sub + '</div></div>';
     el('next').classList.remove('is-hidden');
     renderScores(isRight);
+    recordSession();   // keep this session's record live in history
   }
 
   optEls.forEach((b,i) => b.addEventListener('click', () => answer(i)));
   el('next').addEventListener('click', newRound);
   el('restart').addEventListener('click', () => {
+    recordSession();
     Object.assign(state, { score:0, rounds:0, correct:0, streak:0, best:0 });
+    startNewSession();
     renderScores(false); newRound();
   });
   el('play').addEventListener('click', () => { el('start').classList.add('hidden'); newRound(); });
+
+  el('historyBtn').addEventListener('click', openHistory);
+  el('histClose').addEventListener('click', closeHistory);
+  el('histClear').addEventListener('click', () => { if (confirm('Clear all score history?')) { saveHistory([]); openHistory(); } });
 
   const modeBtns = [...document.querySelectorAll('.mode')];
   function setActiveMode(m) {
@@ -983,8 +1097,10 @@
   }
   modeBtns.forEach(b => b.addEventListener('click', () => {
     if (b.disabled || b.dataset.mode === mode) return;
+    recordSession();
     setActiveMode(b.dataset.mode);
     Object.assign(state, { score:0, rounds:0, correct:0, streak:0, best:0 });
+    startNewSession();
     renderScores(false); newRound();
   }));
 
@@ -1005,6 +1121,7 @@
 
   let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (mode === 'cartoon') drawFace(canvas, state.age, state.seed); }, 120); });
 
+  startNewSession();
   renderScores(false);
   state.age = 34; state.seed = 12345;
   startFaceAnim();
