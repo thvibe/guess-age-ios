@@ -286,8 +286,10 @@
   .ghost:active { transform: scale(.97); }
 
   /* ---- Landscape: controls on the LEFT, image on the RIGHT (filling its
-     side), answer buttons in a full-width FOOTER. ---- */
-  @media (orientation: landscape) and (min-width: 560px) {
+     side), answer buttons in a full-width FOOTER. Scoped to a SHORT viewport so
+     it only kicks in when a PHONE is turned sideways — desktop/tablet (tall
+     viewports) keep the centred portrait layout. ---- */
+  @media (orientation: landscape) and (max-height: 600px) {
     #phone {
       max-width: none; width: 100%;
       display: grid;
