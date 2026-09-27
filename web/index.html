@@ -211,8 +211,8 @@
   .mode:disabled { opacity: .45; cursor: default; }
 
   .prompt { text-align: center; height: 68px; display: grid; place-items: center; overflow: hidden; }
-  .prompt .ask { color: var(--text); font-weight: 800; font-size: 25px;
-    font-family: var(--sans); letter-spacing: -.02em; }
+  .prompt .ask { color: var(--text); font-weight: 400; font-size: 27px;
+    font-family: 'Luckiest Guy', var(--round); letter-spacing: .5px; }
   .prompt .verdict { font-family: 'Luckiest Guy', var(--round); font-weight: 400; font-size: 30px; letter-spacing: .5px; color: var(--text); line-height: 1; }
   .prompt .sub { color: var(--text-3); font-size: 12px; margin-top: 2px; }
 
@@ -220,19 +220,19 @@
   /* Chunky game-style buttons that clearly float above the background. */
   .opt {
     appearance: none; cursor: pointer;
-    background: var(--accent); color: #fff;
-    border: 2px solid var(--accent); border-radius: 16px;
+    background: color-mix(in srgb, var(--card) 62%, transparent); color: var(--accent);
+    border: 2.5px solid var(--accent); border-radius: 16px;
     padding: 8px 0 10px;
     font-family: var(--round);
-    box-shadow: 0 5px 0 var(--accent-press), 0 10px 20px rgba(227,15,116,.28);
+    box-shadow: 0 0 12px rgba(227,15,116,.30), inset 0 0 10px rgba(227,15,116,.08);
     transition: transform .07s ease, box-shadow .07s ease, background .15s, border-color .15s, opacity .15s;
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
   }
-  .opt .num { font-size: 27px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.02em; line-height: 1.06; }
-  .opt .unit { font-size: 10.5px; font-weight: 700; color: rgba(255,255,255,.82); text-transform: uppercase; letter-spacing: .07em; }
+  .opt .num { font-size: 27px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.02em; line-height: 1.06; color: var(--accent); text-shadow: 0 0 10px rgba(227,15,116,.35); }
+  .opt .unit { font-size: 10.5px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .07em; }
   .opt-text { display: flex; flex-direction: column; align-items: center; justify-content: center; }
   .opt-icon { width: 26px; height: 26px; flex: none; color: currentColor; }
-  .opt:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--accent-press), 0 4px 10px rgba(227,15,116,.2); }
+  .opt:active { transform: translateY(1px); box-shadow: 0 0 8px rgba(227,15,116,.25), inset 0 0 14px rgba(227,15,116,.14); background: color-mix(in srgb, var(--accent) 14%, var(--card)); }
   .opt:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
   /* Reveal: solid GREEN (correct) + solid RED (wrong) over a black overlay so the
      answer is unmistakable; the correct one bounces toward the viewer. */
@@ -453,7 +453,7 @@
     </div>
   </div>
 
-  <div class="prompt" id="prompt"><div class="ask">How old is this person?</div></div>
+  <div class="prompt" id="prompt"><div class="ask">How old am I?</div></div>
 
   <div class="options" id="options">
     <button class="opt"></button><button class="opt"></button>
@@ -1114,7 +1114,11 @@
   let photoFails = 0;        // consecutive streamed-image load failures
   photoImg.addEventListener('load', () => { photoFails = 0; });
 
-  // ---- Report an image (thumbs-down): hide it for this player and remember it. ----
+  // ---- Report an image (thumbs-down): hide it for this player + send the flag. ----
+  // Paste a collection endpoint below to RECEIVE reports centrally — e.g. a
+  // Formspree form URL ("https://formspree.io/f/XXXXXXXX") or a Google Apps
+  // Script web-app URL. Leave '' to only hide reported images on the device.
+  const REPORT_ENDPOINT = '';
   const RKEY = 'guessage.reported.v1';
   const photoKey = p => (p && (p.id || p.file || p.url)) || '';
   let reported;
@@ -1302,7 +1306,7 @@
       b.innerHTML = '<span class="opt-text"><span class="num">' + state.opts.values[i] + '</span><span class="unit">years old</span></span>';
       b.className = 'opt'; b.disabled = false;
     });
-    el('prompt').innerHTML = '<div class="ask">How old is this person?</div>';
+    el('prompt').innerHTML = '<div class="ask">How old am I?</div>';
     el('next').classList.add('is-hidden');
   }
 
@@ -1345,11 +1349,28 @@
 
   optEls.forEach((b,i) => b.addEventListener('click', () => answer(i)));
   el('next').addEventListener('click', newRound);
+  function sendReport(p, k) {
+    if (!REPORT_ENDPOINT) return;             // no endpoint configured -> local only
+    const a = p.attribution || {};
+    try {
+      fetch(REPORT_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          id: k, url: p.url || null, file: p.file || null, age: p.age,
+          name: p.name || null, author: a.author || null, source: a.sourceURL || null,
+          at: new Date().toISOString(), ua: navigator.userAgent
+        }),
+      }).catch(() => {});                     // fire and forget — never block the game
+    } catch (e) {}
+  }
   el('report').addEventListener('click', () => {
-    if (!state.photo) return;                 // only real photos can be reported
-    const k = photoKey(state.photo);
+    const p = state.photo;
+    if (!p) return;                           // only real photos can be reported
+    const k = photoKey(p);
     if (k) { reported.add(k); saveReported(); }
-    const i = photos.findIndex(p => photoKey(p) === k);   // drop from the live pool
+    sendReport(p, k);
+    const i = photos.findIndex(x => photoKey(x) === k);   // drop from the live pool
     if (i >= 0) photos.splice(i, 1);
     showToast('Thanks — we’ll hide that one.');
     newRound();
