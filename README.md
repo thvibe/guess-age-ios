@@ -63,6 +63,16 @@ Open that URL on an iPhone in Safari → **Share → Add to Home Screen** to pla
 full-screen like an app. This is the free, no-Mac way to try the gameplay; the
 native app also lives in Xcode.
 
+The web build's pure rules (age range, option generation, scoring, PRNG) live in
+[`web/game-logic.js`](web/game-logic.js), shared by the page and by unit tests in
+[`web/test/`](web/test/). Run them with any Node 18+ — no install needed:
+
+```bash
+node --test web/test/*.test.cjs
+```
+
+CI runs these on every push (`.github/workflows/ci.yml`).
+
 ## Get it on your iPhone (TestFlight)
 
 A GitHub Actions workflow can build the app in the cloud and deliver it to your

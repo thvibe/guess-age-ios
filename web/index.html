@@ -92,6 +92,8 @@
   }
 
   * { box-sizing: border-box; }
+  /* Android/iOS: no grey tap flash, no 300ms delay / double-tap zoom on controls. */
+  button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
   html, body { margin: 0; overscroll-behavior: none; }
   /* The Sunset Party gradient lives on <html> so it paints the ENTIRE screen —
      including behind Safari's top/bottom bars and under the iOS safe areas — and
@@ -107,6 +109,7 @@
     -webkit-font-smoothing: antialiased;
     display: flex;
     justify-content: center;
+    min-height: 100vh;      /* fallback for browsers without dvh */
     min-height: 100dvh;
   }
   /* Decorative Memphis confetti + warm sun glow, fixed behind everything. */
@@ -125,6 +128,7 @@
   #phone {
     width: 100%;
     max-width: 440px;
+    height: 100vh;          /* fallback for browsers without dvh */
     height: 100dvh;
     overflow: hidden;
     padding: max(10px, env(safe-area-inset-top)) 16px calc(12px + env(safe-area-inset-bottom));
@@ -183,12 +187,11 @@
     position: absolute; left: 50%; transform: translateX(-50%); bottom: 10px; z-index: 2;
     max-width: 88%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     font-size: 10px; line-height: 1.2; color: #fff;
-    background: rgba(0,0,0,.42); backdrop-filter: blur(4px);
+    background: rgba(0,0,0,.42); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
     padding: 4px 10px; border-radius: 999px; opacity: 0; transition: opacity .2s;
   }
   #card.photo .credit { opacity: 1; }
   .credit a { color: #fff; }
-  /* Report button (thumbs-down) over the photo — flag a nonsense / inappropriate image. */
   /* Actions under the answer buttons: a Skip link + the report (thumbs-down). */
   .subactions { display: flex; align-items: center; justify-content: center; gap: 20px; min-height: 44px; }
   body.revealed .subactions { display: none; }
@@ -207,12 +210,6 @@
     z-index: 20; opacity: 0; pointer-events: none; max-width: 84%; text-align: center;
     box-shadow: 0 8px 24px rgba(0,0,0,.35); transition: opacity .2s ease, transform .2s ease; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  .modes { display: flex; gap: 8px; }
-  .mode { flex: 1; appearance: none; border: 0; border-radius: 12px; padding: 9px 0; cursor: pointer;
-    font-family: var(--round); font-weight: 800; font-size: 14px; background: var(--fill); color: var(--text-2);
-    transition: background .15s, color .15s; }
-  .mode.active { background: var(--accent); color: #fff; }   /* white on deep pink = AA (4.6:1) */
-  .mode:disabled { opacity: .45; cursor: default; }
 
   .prompt { text-align: center; height: 68px; display: grid; place-items: center; overflow: hidden; }
   .prompt .ask { color: var(--text); font-weight: 400; font-size: 27px;
@@ -277,14 +274,13 @@
     background: radial-gradient(135% 78% at 50% 86%, rgba(0,0,0,.02) 0%, rgba(0,0,0,.26) 55%, rgba(0,0,0,.5) 100%);
     opacity: 0; visibility: hidden; transition: opacity .28s ease; z-index: 3; pointer-events: none; }
   body.revealed .scrim { opacity: 1; visibility: visible; }
-  body.revealed #options, body.revealed .prompt, body.revealed #next,
-  body.revealed .scores, body.revealed header.bar { position: relative; z-index: 4; }
+  body.revealed #options, body.revealed .prompt, body.revealed #next { position: relative; z-index: 4; }
 
   .next {
     appearance: none; border: 0; border-radius: 16px; padding: 12px; cursor: pointer;
     background: var(--accent); color: #fff; font-family: var(--round); font-weight: 800;
     font-size: 17px; transition: transform .08s, background .15s, opacity .2s;
-    box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 45%, transparent);
+    box-shadow: 0 6px 18px rgba(227,15,116,.45);
   }
   .next:active { transform: scale(.98); background: var(--accent-press); }
   .next.is-hidden { display: none; }   /* Skip/report row occupies this slot pre-answer */
@@ -292,30 +288,18 @@
   .foot { text-align: center; color: var(--text-2); font-size: 11px; line-height: 1.5; }
   .foot b { color: var(--text); font-weight: 700; }
 
-  #start {
-    position: fixed; inset: 0; background: color-mix(in srgb, var(--bg) 86%, transparent);
-    backdrop-filter: blur(10px); display: grid; place-items: center; padding: 24px; z-index: 5;
-  }
-  #start.hidden { display: none; }
+  /* Sheet used by the score-history overlay. */
   .sheet {
     width: 100%; max-width: 380px; background: var(--card); border-radius: 26px;
     padding: 26px 24px; box-shadow: var(--shadow); text-align: center;
   }
   .sheet h1 { font-family: var(--round); font-weight: 800; font-size: 27px; margin: 6px 0 2px; letter-spacing: -.02em; }
   .sheet p.tag { color: var(--text-2); margin: 0 0 18px; font-size: 14px; }
-  .rules { text-align: left; display: flex; flex-direction: column; gap: 12px; margin: 0 0 22px; }
-  .rule { display: flex; gap: 12px; align-items: flex-start; font-size: 14px; }
-  .rule .n { flex: none; width: 26px; height: 26px; border-radius: 8px; background: var(--fill);
-    color: var(--accent); font-family: var(--round); font-weight: 800; display: grid; place-items: center; font-size: 14px; }
-  .rule span { color: var(--text-2); line-height: 1.35; }
-  .rule b { color: var(--text); font-weight: 700; }
-  .badge { display:inline-flex; align-items:center; gap:6px; background: var(--fill); color: var(--text-2);
-    font-size: 11.5px; font-weight:600; padding: 6px 11px; border-radius: 999px; margin-bottom: 14px; }
 
   .bar-btns { display: flex; gap: 8px; }
   /* Score history overlay */
-  #history { position: fixed; inset: 0; background: color-mix(in srgb, var(--bg) 86%, transparent);
-    backdrop-filter: blur(10px); display: grid; place-items: center; padding: 24px; z-index: 6; }
+  #history { position: fixed; inset: 0; background: rgba(20,16,28,.5); background: color-mix(in srgb, var(--bg) 86%, transparent);
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); display: grid; place-items: center; padding: 24px; z-index: 6; }
   #history.hidden { display: none; }
   #history .sheet { max-width: 400px; }
   .hist-list { max-height: 46vh; overflow-y: auto; margin: 4px 0 16px; text-align: left;
@@ -326,7 +310,7 @@
   .hist-row .h-score { font-family: var(--round); font-weight: 800; font-size: 20px; font-variant-numeric: tabular-nums; line-height: 1.1; }
   .hist-row .h-when { font-size: 11px; color: var(--text-3); }
   .hist-row .h-meta { color: var(--text-2); font-size: 11.5px; margin-left: auto; text-align: right; line-height: 1.35; }
-  .hist-row.best { outline: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--fill)); }
+  .hist-row.best { outline: 2px solid var(--accent); background: var(--fill); background: color-mix(in srgb, var(--accent) 12%, var(--fill)); }
   .hist-empty { color: var(--text-2); font-size: 14px; padding: 22px 6px; text-align: center; line-height: 1.4; }
   .hist-actions { display: flex; gap: 10px; }
   .ghost { appearance: none; border: 2px solid var(--btn-border); background: transparent; color: var(--text-2);
@@ -342,7 +326,7 @@
       max-width: none; width: 100%;
       display: grid;
       grid-template-columns: minmax(230px, 0.8fr) minmax(0, 1.35fr);
-      grid-template-rows: auto auto auto minmax(0, 1fr) auto auto;
+      grid-template-rows: auto auto minmax(0, 1fr) auto auto;
       column-gap: 22px; row-gap: 10px;
       align-items: start;
       padding-left: max(16px, env(safe-area-inset-left));
@@ -350,14 +334,13 @@
     }
     header.bar { grid-column: 1; grid-row: 1; }
     .scores    { grid-column: 1; grid-row: 2; }
-    .modes     { grid-column: 1; grid-row: 3; }
-    .prompt    { grid-column: 1; grid-row: 4; align-self: center; height: auto; }
-    #next      { grid-column: 1; grid-row: 5; align-self: end; }
+    .prompt    { grid-column: 1; grid-row: 3; align-self: center; height: auto; }
+    .subactions, #next { grid-column: 1; grid-row: 4; align-self: end; }
     /* Image fills the whole right side, top to bottom. */
-    .card-wrap { grid-column: 2; grid-row: 1 / 6; min-height: 0; height: 100%; }
+    .card-wrap { grid-column: 2; grid-row: 1 / 5; min-height: 0; height: 100%; }
     #card { aspect-ratio: auto; width: 100%; height: 100%; }
     /* Answer buttons span the full width along the bottom. */
-    .options { grid-column: 1 / 3; grid-row: 6; grid-template-columns: repeat(4, 1fr); }
+    .options { grid-column: 1 / 3; grid-row: 5; grid-template-columns: repeat(4, 1fr); }
     .foot { display: none; }
   }
 
@@ -401,9 +384,9 @@
     color: var(--text-2); background: var(--card); padding: 7px 14px; border-radius: 999px; box-shadow: var(--shadow); }
   .home-play { appearance: none; border: 0; width: min(320px, 100%); height: 60px; border-radius: 18px; cursor: pointer;
     background: var(--accent); color: #fff; font-family: var(--round); font-weight: 800; font-size: 19px;
-    box-shadow: 0 6px 0 var(--accent-press), 0 12px 24px color-mix(in srgb, var(--accent) 40%, transparent);
+    box-shadow: 0 6px 0 var(--accent-press), 0 12px 24px rgba(227,15,116,.4);
     transition: transform .08s, box-shadow .08s; }
-  .home-play:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--accent-press), 0 6px 14px color-mix(in srgb, var(--accent) 35%, transparent); }
+  .home-play:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--accent-press), 0 6px 14px rgba(227,15,116,.35); }
   .home-caption { font-size: 12px; color: var(--text); opacity: .62; letter-spacing: .05em; }
   @keyframes logoBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
   @media (max-height: 720px) { .home-teaser { display: none; } }
@@ -518,54 +501,16 @@
 
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
+<script src="game-logic.js"></script>
 <script>
 (() => {
   "use strict";
-  const MIN = 5, MAX = 99;   // never show an age (or option) of 4 or below
-  const clamp = a => Math.min(Math.max(a, MIN), MAX);
-  const cl01 = x => Math.min(1, Math.max(0, x));
-
-  function rngFrom(seed) {
-    let t = seed >>> 0;
-    return () => {
-      t += 0x6D2B79F5;
-      let r = Math.imul(t ^ (t >>> 15), 1 | t);
-      r ^= r + Math.imul(r ^ (r >>> 7), 61 | r);
-      return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
-    };
-  }
-
-  // ---- Option generation: faithful port of AgeOptionGenerator.swift ----
-  // Four options, every pair >= MIN_GAP apart, growing outward from the truth.
-  const MIN_GAP = 8;
-  function makeOptions(trueAge, rnd) {
-    const truth = clamp(trueAge);
-    const chosen = [truth];
-    let low = truth, high = truth;
-    let preferHigh = rnd() < 0.5;
-    let safety = 0;
-    while (chosen.length < 4 && safety++ < 100) {
-      const step = MIN_GAP + Math.floor(rnd() * 7); // 8..14
-      const canHigh = high + step <= MAX;
-      const canLow = low - step >= MIN;
-      let useHigh;
-      if (canHigh && canLow) { useHigh = preferHigh; preferHigh = !preferHigh; }
-      else if (canHigh) useHigh = true;
-      else if (canLow) useHigh = false;
-      else break;
-      if (useHigh) { high += step; chosen.push(high); }
-      else { low -= step; chosen.push(low); }
-    }
-    while (chosen.length < 4) {
-      for (let v = MIN; v <= MAX && chosen.length < 4; v++)
-        if (!chosen.includes(v)) chosen.push(v);
-    }
-    for (let i = chosen.length - 1; i > 0; i--) {
-      const j = Math.floor(rnd() * (i + 1));
-      [chosen[i], chosen[j]] = [chosen[j], chosen[i]];
-    }
-    return { values: chosen, correctIndex: chosen.indexOf(truth) };
-  }
+  // Pure rules (age range, PRNG, option generation, scoring) live in
+  // game-logic.js so the Node unit tests exercise the exact shipped code.
+  const {
+    MIN, MAX, clamp, cl01, rngFrom,
+    makeOptions, scoreForStreak, randAge, randSeed, photoKey,
+  } = window.GameLogic;
 
   // ---- Color helpers ----
   const hex = h => { h = h.replace('#',''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; };
@@ -1129,7 +1074,6 @@
   // Script web-app URL. Leave '' to only hide reported images on the device.
   const REPORT_ENDPOINT = '';
   const RKEY = 'guessage.reported.v1';
-  const photoKey = p => (p && (p.id || p.file || p.url)) || '';
   let reported;
   try { reported = new Set(JSON.parse(localStorage.getItem(RKEY)) || []); } catch (e) { reported = new Set(); }
   const saveReported = () => { try { localStorage.setItem(RKEY, JSON.stringify([...reported])); } catch (e) {} };
@@ -1140,9 +1084,6 @@
     clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
   }
 
-  // Cartoon ages span 5..85 (nothing 4 or under); photos use each verified age.
-  function randAge() { return 5 + Math.floor(Math.random() * 81); }
-  function randSeed() { return (Math.random() * 2 ** 31) >>> 0; }
   const escapeHtml = s => String(s == null ? '' : s).replace(/[&<>"']/g,
     c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 
@@ -1327,7 +1268,7 @@
     const isRight = i === correctIdx;
     if (isRight) {
       state.correct++; state.streak++; state.best = Math.max(state.best, state.streak);
-      state.score += 10 + Math.min(state.streak - 1, 10);
+      state.score += scoreForStreak(state.streak);
     } else {
       state.streak = 0;
     }
@@ -1434,27 +1375,7 @@
     if (!saved) updateThemeIcon();
   });
 
-  const modeBtns = [...document.querySelectorAll('.mode')];
-  function setActiveMode(m) {
-    mode = m;
-    modeBtns.forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
-  }
-  modeBtns.forEach(b => b.addEventListener('click', () => {
-    if (b.disabled || b.dataset.mode === mode) return;
-    recordSession();
-    setActiveMode(b.dataset.mode);
-    Object.assign(state, { score:0, rounds:0, correct:0, streak:0, best:0 });
-    startNewSession();
-    renderScores(false); newRound();
-  }));
-
   // ---- Home screen (hero) wiring ----
-  function updateHomeModeIcon() {
-    const b = el('homeMode'); if (!b) return;
-    const isPhoto = mode === 'photo';
-    b.textContent = isPhoto ? 'photo_camera' : 'brush';
-    b.setAttribute('aria-label', isPhoto ? 'Mode: Photos — tap for Cartoon' : 'Mode: Cartoon — tap for Photos');
-  }
   function updateHomeTeaser() {
     const t = el('homeTeaser'); if (!t) return;
     const a = loadHistory();
@@ -1469,10 +1390,7 @@
   // Load the verified-age photo set. Until it exists, disable Photos and play
   // Cartoon; once it lands, Photos becomes the default.
   function disablePhotos() {
-    const pb = modeBtns.find(b => b.dataset.mode === 'photo');
-    if (pb) pb.disabled = true;
-    if (mode === 'photo') setActiveMode('cartoon');
-    updateHomeModeIcon();
+    if (mode === 'photo') mode = 'cartoon';   // no verified photos yet -> silent cartoon fallback
   }
   // Load both photo pools: the committed CORE (local cropped files, manifest.json)
   // and the STREAM (thousands of Wikimedia-hosted thumbnails, stream.json). Play
@@ -1500,7 +1418,6 @@
   renderScores(false);
   state.age = 34; state.seed = 12345;
   startFaceAnim();
-  updateHomeModeIcon();
   updateHomeTeaser();
 
   // Dev-only export for the offline render harness (tools/render_faces.js).

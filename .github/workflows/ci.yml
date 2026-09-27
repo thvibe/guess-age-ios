@@ -59,6 +59,19 @@ jobs:
           path: TestResults.xcresult
           if-no-files-found: ignore
 
+  web-tests:
+    name: Web logic tests (Node)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Unit tests (pure game logic)
+        run: node --test web/test/*.test.cjs
+
   dataset-tools:
     name: Dataset tools (Python)
     runs-on: ubuntu-latest
