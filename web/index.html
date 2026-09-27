@@ -8,25 +8,28 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Guess the Age">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#ff7a4d">
+<meta name="theme-color" content="#e30f74">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,500,0,0&display=swap" rel="stylesheet">
 <style>
   /* 90s neo-retro / Memphis: hot magenta + teal on warm cream. */
   :root {
-    --accent: #ff2e88;            /* hot retro magenta */
-    --accent-press: #e81d76;
+    --accent: #e30f74;            /* deep neon magenta — white text passes AA */
+    --accent-press: #c50f65;
     --teal: #10b5aa;
     --good: #12b26a;
     --good-fill: rgba(18,178,106,.16);
-    --bad: #ff3b5c;
-    --bad-fill: rgba(255,59,92,.16);
+    --bad: #d92d20;              /* clear red for a wrong answer (distinct from the pink accent) */
+    --bad-fill: rgba(217,45,32,.15);
     --bg: #ecdfc7;                /* warm cream base */
     --bg2: #f8f0df;              /* lighter top of the gradient */
     --card: #fffdf6;             /* warm white */
     --fill: #efe6d2;
     --fill-press: #e5d9c0;
-    --btn-face: #fffdf6;
+    --btn-face: #e9f7f6;         /* pale teal so buttons read distinct from the cream bg */
     --btn-edge: #10b5aa;         /* teal 3D bottom edge on option buttons */
-    --btn-border: #e6dcc4;
+    --btn-border: #bfe4e2;
     --text: #241f2b;             /* deep retro ink */
     --text-2: #6c6355;
     --text-3: #a99f8a;
@@ -37,21 +40,21 @@
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --accent: #ff4d9d;
-      --accent-press: #f0338a;
+      --accent: #e30f74;
+      --accent-press: #c50f65;
       --teal: #22d3c4;
       --good: #2ed47f;
       --good-fill: rgba(46,212,127,.20);
-      --bad: #ff5c78;
-      --bad-fill: rgba(255,92,120,.20);
+      --bad: #ff5a4a;
+      --bad-fill: rgba(255,90,74,.20);
       --bg: #14121c;             /* deep retro plum-navy */
       --bg2: #201a2e;
       --card: #211c2c;
       --fill: #2a2438;
       --fill-press: #3a3350;
-      --btn-face: #221c2e;
+      --btn-face: #223140;
       --btn-edge: #0f9c92;
-      --btn-border: #3d3652;
+      --btn-border: #37506a;
       --text: #f6eefb;
       --text-2: #b6a7c4;
       --text-3: #7d7090;
@@ -60,16 +63,16 @@
     }
   }
   :root[data-theme="light"] {
-    --accent:#ff2e88;--accent-press:#e81d76;--teal:#10b5aa;--good:#12b26a;--good-fill:rgba(18,178,106,.16);
-    --bad:#ff3b5c;--bad-fill:rgba(255,59,92,.16);--bg:#ecdfc7;--bg2:#f8f0df;--card:#fffdf6;--fill:#efe6d2;
-    --fill-press:#e5d9c0;--btn-face:#fffdf6;--btn-edge:#10b5aa;--btn-border:#e6dcc4;
+    --accent:#e30f74;--accent-press:#c50f65;--teal:#10b5aa;--good:#12b26a;--good-fill:rgba(18,178,106,.16);
+    --bad:#d92d20;--bad-fill:rgba(217,45,32,.15);--bg:#ecdfc7;--bg2:#f8f0df;--card:#fffdf6;--fill:#efe6d2;
+    --fill-press:#e5d9c0;--btn-face:#e9f7f6;--btn-edge:#10b5aa;--btn-border:#bfe4e2;
     --text:#241f2b;--text-2:#6c6355;--text-3:#a99f8a;
     --hair-line:rgba(36,31,43,.08);--shadow:0 12px 30px rgba(60,40,20,.18),0 2px 6px rgba(60,40,20,.10);
   }
   :root[data-theme="dark"] {
-    --accent:#ff4d9d;--accent-press:#f0338a;--teal:#22d3c4;--good:#2ed47f;--good-fill:rgba(46,212,127,.20);
-    --bad:#ff5c78;--bad-fill:rgba(255,92,120,.20);--bg:#14121c;--bg2:#201a2e;--card:#211c2c;--fill:#2a2438;
-    --fill-press:#3a3350;--btn-face:#221c2e;--btn-edge:#0f9c92;--btn-border:#3d3652;
+    --accent:#e30f74;--accent-press:#c50f65;--teal:#22d3c4;--good:#2ed47f;--good-fill:rgba(46,212,127,.20);
+    --bad:#ff5a4a;--bad-fill:rgba(255,90,74,.20);--bg:#14121c;--bg2:#201a2e;--card:#211c2c;--fill:#2a2438;
+    --fill-press:#3a3350;--btn-face:#223140;--btn-edge:#0f9c92;--btn-border:#37506a;
     --text:#f6eefb;--text-2:#b6a7c4;--text-3:#7d7090;
     --hair-line:rgba(255,255,255,.08);--shadow:0 12px 30px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.4);
   }
@@ -104,9 +107,12 @@
   .icon-btn {
     appearance: none; border: 0; background: var(--fill); color: var(--text);
     width: 38px; height: 38px; border-radius: 50%; font-size: 17px; cursor: pointer;
-    display: grid; place-items: center; transition: background .15s, transform .1s;
+    display: grid; place-items: center; overflow: hidden; transition: background .15s, transform .1s;
   }
   .icon-btn:active { transform: scale(.92); background: var(--fill-press); }
+  .msym { font-family: 'Material Symbols Rounded'; font-weight: 500; font-style: normal;
+    font-size: 21px; line-height: 1; letter-spacing: normal; text-transform: none;
+    white-space: nowrap; -webkit-font-smoothing: antialiased; }
 
   .scores { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
   .stat {
@@ -120,17 +126,17 @@
   @keyframes pop { 0%{transform:scale(1)} 40%{transform:scale(1.22)} 100%{transform:scale(1)} }
 
   .card-wrap { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; }
-  /* Circular avatar sized to the SMALLER of the container width and the leftover
-     height (capped at 340px), so it can never exceed its area and cover the
-     controls above it. Every surrounding row is fixed-height, so the leftover is
-     constant — the card doesn't resize or make the layout jump between rounds. */
+  /* Rounded-rectangle avatar sized to the SMALLER of the container width and the
+     leftover height, so it can never exceed its area and cover the controls above
+     it. Every surrounding row is fixed-height, so the leftover is constant — the
+     card doesn't resize or make the layout jump between rounds. */
   #card {
-    position: relative; aspect-ratio: 1 / 1;
-    width: 100%; max-width: 340px; max-height: 100%;
-    border-radius: 50%; overflow: hidden;
+    position: relative; aspect-ratio: 4 / 5;
+    height: 100%; max-height: 100%; max-width: 100%;
+    border-radius: 28px; overflow: hidden;
     box-shadow: var(--shadow); background: var(--fill);
   }
-  /* The cartoon canvas and the photo are absolute layers filling the circle;
+  /* The cartoon canvas and the photo are absolute layers filling the card;
      the card shows one at a time (class .photo) so its size never shifts. */
   #face, #photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
   #photo { display: none; object-position: center 28%; background: var(--fill); }
@@ -141,8 +147,8 @@
   /* Photographer credit (CC attribution) — a small pill over the photo that
      stays inside the circle; never shows the subject's name. */
   .credit {
-    position: absolute; left: 50%; transform: translateX(-50%); bottom: 8%; z-index: 2;
-    max-width: 72%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    position: absolute; left: 50%; transform: translateX(-50%); bottom: 10px; z-index: 2;
+    max-width: 88%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     font-size: 10px; line-height: 1.2; color: #fff;
     background: rgba(0,0,0,.42); backdrop-filter: blur(4px);
     padding: 4px 10px; border-radius: 999px; opacity: 0; transition: opacity .2s;
@@ -153,11 +159,12 @@
   .mode { flex: 1; appearance: none; border: 0; border-radius: 12px; padding: 9px 0; cursor: pointer;
     font-family: var(--round); font-weight: 800; font-size: 14px; background: var(--fill); color: var(--text-2);
     transition: background .15s, color .15s; }
-  .mode.active { background: var(--accent); color: #fff; }
+  .mode.active { background: var(--accent); color: #fff; }   /* white on deep pink = AA (4.6:1) */
   .mode:disabled { opacity: .45; cursor: default; }
 
   .prompt { text-align: center; height: 56px; display: grid; place-items: center; overflow: hidden; }
-  .prompt .ask { color: var(--text-2); font-weight: 600; font-size: 15px; }
+  .prompt .ask { color: var(--text); font-weight: 700; font-size: 19px;
+    font-family: 'Fredoka', var(--round); letter-spacing: .01em; }
   .prompt .verdict { font-family: var(--round); font-weight: 800; font-size: 21px; letter-spacing: -.01em; }
   .prompt .verdict.good { color: var(--good); }
   .prompt .verdict.bad { color: var(--bad); }
@@ -250,9 +257,9 @@
   <header class="bar">
     <div class="title">Guess the Age <small>· demo</small></div>
     <div class="bar-btns">
-      <button class="icon-btn" id="themeBtn" title="Light / dark" aria-label="Toggle light or dark mode">🌙</button>
-      <button class="icon-btn" id="historyBtn" title="Score history" aria-label="Score history">📊</button>
-      <button class="icon-btn" id="restart" title="Restart" aria-label="Restart">↺</button>
+      <button class="icon-btn msym" id="themeBtn" title="Light / dark" aria-label="Toggle light or dark mode">dark_mode</button>
+      <button class="icon-btn msym" id="historyBtn" title="Score history" aria-label="Score history">leaderboard</button>
+      <button class="icon-btn msym" id="restart" title="Restart" aria-label="Restart">refresh</button>
     </div>
   </header>
 
@@ -304,7 +311,7 @@
 
 <div id="start">
   <div class="sheet">
-    <div class="badge">🎯 solo · endless</div>
+    <div class="badge"><span class="msym" style="font-size:15px">sports_esports</span> solo · endless</div>
     <h1>Guess the Age</h1>
     <p class="tag">Look at the face. Tap the right age. Keep going.</p>
     <div class="rules">
@@ -319,7 +326,7 @@
 <script>
 (() => {
   "use strict";
-  const MIN = 1, MAX = 99;
+  const MIN = 5, MAX = 99;   // never show an age (or option) of 4 or below
   const clamp = a => Math.min(Math.max(a, MIN), MAX);
   const cl01 = x => Math.min(1, Math.max(0, x));
 
@@ -879,8 +886,8 @@
   let mode = 'photo';        // Photos primary; falls back to Cartoon if none loaded.
   let photos = [];           // verified-age real photos (photos/manifest.json)
 
-  // Cartoon ages span 3..85; photo rounds use each photo's verified age.
-  function randAge() { return 3 + Math.floor(Math.random() * 83); }
+  // Cartoon ages span 5..85 (nothing 4 or under); photos use each verified age.
+  function randAge() { return 5 + Math.floor(Math.random() * 81); }
   function randSeed() { return (Math.random() * 2 ** 31) >>> 0; }
   const escapeHtml = s => String(s == null ? '' : s).replace(/[&<>"']/g,
     c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
@@ -932,7 +939,7 @@
         const row = document.createElement('div');
         row.className = 'hist-row' + (r.score === best ? ' best' : '');
         row.innerHTML = `<div class="rank">${idx + 1}</div>`
-          + `<div><div class="h-score">${r.score}${r.score === best ? ' 🏆' : ''}</div>`
+          + `<div><div class="h-score">${r.score}${r.score === best ? ' <span class="msym" style="font-size:16px;vertical-align:-3px;color:var(--accent)">emoji_events</span>' : ''}</div>`
           + `<div class="h-when">${escapeHtml(fmtWhen(r.ts))} · ${r.mode}</div></div>`
           + `<div class="h-meta">${r.rounds} rounds · ${acc}%<br>best streak ${r.best}</div>`;
         list.appendChild(row);
@@ -1096,7 +1103,7 @@
   const TKEY = 'guessage.theme';
   const systemDark = () => matchMedia('(prefers-color-scheme: dark)').matches;
   const currentTheme = () => document.documentElement.dataset.theme || (systemDark() ? 'dark' : 'light');
-  function updateThemeIcon() { el('themeBtn').textContent = currentTheme() === 'dark' ? '☀️' : '🌙'; }
+  function updateThemeIcon() { el('themeBtn').textContent = currentTheme() === 'dark' ? 'light_mode' : 'dark_mode'; }
   function applyTheme(t) {
     if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
     else delete document.documentElement.dataset.theme;
@@ -1139,8 +1146,12 @@
   fetch('photos/manifest.json', { cache: 'no-store' })
     .then(r => r.ok ? r.json() : null)
     .then(d => {
-      if (d && Array.isArray(d.photos) && d.photos.length) photos = d.photos;
-      else disablePhotos();
+      if (d && Array.isArray(d.photos) && d.photos.length) {
+        photos = d.photos;
+        // If a round already started in photo mode before the list loaded (and
+        // fell back to cartoon), refresh so it actually shows a photo.
+        if (mode === 'photo' && !state.answered && el('start').classList.contains('hidden')) newRound();
+      } else disablePhotos();
     })
     .catch(disablePhotos);
 
