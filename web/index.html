@@ -198,23 +198,33 @@
   /* "How others guessed" — a crowd age-band distribution that slides up over the
      lower card on reveal. Reads over the image via a dark scrim; #card clips it. */
   #crowd { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; display: none;
-    flex-direction: column; gap: 7px; padding: 26px 14px 13px;
-    background: linear-gradient(to top, rgba(10,7,16,.82) 0%, rgba(10,7,16,.72) 62%, rgba(10,7,16,0) 100%);
-    color: #fff; max-height: 66%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    flex-direction: column; gap: 7px; padding: 30px 14px 13px;
+    background: linear-gradient(to top, rgba(12,8,18,.92) 0%, rgba(12,8,18,.9) 82%, rgba(12,8,18,0) 100%);
+    -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+    color: #fff; max-height: 72%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   body.revealed #crowd { display: flex; animation: crowdIn .34s ease .16s both; }
   @keyframes crowdIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
   #crowd .ch { font-family: var(--round); font-weight: 800; font-size: 11px; letter-spacing: .06em;
     text-transform: uppercase; color: rgba(255,255,255,.82); }
   #crowd .ch b { color: #fff; }
-  .cbar { display: grid; grid-template-columns: 50px 1fr 38px; align-items: center; gap: 9px; font-size: 12px; }
-  .cbar .cband { font-weight: 700; font-variant-numeric: tabular-nums; color: rgba(255,255,255,.9); }
-  .cbar .ctrack { height: 10px; border-radius: 999px; background: rgba(255,255,255,.16); overflow: hidden; }
-  .cbar .cfill { height: 100%; border-radius: 999px; background: rgba(255,255,255,.55); transition: width .5s cubic-bezier(.2,.8,.3,1); }
-  .cbar .cpct { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: rgba(255,255,255,.9); }
-  .cbar.is-true .cfill { background: var(--good); }
-  .cbar.is-true .cband { color: var(--good); }
-  .cbar.is-you .ctrack { box-shadow: inset 0 0 0 2px var(--blue); }
-  .cbar.is-you .cband { color: var(--blue); }
+  #crowd .cleg { display: flex; gap: 14px; margin: -2px 0 2px; }
+  #crowd .lg { font-size: 10.5px; font-weight: 700; color: rgba(255,255,255,.85); display: flex; align-items: center; gap: 5px; }
+  #crowd .lg::before { content: ""; width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  #crowd .lg-crowd::before { background: var(--accent); }
+  #crowd .lg-you::before { background: var(--blue); }
+  #crowd .samp { font-weight: 700; font-size: 9px; letter-spacing: .06em; text-transform: uppercase; color: rgba(255,255,255,.62);
+    border: 1px solid rgba(255,255,255,.3); border-radius: 999px; padding: 1px 6px; margin-left: 5px; }
+  .cbar2 { display: grid; grid-template-columns: 50px 1fr 40px; align-items: center; gap: 9px; font-size: 12px; }
+  .cbar2 .cband { font-weight: 700; font-variant-numeric: tabular-nums; color: rgba(255,255,255,.9); }
+  .cbar2 .cbars { display: flex; flex-direction: column; gap: 3px; }
+  .cbar2 .ctrack { display: block; height: 8px; border-radius: 999px; background: rgba(255,255,255,.15); overflow: hidden; }
+  .cbar2 .ctrack.ty { height: 6px; }
+  .cbar2 .cfill { display: block; height: 100%; min-width: 2px; border-radius: 999px; transition: width .5s cubic-bezier(.2,.8,.3,1); }
+  .cbar2 .fc { background: var(--accent); }
+  .cbar2 .fy { background: var(--blue); }
+  .cbar2.is-true .fc { background: var(--good); }
+  .cbar2.is-true .cband { color: var(--good); }
+  .cbar2 .cpct { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; color: rgba(255,255,255,.92); }
   /* Actions under the answer buttons: a Skip link + the report (thumbs-down). */
   .subactions { display: flex; align-items: center; justify-content: center; gap: 20px; min-height: 44px; }
   body.revealed .subactions { display: none; }
@@ -1185,33 +1195,60 @@
     return fetch(url, { cache: 'no-store' }).then(r => r.ok ? r.json() : null)
       .then(d => (d && Array.isArray(d.counts) && d.counts.length === 9) ? d.counts : null).catch(() => null);
   }
-  function renderCrowd(counts, youIdx, trueAge, isCrowd) {
+  // A plausible crowd distribution, made up for the demo until STATS_ENDPOINT is
+  // set. Deterministic per photo (same face -> same numbers), clustered near the
+  // true age with a spread and a small long tail.
+  const hashStr = s => { let h = 2166136261 >>> 0; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+  function demoCrowd(key, trueAge) {
+    const rnd = rngFrom(hashStr(key) ^ 0x5bd1e995);
+    const t = bandIndex(trueAge);
+    const counts = new Array(9).fill(0);
+    const N = 140 + Math.floor(rnd() * 760);   // 140–900 "players"
+    for (let k = 0; k < N; k++) {
+      const r = rnd();
+      let band;
+      if (r < 0.42) band = t;
+      else if (r < 0.72) band = t + (rnd() < 0.5 ? -1 : 1);
+      else if (r < 0.90) band = t + (rnd() < 0.5 ? -2 : 2);
+      else band = Math.floor(rnd() * 9);
+      counts[Math.min(8, Math.max(0, band))]++;
+    }
+    return counts;
+  }
+  function renderCrowd(youArr, crowd, youIdx, trueAge, isReal) {
     const host = el('crowd'); if (!host) return;
-    const total = counts.reduce((s, c) => s + c, 0) || 1;
+    const cTotal = crowd.reduce((s, c) => s + c, 0) || 1;
+    const yTotal = youArr.reduce((s, c) => s + c, 0) || 1;
     const trueIdx = bandIndex(trueAge);
     const show = [];
-    for (let i = 0; i < 9; i++) if (counts[i] > 0 || i === trueIdx || i === youIdx) show.push(i);
-    const head = isCrowd
-      ? '<div class="ch">How players guessed · <b>' + total.toLocaleString() + '</b></div>'
-      : '<div class="ch">Your guesses on this face · <b>' + total + '</b></div>';
+    for (let i = 0; i < 9; i++) if (crowd[i] > 0 || youArr[i] > 0 || i === trueIdx || i === youIdx) show.push(i);
+    const head = '<div class="ch">How players guessed · <b>' + cTotal.toLocaleString() + '</b>'
+      + (isReal ? '' : '<span class="samp">sample</span>') + '</div>';
+    const legend = '<div class="cleg"><span class="lg lg-crowd">Players</span><span class="lg lg-you">You</span></div>';
     const rows = show.map(i => {
-      const pct = Math.round(counts[i] / total * 100);
-      const cls = 'cbar' + (i === trueIdx ? ' is-true' : '') + (i === youIdx ? ' is-you' : '');
+      const cP = Math.round(crowd[i] / cTotal * 100);
+      const yP = Math.round(youArr[i] / yTotal * 100);
+      const cls = 'cbar2' + (i === trueIdx ? ' is-true' : '') + (i === youIdx ? ' is-you' : '');
       return '<div class="' + cls + '"><span class="cband">' + bandLabel(i) + '</span>'
-        + '<span class="ctrack"><span class="cfill" style="width:' + pct + '%"></span></span>'
-        + '<span class="cpct">' + pct + '%</span></div>';
+        + '<span class="cbars">'
+        + '<span class="ctrack"><span class="cfill fc" style="width:' + cP + '%"></span></span>'
+        + '<span class="ctrack ty"><span class="cfill fy" style="width:' + yP + '%"></span></span>'
+        + '</span>'
+        + '<span class="cpct">' + cP + '%</span></div>';
     }).join('');
-    host.innerHTML = head + rows;
+    host.innerHTML = head + legend + rows;
   }
   function recordGuess(key, chosenAge, trueAge) {
     const you = bandIndex(chosenAge);
     const g = loadGuesses();
     const arr = (g[key] && g[key].length === 9) ? g[key] : new Array(9).fill(0);
     arr[you] += 1; g[key] = arr; saveGuesses(g);
-    renderCrowd(arr, you, trueAge, false);            // device tally shows immediately
-    if (STATS_ENDPOINT) {                              // if wired up, replace with the real crowd
+    if (STATS_ENDPOINT) {                                        // real crowd once wired up
+      renderCrowd(arr, demoCrowd(key, trueAge), you, trueAge, false);   // demo until it arrives
       postGuess(key, you);
-      fetchDist(key).then(counts => { if (counts) renderCrowd(counts, you, trueAge, true); });
+      fetchDist(key).then(counts => { if (counts) renderCrowd(arr, counts, you, trueAge, true); });
+    } else {
+      renderCrowd(arr, demoCrowd(key, trueAge), you, trueAge, false);   // demo crowd + your pick
     }
   }
 
