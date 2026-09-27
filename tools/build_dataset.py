@@ -226,18 +226,17 @@ def download(url, dest):
         f.write(data)
 
 
-def face_crop(path, cascade, size, margin=1.6, eye_cascade=None):
-    """Overwrite `path` with a square crop centred on the largest *validated* face.
+def detect_face(path, cascade, eye_cascade=None):
+    """Return (fx, fy, fw, fh, W, H) for the largest *validated* face, or None.
 
-    Returns True if a usable face was found and cropped, False otherwise (caller
-    should drop the image). Rejects images with no face (documents), textured
-    false positives (gravestones/rock — no eyes inside the "face"), and shots
-    where the biggest face is tiny relative to the frame (full-body / distant).
+    Rejects images with no face (documents), textured false positives
+    (gravestones/rock — no eyes inside the "face"), and shots where the biggest
+    face is tiny relative to the frame (full-body / distant).
     """
     import cv2  # imported lazily so the tool still runs without OpenCV
     img = cv2.imread(path)
     if img is None:
-        return False
+        return None
     h, w = img.shape[:2]
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     m = max(28, int(w * 0.08))
@@ -256,8 +255,20 @@ def face_crop(path, cascade, size, margin=1.6, eye_cascade=None):
                 continue
         valid.append((fx, fy, fw, fh))
     if not valid:
-        return False
+        return None
     fx, fy, fw, fh = max(valid, key=lambda f: f[2] * f[3])
+    return (fx, fy, fw, fh, w, h)
+
+
+def face_crop(path, cascade, size, margin=1.6, eye_cascade=None):
+    """Overwrite `path` with a square crop centred on the largest validated face.
+    Returns True if a usable face was found and cropped, False otherwise (caller
+    should drop the image)."""
+    import cv2  # imported lazily so the tool still runs without OpenCV
+    det = detect_face(path, cascade, eye_cascade)
+    if not det:
+        return False
+    fx, fy, fw, fh, w, h = det
     cx, cy = fx + fw / 2, fy + fh / 2 - fh * 0.1
     half = fw * margin
     x0 = int(max(0, min(cx - half, w - 1)))
@@ -265,6 +276,7 @@ def face_crop(path, cascade, size, margin=1.6, eye_cascade=None):
     side = int(min(half * 2, w - x0, h - y0))
     if side < 60:
         return False
+    img = cv2.imread(path)
     face = cv2.resize(img[y0:y0 + side, x0:x0 + side], (size, size), interpolation=cv2.INTER_AREA)
     cv2.imwrite(path, face, [cv2.IMWRITE_JPEG_QUALITY, 88])
     return True
@@ -289,6 +301,17 @@ def main():
                          "(skips the iOS seed/Seed outputs)")
     ap.add_argument("--budget", type=float, default=0,
                     help="wall-clock seconds ceiling for collection (0 = no limit)")
+    ap.add_argument("--core-count", type=int, default=0,
+                    help="with --web-dir: how many photos to download + face-crop + commit as the "
+                         "offline CORE (0 = all). The remaining verified records become STREAM "
+                         "entries in --stream-out (Wikimedia-hosted, no files committed).")
+    ap.add_argument("--stream-out", default=None,
+                    help="with --web-dir: write STREAM entries (Commons thumbnail URL + age + "
+                         "attribution) here as JSON. No image files are downloaded or committed for "
+                         "these, so the set scales to thousands cheaply.")
+    ap.add_argument("--append-stream", action="store_true",
+                    help="merge into an existing --stream-out file (dedupe by id) so repeated runs "
+                         "accumulate toward thousands.")
     args = ap.parse_args()
 
     seed_dir = os.path.join(args.res_dir, "Seed")
@@ -337,8 +360,9 @@ def main():
         print("Collected nothing — check network access to Wikimedia.", file=sys.stderr)
         sys.exit(1)
 
-    # Web output: download every image locally and write a manifest the web app
-    # serves directly (no cross-origin hotlinking, works on GitHub Pages).
+    # Web output (HYBRID): a downloaded, face-cropped, committed CORE plus a
+    # STREAM that references Commons thumbnail URLs only (nothing committed for
+    # those, so it scales to thousands). The web app plays from both pools.
     if args.web_dir:
         os.makedirs(args.web_dir, exist_ok=True)
         cascade = eye_cascade = None
@@ -351,38 +375,75 @@ def main():
                 # Fail loudly rather than silently shipping uncropped full-body/junk.
                 print(f"ERROR: --face-crop requested but OpenCV is unavailable: {e}", file=sys.stderr)
                 sys.exit(2)
-        photos, rejected = [], 0
+
+        core_target = args.core_count if args.core_count > 0 else len(collected)
+        photos, rejected, stream_src = [], 0, []
         for rec in collected:
-            fname = f"p-{rec['id']}.jpg"
-            dest = os.path.join(args.web_dir, fname)
-            try:
-                download(rec["imageURL"], dest)
-                time.sleep(args.delay)
-            except Exception as e:  # noqa: BLE001
-                print(f"  skip {fname}: {e}", file=sys.stderr)
-                continue
-            if cascade is not None:
-                # Keep only clear portraits: crop to the face, drop faceless
-                # images (gravestones/documents) and tiny-face full-body shots.
-                if not face_crop(dest, cascade, args.thumb_width, eye_cascade=eye_cascade):
-                    try:
-                        os.remove(dest)
-                    except OSError:
-                        pass
-                    rejected += 1
+            # Fill the offline CORE first (download + crop + commit). Once it's
+            # full, the rest become lightweight STREAM entries (no download).
+            if len(photos) < core_target:
+                fname = f"p-{rec['id']}.jpg"
+                dest = os.path.join(args.web_dir, fname)
+                try:
+                    download(rec["imageURL"], dest)
+                    time.sleep(args.delay)
+                except Exception as e:  # noqa: BLE001
+                    print(f"  skip {fname}: {e}", file=sys.stderr)
                     continue
-            photos.append({
-                "file": fname,
-                "age": rec["age"],
-                "name": rec["name"],
-                "attribution": rec["attribution"],
-            })
+                if cascade is not None:
+                    # Keep only clear portraits: crop to the face, drop faceless
+                    # images (gravestones/documents) and tiny-face full-body shots.
+                    if not face_crop(dest, cascade, args.thumb_width, eye_cascade=eye_cascade):
+                        try:
+                            os.remove(dest)
+                        except OSError:
+                            pass
+                        rejected += 1
+                        continue
+                photos.append({
+                    "file": fname,
+                    "age": rec["age"],
+                    "name": rec["name"],
+                    "attribution": rec["attribution"],
+                })
+            elif args.stream_out:
+                stream_src.append(rec)
         if args.face_crop:
-            print(f"Face-crop kept {len(photos)}, rejected {rejected} (no usable face).", file=sys.stderr)
+            print(f"Core face-crop kept {len(photos)}, rejected {rejected} (no usable face).", file=sys.stderr)
         with open(os.path.join(args.web_dir, "manifest.json"), "w", encoding="utf-8") as f:
             json.dump({"version": 1, "photos": photos}, f, indent=1, ensure_ascii=False)
             f.write("\n")
-        print(f"Wrote {len(photos)} web photos -> {args.web_dir}")
+        print(f"Wrote {len(photos)} core web photos -> {args.web_dir}")
+
+        # STREAM: reference Commons thumbnails directly; merge with any existing
+        # file (dedupe by id) so repeated runs accumulate a large, varied pool.
+        if args.stream_out:
+            entries, seen = [], set()
+            if args.append_stream and os.path.exists(args.stream_out):
+                try:
+                    prev = json.load(open(args.stream_out, encoding="utf-8"))
+                    entries = prev.get("photos", [])
+                    seen = {e.get("id") for e in entries if e.get("id")}
+                except Exception as e:  # noqa: BLE001
+                    print(f"  (could not read existing stream {args.stream_out}: {e})", file=sys.stderr)
+            core_ids = {p["file"][2:-4] for p in photos}   # 'p-<id>.jpg' -> '<id>'
+            added = 0
+            for rec in stream_src:
+                if rec["id"] in seen or rec["id"] in core_ids:
+                    continue
+                entries.append({
+                    "id": rec["id"],
+                    "age": rec["age"],
+                    "url": rec["imageURL"],
+                    "name": rec["name"],
+                    "attribution": rec["attribution"],
+                })
+                seen.add(rec["id"])
+                added += 1
+            with open(args.stream_out, "w", encoding="utf-8") as f:
+                json.dump({"version": 1, "photos": entries}, f, indent=1, ensure_ascii=False)
+                f.write("\n")
+            print(f"Stream: added {added}; total {len(entries)} -> {args.stream_out}")
         return
 
     # Full streaming manifest.
