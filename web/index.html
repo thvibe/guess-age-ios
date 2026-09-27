@@ -358,6 +358,11 @@
     font-size: clamp(46px, 14vw, 60px); color: var(--accent); letter-spacing: 1px; line-height: 1;
     text-shadow: 0 3px 0 rgba(0,0,0,.16), 0 7px 16px rgba(0,0,0,.14); }
   .home-tag { margin: 2px 0 0; font-size: 15px; font-weight: 600; color: var(--text); max-width: 280px; line-height: 1.35; }
+  .home-rules { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 340px; margin: 6px auto 0; }
+  .home-rule { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; color: var(--text); line-height: 1.35; text-align: left; }
+  .home-rule .n { flex: none; width: 24px; height: 24px; border-radius: 8px; background: var(--card); color: var(--accent);
+    font-family: var(--round); font-weight: 800; display: grid; place-items: center; font-size: 13px; box-shadow: var(--shadow); }
+  .home-rule b { font-weight: 800; }
   .home-bottom { display: flex; flex-direction: column; align-items: center; gap: 12px; }
   .home-teaser { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
     color: var(--text-2); background: var(--card); padding: 7px 14px; border-radius: 999px; box-shadow: var(--shadow); }
@@ -368,11 +373,12 @@
   .home-play:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--accent-press), 0 6px 14px color-mix(in srgb, var(--accent) 35%, transparent); }
   .home-caption { font-size: 12px; color: var(--text); opacity: .62; letter-spacing: .05em; }
   @keyframes logoBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-  @media (max-height: 640px) { .home-teaser { display: none; } .home-hero { gap: 10px; } }
+  @media (max-height: 720px) { .home-teaser { display: none; } }
+  @media (max-height: 640px) { .home-rules { display: none; } .home-hero { gap: 10px; } }
   @media (orientation: landscape) and (max-height: 600px) {
     .home-logo { width: clamp(84px, 20vh, 120px); animation: none; }
     .home-title { font-size: clamp(28px, 7vh, 38px); }
-    .home-teaser { display: none; }
+    .home-teaser, .home-rules { display: none; }
     .home-hero { gap: 8px; }
   }
 
@@ -465,6 +471,11 @@
     </svg>
     <h1 class="home-title">How Old?</h1>
     <p class="home-tag">One face, four ages — trust your gut.</p>
+    <div class="home-rules">
+      <div class="home-rule"><span class="n">1</span><span>Each round shows a face — a <b>real photo</b> (verified age) or a <b>cartoon</b> — pick which of <b>four ages</b> is right.</span></div>
+      <div class="home-rule"><span class="n">2</span><span>Build a <b>streak</b> for bonus points. A miss resets it.</span></div>
+      <div class="home-rule"><span class="n">3</span><span>There's no finish line. It just <b>keeps going</b>.</span></div>
+    </div>
   </div>
   <div class="home-bottom">
     <div class="home-teaser" id="homeTeaser">First run — set the record.</div>
