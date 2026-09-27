@@ -1,6 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-  <!-- Guess Bubble app mark: teal speech bubble + "?" on a deep tile -->
-  <rect x="2" y="2" width="96" height="96" rx="24" fill="#1c1830"/>
-  <path d="M20 24h60a9 9 0 0 1 9 9v30a9 9 0 0 1-9 9H47L29 85V72h-9a9 9 0 0 1-9-9V33a9 9 0 0 1 9-9z" fill="#10b5aa"/>
-  <text x="50" y="59" font-family="'Fredoka','Trebuchet MS',system-ui,sans-serif" font-size="42" font-weight="700" fill="#ffffff" text-anchor="middle">?</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="How Old?">
+  <rect x="4" y="4" width="112" height="112" rx="28" fill="#1c1830"/>
+  <path d="M46 44a15 15 0 1 1 21 13c-4 2-7 5-7 11" fill="none" stroke="#e30f74" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="60" cy="90" r="8" fill="#e30f74"/>
 </svg>
