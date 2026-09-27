@@ -155,7 +155,7 @@
   .scores { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
   .stat {
     background: var(--card); border-radius: 14px; padding: 9px 6px; text-align: center;
-    box-shadow: var(--shadow);
+    box-shadow: var(--shadow); position: relative;
   }
   .stat b { font-family: var(--round); font-weight: 800; font-size: 20px; display: block;
     font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
@@ -245,14 +245,21 @@
   /* Quick bounce toward the viewer on a correct answer — a clear "got it, next!". */
   @keyframes popCorrect {
     0%   { transform: translateY(0) scale(1); }
-    35%  { transform: translateY(-10px) scale(1.16); }
-    60%  { transform: translateY(0) scale(1.02); }
-    80%  { transform: translateY(-3px) scale(1.05); }
+    30%  { transform: translateY(-9px) scale(1.09); }
+    58%  { transform: translateY(-2px) scale(1.015); }
     100% { transform: translateY(0) scale(1); }
   }
-  .opt.wrong { background: var(--bad); border-color: var(--bad); color: #fff;
-    box-shadow: 0 6px 0 rgba(0,0,0,.3), 0 12px 22px rgba(0,0,0,.4); }
+  /* The wrong pick deflates — muted, sunk, dimmed — so the green answer stays the hero. */
+  .opt.wrong { background: #a8443d; border-color: #a8443d; color: #fff;
+    box-shadow: 0 2px 0 rgba(0,0,0,.32); opacity: .72; animation: miss .4s ease both; }
   .opt.wrong .num, .opt.wrong .unit { color: #fff; }
+  @keyframes miss {
+    0%   { transform: translate(0,0); }
+    30%  { transform: translate(-3px,0); }
+    55%  { transform: translate(3px,0); }
+    80%  { transform: translate(-1px,1px); }
+    100% { transform: translate(0,2px); }
+  }
   /* Unchosen options recede into the black reveal overlay. */
   .opt.dim { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.14);
     color: rgba(255,255,255,.55); box-shadow: none; }
@@ -263,6 +270,52 @@
   .opt.correct .opt-text, .opt.wrong .opt-text { align-items: flex-start; }
   .answered .opt { cursor: default; }
   .answered .opt:active { transform: none; }
+
+  /* ---- Reveal choreography (ported from the "Reveal Moment" design canvas) ---- */
+  /* On a miss the correct answer becomes the hero: lifted, with a green halo pulsed 3x. */
+  .opt.correct.teach { transform: translateY(-2px); animation: teachPulse 1s ease .05s 3 both; }
+  @keyframes teachPulse {
+    0%, 100% { box-shadow: 0 8px 0 rgba(0,0,0,.28), 0 0 0 0 rgba(18,178,106,0); }
+    50%      { box-shadow: 0 8px 0 rgba(0,0,0,.28), 0 0 0 12px rgba(18,178,106,.4); }
+  }
+  /* The check strokes itself on. */
+  .opt.correct .opt-icon path { stroke-dasharray: 40; stroke-dashoffset: 40; animation: drawMark .34s ease .12s forwards; }
+  @keyframes drawMark { to { stroke-dashoffset: 0; } }
+  /* Verdict springs in with a confident overshoot; settles gently on a miss. */
+  .prompt .verdict.is-right { animation: vSpring .52s cubic-bezier(.2,1.5,.35,1) .06s both; }
+  .prompt .verdict.is-wrong { animation: vSettle .4s ease .04s both; }
+  @keyframes vSpring { 0% { opacity: 0; transform: scale(.55); } 62% { opacity: 1; transform: scale(1.08); } 100% { opacity: 1; transform: scale(1); } }
+  @keyframes vSettle { 0% { opacity: 0; transform: translateY(6px); } 100% { opacity: 1; transform: translateY(0); } }
+  /* Confetti bursts up and out from the winning button, then falls under gravity. */
+  .confetti-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 5; }
+  .confetti-piece { position: absolute; will-change: transform, opacity;
+    animation: burst .9s cubic-bezier(.15,.6,.35,1) forwards; }
+  @keyframes burst {
+    0%   { opacity: 0; transform: translate(-50%,-50%) scale(.2) rotate(0deg); }
+    16%  { opacity: 1; }
+    62%  { opacity: 1; transform: translate(calc(-50% + var(--dx) * .92), calc(-50% + var(--dy))) scale(1) rotate(calc(var(--rot) * .6)); }
+    100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy) + 96px)) scale(.9) rotate(var(--rot)); }
+  }
+  /* +points floats off the score; the score number bumps green. */
+  .plus-float { position: absolute; top: -7px; right: 6px; font-family: var(--round); font-weight: 800;
+    font-size: 17px; color: var(--good); pointer-events: none; text-shadow: 0 1px 3px rgba(0,0,0,.28);
+    animation: floatUp 1.05s ease .16s both; z-index: 6; }
+  @keyframes floatUp {
+    0%   { opacity: 0; transform: translateY(10px) scale(.85); }
+    22%  { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-40px) scale(1); }
+  }
+  .stat.win b { animation: bumpWin .52s ease both; }
+  @keyframes bumpWin { 0% { transform: scale(1); } 40% { transform: scale(1.3); color: var(--good); } 100% { transform: scale(1); } }
+
+  /* Respect reduced-motion: keep the meaning, drop the movement. */
+  @media (prefers-reduced-motion: reduce) {
+    .opt.correct, .opt.correct.teach, .opt.wrong,
+    .prompt .verdict.is-right, .prompt .verdict.is-wrong,
+    .opt.correct .opt-icon path, .stat.win b, .stat.flash b { animation: none !important; }
+    .opt.correct.teach { transform: none; }
+    .confetti-layer, .plus-float { display: none !important; }
+  }
 
   /* Black reveal overlay: on answer the game dims to black and the solid
      green/red buttons + the verdict + Next sit above it. The scrim lives INSIDE
@@ -1214,6 +1267,9 @@
 
   function newRound() {
     state.seed = randSeed(); state.answered = false;
+    // Clear any lingering celebration bits so they can't bleed into the next round.
+    el('phone').querySelectorAll('.confetti-layer, .plus-float').forEach(n => n.remove());
+    el('s-score').classList.remove('win'); el('s-streak').classList.remove('win');
     const card = el('card'); card.classList.remove('reveal-in'); void card.offsetWidth; card.classList.add('reveal-in');
 
     if (mode === 'photo' && photos.length) {
@@ -1261,6 +1317,51 @@
     el('report').style.display = state.photo ? '' : 'none';   // only real photos are reportable
   }
 
+  // ---- Reveal celebration (ported from the "Reveal Moment" design) ----
+  const CONFETTI_COLORS = ['#10b5aa', '#6d5efc', '#facc15', '#f0653a', '#e30f74', '#12b26a', '#ffffff'];
+  function celebrate(btn) {
+    if (reduceMotion) return;
+    const phone = el('phone');
+    if (!phone || !btn) return;
+    const pr = phone.getBoundingClientRect();
+    const br = btn.getBoundingClientRect();
+    const ox = br.left - pr.left + br.width / 2;   // origin: centre-top of the winning button
+    const oy = br.top - pr.top;
+    const layer = document.createElement('div');
+    layer.className = 'confetti-layer';
+    const N = 22;
+    for (let k = 0; k < N; k++) {
+      const t = k / (N - 1);
+      const ang = (-162 + t * 144) * Math.PI / 180;   // fan sweeping up and out
+      const r = 118 + ((k * 43) % 84);
+      const dx = Math.round(Math.cos(ang) * r);
+      const dy = Math.round(Math.sin(ang) * r);
+      const rot = ((k * 71) % 360) - 180;
+      const size = 7 + (k % 3) * 3;
+      const color = CONFETTI_COLORS[k % CONFETTI_COLORS.length];
+      const radius = (k % 2 === 0) ? '2px' : '50%';
+      const delay = (k % 5) * 20;
+      const p = document.createElement('span');
+      p.className = 'confetti-piece';
+      p.style.cssText = 'left:' + ox + 'px; top:' + oy + 'px; width:' + size + 'px; height:' + size
+        + 'px; background:' + color + '; border-radius:' + radius + '; animation-delay:' + delay
+        + 'ms; --dx:' + dx + 'px; --dy:' + dy + 'px; --rot:' + rot + 'deg;';
+      layer.appendChild(p);
+    }
+    phone.appendChild(layer);
+    setTimeout(() => layer.remove(), 1200);
+  }
+  function pointsFloat(pts) {
+    if (reduceMotion) return;
+    const stat = el('s-score');
+    if (!stat) return;
+    const f = document.createElement('span');
+    f.className = 'plus-float';
+    f.textContent = '+' + pts;
+    stat.appendChild(f);
+    setTimeout(() => f.remove(), 1200);
+  }
+
   function answer(i) {
     if (state.answered) return;
     state.answered = true; state.rounds++;
@@ -1278,7 +1379,11 @@
     document.body.classList.add('revealed');
     optEls.forEach((b,idx) => {
       b.disabled = true;
-      if (idx === correctIdx) { b.classList.add('correct'); b.insertAdjacentHTML('afterbegin', CHECK_SVG); }
+      if (idx === correctIdx) {
+        b.classList.add('correct');
+        if (!isRight) b.classList.add('teach');   // shown as the answer after a miss
+        b.insertAdjacentHTML('afterbegin', CHECK_SVG);
+      }
       else if (idx === i) { b.classList.add('wrong'); b.insertAdjacentHTML('afterbegin', X_SVG); }
       else b.classList.add('dim');
     });
@@ -1291,10 +1396,19 @@
     } else {
       sub = 'Actual age ' + state.age;
     }
-    el('prompt').innerHTML = '<div><div class="verdict">' + (isRight ? 'Correct' : 'Incorrect')
+    el('prompt').innerHTML = '<div><div class="verdict ' + (isRight ? 'is-right' : 'is-wrong') + '">'
+      + (isRight ? 'Correct' : 'Incorrect')
       + '</div><div class="sub">' + sub + '</div></div>';
     el('next').classList.remove('is-hidden');
     renderScores(isRight);
+    if (isRight) {
+      // The payoff: confetti from the winning button, +points off the score, a green bump.
+      celebrate(optEls[correctIdx]);
+      pointsFloat(scoreForStreak(state.streak));
+      const sc = el('s-score'), st = el('s-streak');
+      sc.classList.add('win'); st.classList.add('win');
+      setTimeout(() => { sc.classList.remove('win'); st.classList.remove('win'); }, 640);
+    }
     recordSession();   // keep this session's record live in history
   }
 
