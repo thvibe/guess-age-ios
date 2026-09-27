@@ -189,13 +189,17 @@
   #card.photo .credit { opacity: 1; }
   .credit a { color: #fff; }
   /* Report button (thumbs-down) over the photo — flag a nonsense / inappropriate image. */
-  .report { position: absolute; top: 10px; right: 10px; z-index: 3; display: none;
-    width: 34px; height: 34px; border-radius: 50%; border: 0; cursor: pointer;
-    background: rgba(0,0,0,.42); color: #fff; align-items: center; justify-content: center;
-    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); transition: transform .1s, background .15s; }
-  #card.photo .report { display: flex; }
-  .report:active { transform: scale(.9); }
-  .report:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+  /* Actions under the answer buttons: a Skip link + the report (thumbs-down). */
+  .subactions { display: flex; align-items: center; justify-content: center; gap: 20px; min-height: 44px; }
+  body.revealed .subactions { display: none; }
+  .link-btn { appearance: none; background: none; border: 0; cursor: pointer; color: var(--text-2);
+    font-family: var(--round); font-weight: 700; font-size: 14px; padding: 8px 12px; min-height: 44px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 10px;
+    transition: color .15s, transform .1s; }
+  .link-btn:active { color: var(--text); transform: scale(.96); }
+  .link-btn:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+  #skip { text-decoration: underline; text-underline-offset: 3px; }
+  .report { color: var(--text-3); }
   /* Toast (e.g. report confirmation). */
   .toast { position: fixed; left: 50%; bottom: calc(26px + env(safe-area-inset-bottom));
     transform: translateX(-50%) translateY(10px); background: rgba(20,16,28,.94); color: #fff;
@@ -220,19 +224,19 @@
   /* Chunky game-style buttons that clearly float above the background. */
   .opt {
     appearance: none; cursor: pointer;
-    background: color-mix(in srgb, var(--card) 62%, transparent); color: var(--accent);
+    background: rgba(22,17,30,.72); color: #fff;
     border: 2.5px solid var(--accent); border-radius: 16px;
     padding: 8px 0 10px;
     font-family: var(--round);
-    box-shadow: 0 0 12px rgba(227,15,116,.30), inset 0 0 10px rgba(227,15,116,.08);
+    box-shadow: 0 0 14px rgba(227,15,116,.42), inset 0 0 12px rgba(227,15,116,.14);
     transition: transform .07s ease, box-shadow .07s ease, background .15s, border-color .15s, opacity .15s;
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
   }
-  .opt .num { font-size: 27px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.02em; line-height: 1.06; color: var(--accent); text-shadow: 0 0 10px rgba(227,15,116,.35); }
-  .opt .unit { font-size: 10.5px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .07em; }
+  .opt .num { font-size: 27px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.02em; line-height: 1.06; color: #fff; text-shadow: 0 0 10px rgba(227,15,116,.55); }
+  .opt .unit { font-size: 10.5px; font-weight: 700; color: rgba(255,255,255,.82); text-transform: uppercase; letter-spacing: .07em; }
   .opt-text { display: flex; flex-direction: column; align-items: center; justify-content: center; }
   .opt-icon { width: 26px; height: 26px; flex: none; color: currentColor; }
-  .opt:active { transform: translateY(1px); box-shadow: 0 0 8px rgba(227,15,116,.25), inset 0 0 14px rgba(227,15,116,.14); background: color-mix(in srgb, var(--accent) 14%, var(--card)); }
+  .opt:active { transform: translateY(1px); box-shadow: 0 0 10px rgba(227,15,116,.4), inset 0 0 16px rgba(227,15,116,.24); background: rgba(30,20,40,.82); }
   .opt:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
   /* Reveal: solid GREEN (correct) + solid RED (wrong) over a black overlay so the
      answer is unmistakable; the correct one bounces toward the viewer. */
@@ -282,7 +286,7 @@
     box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 45%, transparent);
   }
   .next:active { transform: scale(.98); background: var(--accent-press); }
-  .next.is-hidden { visibility: hidden; pointer-events: none; } /* reserve space, no jump */
+  .next.is-hidden { display: none; }   /* Skip/report row occupies this slot pre-answer */
 
   .foot { text-align: center; color: var(--text-2); font-size: 11px; line-height: 1.5; }
   .foot b { color: var(--text); font-weight: 700; }
@@ -449,7 +453,6 @@
       <canvas id="face"></canvas>
       <img id="photo" alt="">
       <div class="credit" id="credit"></div>
-      <button class="report" id="report" aria-label="Report this image (doesn't make sense or inappropriate)" title="Report this image"><span class="msym" style="font-size:18px">thumb_down</span></button>
     </div>
   </div>
 
@@ -458,6 +461,11 @@
   <div class="options" id="options">
     <button class="opt"></button><button class="opt"></button>
     <button class="opt"></button><button class="opt"></button>
+  </div>
+
+  <div class="subactions" id="subactions">
+    <button class="link-btn" id="skip">Skip</button>
+    <button class="link-btn report" id="report" aria-label="Report this image (doesn't make sense or inappropriate)" title="Report this image"><span class="msym" style="font-size:19px">thumb_down</span></button>
   </div>
 
   <button class="next is-hidden" id="next">Next</button>
@@ -1308,6 +1316,7 @@
     });
     el('prompt').innerHTML = '<div class="ask">How old am I?</div>';
     el('next').classList.add('is-hidden');
+    el('report').style.display = state.photo ? '' : 'none';   // only real photos are reportable
   }
 
   function answer(i) {
@@ -1349,6 +1358,7 @@
 
   optEls.forEach((b,i) => b.addEventListener('click', () => answer(i)));
   el('next').addEventListener('click', newRound);
+  el('skip').addEventListener('click', () => newRound());   // skip this face, no score change
   function sendReport(p, k) {
     if (!REPORT_ENDPOINT) return;             // no endpoint configured -> local only
     const a = p.attribution || {};
