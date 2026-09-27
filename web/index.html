@@ -210,6 +210,8 @@
   }
   .opt .num { font-size: 27px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.02em; line-height: 1.06; }
   .opt .unit { font-size: 10.5px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: .07em; }
+  .opt-text { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .opt-icon { width: 26px; height: 26px; flex: none; color: currentColor; }
   .opt:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--btn-edge), 0 4px 10px rgba(16,60,70,.18); }
   .opt:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
   /* Reveal: solid GREEN (correct) + solid RED (wrong) over a black overlay so the
@@ -234,6 +236,10 @@
   .opt.dim { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.14);
     color: rgba(255,255,255,.55); box-shadow: none; }
   .opt.dim .num, .opt.dim .unit { color: rgba(255,255,255,.5); }
+  /* On reveal, the correct/wrong buttons show their icon on the LEFT with the
+     number/label left-aligned beside it (icon colour = the button text colour). */
+  .opt.correct, .opt.wrong { flex-direction: row; justify-content: flex-start; gap: 12px; padding-left: 16px; }
+  .opt.correct .opt-text, .opt.wrong .opt-text { align-items: flex-start; }
   .answered .opt { cursor: default; }
   .answered .opt:active { transform: none; }
 
@@ -1007,6 +1013,9 @@
   const photoImg = el('photo');
   const credit = el('credit');
   const optEls = [...document.querySelectorAll('.opt')];
+  // Reveal icons (inherit the button's text colour via stroke:currentColor).
+  const CHECK_SVG = '<svg class="opt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12.5l5 5 11-12"/></svg>';
+  const X_SVG = '<svg class="opt-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
   const state = { score:0, rounds:0, correct:0, streak:0, best:0, age:0, seed:0, opts:null, answered:false, photo:null };
 
   let mode = 'photo';        // Photos primary; falls back to Cartoon if none loaded.
@@ -1186,7 +1195,7 @@
     el('options').classList.remove('answered');
     document.body.classList.remove('revealed');
     optEls.forEach((b,i) => {
-      b.innerHTML = '<span class="num">' + state.opts.values[i] + '</span><span class="unit">years old</span>';
+      b.innerHTML = '<span class="opt-text"><span class="num">' + state.opts.values[i] + '</span><span class="unit">years old</span></span>';
       b.className = 'opt'; b.disabled = false;
     });
     el('prompt').innerHTML = '<div class="ask">How old is this person?</div>';
@@ -1210,8 +1219,8 @@
     document.body.classList.add('revealed');
     optEls.forEach((b,idx) => {
       b.disabled = true;
-      if (idx === correctIdx) b.classList.add('correct');
-      else if (idx === i) b.classList.add('wrong');
+      if (idx === correctIdx) { b.classList.add('correct'); b.insertAdjacentHTML('afterbegin', CHECK_SVG); }
+      else if (idx === i) { b.classList.add('wrong'); b.insertAdjacentHTML('afterbegin', X_SVG); }
       else b.classList.add('dim');
     });
     let sub;
