@@ -224,19 +224,19 @@
   /* Chunky game-style buttons that clearly float above the background. */
   .opt {
     appearance: none; cursor: pointer;
-    background: rgba(22,17,30,.72); color: #fff;
-    border: 2.5px solid var(--accent); border-radius: 16px;
+    background: var(--accent); color: #fff;
+    border: 0; border-radius: 16px;
     padding: 8px 0 10px;
     font-family: var(--round);
-    box-shadow: 0 0 14px rgba(227,15,116,.42), inset 0 0 12px rgba(227,15,116,.14);
+    box-shadow: 0 6px 0 #9d0c53, 0 9px 18px rgba(227,15,116,.28);
     transition: transform .07s ease, box-shadow .07s ease, background .15s, border-color .15s, opacity .15s;
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
   }
-  .opt .num { font-size: 27px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.02em; line-height: 1.06; color: #fff; text-shadow: 0 0 10px rgba(227,15,116,.55); }
+  .opt .num { font-size: 27px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.02em; line-height: 1.06; color: #fff; }
   .opt .unit { font-size: 10.5px; font-weight: 700; color: rgba(255,255,255,.82); text-transform: uppercase; letter-spacing: .07em; }
   .opt-text { display: flex; flex-direction: column; align-items: center; justify-content: center; }
   .opt-icon { width: 26px; height: 26px; flex: none; color: currentColor; }
-  .opt:active { transform: translateY(1px); box-shadow: 0 0 10px rgba(227,15,116,.4), inset 0 0 16px rgba(227,15,116,.24); background: rgba(30,20,40,.82); }
+  .opt:active { transform: translateY(4px); box-shadow: 0 2px 0 #9d0c53, 0 3px 10px rgba(227,15,116,.2); }
   .opt:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
   /* Reveal: solid GREEN (correct) + solid RED (wrong) over a black overlay so the
      answer is unmistakable; the correct one bounces toward the viewer. */
