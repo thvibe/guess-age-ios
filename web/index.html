@@ -191,12 +191,10 @@
   .mode.active { background: var(--accent); color: #fff; }   /* white on deep pink = AA (4.6:1) */
   .mode:disabled { opacity: .45; cursor: default; }
 
-  .prompt { text-align: center; height: 62px; display: grid; place-items: center; overflow: hidden; }
+  .prompt { text-align: center; height: 68px; display: grid; place-items: center; overflow: hidden; }
   .prompt .ask { color: var(--text); font-weight: 800; font-size: 25px;
     font-family: var(--sans); letter-spacing: -.02em; }
-  .prompt .verdict { font-family: var(--round); font-weight: 800; font-size: 21px; letter-spacing: -.01em; }
-  .prompt .verdict.good { color: var(--good); }
-  .prompt .verdict.bad { color: var(--bad); }
+  .prompt .verdict { font-family: var(--round); font-weight: 800; font-size: 31px; letter-spacing: -.02em; color: var(--text); line-height: 1; }
   .prompt .sub { color: var(--text-3); font-size: 12px; margin-top: 2px; }
 
   .options { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
@@ -1307,11 +1305,10 @@
       const src = a.sourceURL ? ' · <a href="' + escapeHtml(a.sourceURL) + '" target="_blank" rel="noopener">source</a>' : '';
       sub = who + src;
     } else {
-      sub = isRight ? 'Drawn at age ' + state.age : '+0 — streak reset';
+      sub = 'Actual age ' + state.age;
     }
-    el('prompt').innerHTML = isRight
-      ? '<div><div class="verdict good">Correct!</div><div class="sub">' + sub + '</div></div>'
-      : '<div><div class="verdict bad">Actual age: ' + state.age + '</div><div class="sub">' + sub + '</div></div>';
+    el('prompt').innerHTML = '<div><div class="verdict">' + (isRight ? 'Correct' : 'Incorrect')
+      + '</div><div class="sub">' + sub + '</div></div>';
     el('next').classList.remove('is-hidden');
     renderScores(isRight);
     recordSession();   // keep this session's record live in history
