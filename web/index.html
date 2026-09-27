@@ -188,6 +188,21 @@
   }
   #card.photo .credit { opacity: 1; }
   .credit a { color: #fff; }
+  /* Report button (thumbs-down) over the photo — flag a nonsense / inappropriate image. */
+  .report { position: absolute; top: 10px; right: 10px; z-index: 3; display: none;
+    width: 34px; height: 34px; border-radius: 50%; border: 0; cursor: pointer;
+    background: rgba(0,0,0,.42); color: #fff; align-items: center; justify-content: center;
+    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); transition: transform .1s, background .15s; }
+  #card.photo .report { display: flex; }
+  .report:active { transform: scale(.9); }
+  .report:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+  /* Toast (e.g. report confirmation). */
+  .toast { position: fixed; left: 50%; bottom: calc(26px + env(safe-area-inset-bottom));
+    transform: translateX(-50%) translateY(10px); background: rgba(20,16,28,.94); color: #fff;
+    font-family: var(--round); font-weight: 600; font-size: 14px; padding: 10px 16px; border-radius: 999px;
+    z-index: 20; opacity: 0; pointer-events: none; max-width: 84%; text-align: center;
+    box-shadow: 0 8px 24px rgba(0,0,0,.35); transition: opacity .2s ease, transform .2s ease; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   .modes { display: flex; gap: 8px; }
   .mode { flex: 1; appearance: none; border: 0; border-radius: 12px; padding: 9px 0; cursor: pointer;
     font-family: var(--round); font-weight: 800; font-size: 14px; background: var(--fill); color: var(--text-2);
@@ -205,20 +220,20 @@
   /* Chunky game-style buttons that clearly float above the background. */
   .opt {
     appearance: none; cursor: pointer;
-    background: var(--btn-face); color: var(--text);
-    border: 2px solid var(--btn-border); border-radius: 16px;
+    background: var(--accent); color: #fff;
+    border: 2px solid var(--accent); border-radius: 16px;
     padding: 8px 0 10px;
     font-family: var(--round);
-    box-shadow: 0 5px 0 var(--btn-edge), 0 10px 20px rgba(16,60,70,.22);
+    box-shadow: 0 5px 0 var(--accent-press), 0 10px 20px rgba(227,15,116,.28);
     transition: transform .07s ease, box-shadow .07s ease, background .15s, border-color .15s, opacity .15s;
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0;
   }
   .opt .num { font-size: 27px; font-weight: 800; font-variant-numeric: tabular-nums; letter-spacing: -.02em; line-height: 1.06; }
-  .opt .unit { font-size: 10.5px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: .07em; }
+  .opt .unit { font-size: 10.5px; font-weight: 700; color: rgba(255,255,255,.82); text-transform: uppercase; letter-spacing: .07em; }
   .opt-text { display: flex; flex-direction: column; align-items: center; justify-content: center; }
   .opt-icon { width: 26px; height: 26px; flex: none; color: currentColor; }
-  .opt:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--btn-edge), 0 4px 10px rgba(16,60,70,.18); }
-  .opt:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .opt:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--accent-press), 0 4px 10px rgba(227,15,116,.2); }
+  .opt:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
   /* Reveal: solid GREEN (correct) + solid RED (wrong) over a black overlay so the
      answer is unmistakable; the correct one bounces toward the viewer. */
   .opt.correct { background: var(--good); border-color: var(--good); color: #fff;
@@ -434,6 +449,7 @@
       <canvas id="face"></canvas>
       <img id="photo" alt="">
       <div class="credit" id="credit"></div>
+      <button class="report" id="report" aria-label="Report this image (doesn't make sense or inappropriate)" title="Report this image"><span class="msym" style="font-size:18px">thumb_down</span></button>
     </div>
   </div>
 
@@ -490,6 +506,8 @@
     <div class="home-caption">solo · endless</div>
   </div>
 </div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <script>
 (() => {
@@ -1096,6 +1114,19 @@
   let photoFails = 0;        // consecutive streamed-image load failures
   photoImg.addEventListener('load', () => { photoFails = 0; });
 
+  // ---- Report an image (thumbs-down): hide it for this player and remember it. ----
+  const RKEY = 'guessage.reported.v1';
+  const photoKey = p => (p && (p.id || p.file || p.url)) || '';
+  let reported;
+  try { reported = new Set(JSON.parse(localStorage.getItem(RKEY)) || []); } catch (e) { reported = new Set(); }
+  const saveReported = () => { try { localStorage.setItem(RKEY, JSON.stringify([...reported])); } catch (e) {} };
+  let toastTimer;
+  function showToast(msg) {
+    const t = el('toast'); if (!t) return;
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+
   // Cartoon ages span 5..85 (nothing 4 or under); photos use each verified age.
   function randAge() { return 5 + Math.floor(Math.random() * 81); }
   function randSeed() { return (Math.random() * 2 ** 31) >>> 0; }
@@ -1314,6 +1345,15 @@
 
   optEls.forEach((b,i) => b.addEventListener('click', () => answer(i)));
   el('next').addEventListener('click', newRound);
+  el('report').addEventListener('click', () => {
+    if (!state.photo) return;                 // only real photos can be reported
+    const k = photoKey(state.photo);
+    if (k) { reported.add(k); saveReported(); }
+    const i = photos.findIndex(p => photoKey(p) === k);   // drop from the live pool
+    if (i >= 0) photos.splice(i, 1);
+    showToast('Thanks — we’ll hide that one.');
+    newRound();
+  });
   el('restart').addEventListener('click', () => {
     recordSession();
     Object.assign(state, { score:0, rounds:0, correct:0, streak:0, best:0 });
@@ -1413,7 +1453,7 @@
     const pool = [];
     // Only ages the game can actually offer as options (5..99) — never show a
     // toddler (<=4) or a >99 photo, whose clamped option wouldn't match the age.
-    const add = arr => { for (const p of arr) if (p && p.age >= MIN && p.age <= MAX) pool.push(p); };
+    const add = arr => { for (const p of arr) if (p && p.age >= MIN && p.age <= MAX && !reported.has(photoKey(p))) pool.push(p); };
     if (core && Array.isArray(core.photos)) add(core.photos);
     if (stream && Array.isArray(stream.photos)) add(stream.photos);
     if (pool.length) {
