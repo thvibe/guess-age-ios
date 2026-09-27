@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="How Old?">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" id="theme-color-meta" content="#ffddb8">
+<meta name="color-scheme" content="light dark">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -40,6 +41,7 @@
     --app-grad: radial-gradient(135% 108% at 50% 44%, #fff6e6 0%, #ffdcb4 55%, #ffc2da 100%);  /* Sunset Party — glow centred so top & bottom edges match */
     --sun: rgba(255,214,120,.55);
     --edge: #ffddb8;             /* warm solid that matches the gradient's edges */
+    color-scheme: light dark;    /* tell iOS the root canvas has a dark variant */
     --sans: -apple-system, "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif;
     --round: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, "Segoe UI", sans-serif;
   }
@@ -71,6 +73,7 @@
     }
   }
   :root[data-theme="light"] {
+    color-scheme: light;
     --accent:#e30f74;--accent-press:#c50f65;--teal:#10b5aa;--good:#12b26a;--good-fill:rgba(18,178,106,.16);
     --bad:#d92d20;--bad-fill:rgba(217,45,32,.15);--bg:#ecdfc7;--bg2:#f8f0df;--card:#fffdf6;--fill:#efe6d2;
     --fill-press:#e5d9c0;--btn-face:#e9f7f6;--btn-edge:#10b5aa;--btn-border:#bfe4e2;
@@ -79,6 +82,7 @@
     --app-grad:radial-gradient(135% 108% at 50% 44%, #fff6e6 0%, #ffdcb4 55%, #ffc2da 100%);--sun:rgba(255,214,120,.55);--edge:#ffddb8;
   }
   :root[data-theme="dark"] {
+    color-scheme: dark;
     --accent:#e30f74;--accent-press:#c50f65;--teal:#22d3c4;--good:#2ed47f;--good-fill:rgba(46,212,127,.20);
     --bad:#ff5a4a;--bad-fill:rgba(255,90,74,.20);--bg:#14121c;--bg2:#201a2e;--card:#211c2c;--fill:#2a2438;
     --fill-press:#3a3350;--btn-face:#223140;--btn-edge:#0f9c92;--btn-border:#37506a;
@@ -194,7 +198,7 @@
   .prompt { text-align: center; height: 68px; display: grid; place-items: center; overflow: hidden; }
   .prompt .ask { color: var(--text); font-weight: 800; font-size: 25px;
     font-family: var(--sans); letter-spacing: -.02em; }
-  .prompt .verdict { font-family: var(--round); font-weight: 800; font-size: 31px; letter-spacing: -.02em; color: var(--text); line-height: 1; }
+  .prompt .verdict { font-family: 'Luckiest Guy', var(--round); font-weight: 400; font-size: 30px; letter-spacing: .5px; color: var(--text); line-height: 1; }
   .prompt .sub { color: var(--text-3); font-size: 12px; margin-top: 2px; }
 
   .options { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
@@ -475,7 +479,7 @@
     <h1 class="home-title">How Old?</h1>
     <p class="home-tag">One face, four ages — trust your gut.</p>
     <div class="home-rules">
-      <div class="home-rule"><span class="n">1</span><span>Each round shows a face — a <b>real photo</b> (verified age) or a <b>cartoon</b> — pick which of <b>four ages</b> is right.</span></div>
+      <div class="home-rule"><span class="n">1</span><span>Each round shows a <b>real person's face</b> (age verified from public records) — pick which of <b>four ages</b> is right.</span></div>
       <div class="home-rule"><span class="n">2</span><span>Build a <b>streak</b> for bonus points. A miss resets it.</span></div>
       <div class="home-rule"><span class="n">3</span><span>There's no finish line. It just <b>keeps going</b>.</span></div>
     </div>
