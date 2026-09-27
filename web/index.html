@@ -38,7 +38,7 @@
     --text-3: #a99f8a;
     --hair-line: rgba(36,31,43,.08);
     --shadow: 0 12px 30px rgba(60,40,20,.18), 0 2px 6px rgba(60,40,20,.10);
-    --app-grad: radial-gradient(135% 108% at 50% 44%, #fff6e6 0%, #ffdcb4 55%, #ffc2da 100%);  /* Sunset Party — glow centred so top & bottom edges match */
+    --app-grad: radial-gradient(135% 120% at 50% 50%, #fff6e6 0%, #ffdcb4 55%, #ffc2da 100%);  /* Sunset Party — glow centred so top & bottom edges match */
     --sun: rgba(255,214,120,.55);
     --edge: #ffddb8;             /* warm solid that matches the gradient's edges */
     color-scheme: light dark;    /* tell iOS the root canvas has a dark variant */
@@ -66,7 +66,7 @@
       --text-2: #b6a7c4;
       --text-3: #7d7090;
       --hair-line: rgba(255,255,255,.08);
-      --app-grad: radial-gradient(135% 108% at 50% 44%, #2a2140 0%, #191426 58%, #241426 100%);  /* Sunset Party — night, centred glow */
+      --app-grad: radial-gradient(135% 120% at 50% 50%, #2a2140 0%, #191426 58%, #241426 100%);  /* Sunset Party — night, centred glow */
       --sun: rgba(227,15,116,.30);
       --edge: #201628;
       --shadow: 0 12px 30px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.4);
@@ -79,7 +79,7 @@
     --fill-press:#e5d9c0;--btn-face:#e9f7f6;--btn-edge:#10b5aa;--btn-border:#bfe4e2;
     --text:#241f2b;--text-2:#6c6355;--text-3:#a99f8a;
     --hair-line:rgba(36,31,43,.08);--shadow:0 12px 30px rgba(60,40,20,.18),0 2px 6px rgba(60,40,20,.10);
-    --app-grad:radial-gradient(135% 108% at 50% 44%, #fff6e6 0%, #ffdcb4 55%, #ffc2da 100%);--sun:rgba(255,214,120,.55);--edge:#ffddb8;
+    --app-grad:radial-gradient(135% 120% at 50% 50%, #fff6e6 0%, #ffdcb4 55%, #ffc2da 100%);--sun:rgba(255,214,120,.55);--edge:#ffddb8;
   }
   :root[data-theme="dark"] {
     color-scheme: dark;
@@ -88,7 +88,7 @@
     --fill-press:#3a3350;--btn-face:#223140;--btn-edge:#0f9c92;--btn-border:#37506a;
     --text:#f6eefb;--text-2:#b6a7c4;--text-3:#7d7090;
     --hair-line:rgba(255,255,255,.08);--shadow:0 12px 30px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.4);
-    --app-grad:radial-gradient(135% 108% at 50% 44%, #2a2140 0%, #191426 58%, #241426 100%);--sun:rgba(227,15,116,.30);--edge:#201628;
+    --app-grad:radial-gradient(135% 120% at 50% 50%, #2a2140 0%, #191426 58%, #241426 100%);--sun:rgba(227,15,116,.30);--edge:#201628;
   }
 
   * { box-sizing: border-box; }
@@ -117,9 +117,9 @@
      whole viewport — including behind the iOS status bar and home indicator —
      with no seam at the safe-area edges. */
   #bg { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: var(--app-grad); }
-  #bg .sun { position: absolute; left: 50%; top: -8%; transform: translateX(-50%);
-    width: min(130vw, 760px); height: 48vh;
-    background: radial-gradient(circle at 50% 50%, var(--sun), transparent 68%); }
+  #bg .sun { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: min(130vw, 760px); height: 62vh;
+    background: radial-gradient(circle at 50% 50%, var(--sun), transparent 70%); }
   #bg i { position: absolute; display: block; }
   #bg .dot { border-radius: 50%; }
   #bg .ring { border-radius: 50%; background: transparent; }
