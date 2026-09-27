@@ -153,13 +153,12 @@
   @keyframes pop { 0%{transform:scale(1)} 40%{transform:scale(1.22)} 100%{transform:scale(1)} }
 
   .card-wrap { flex: 1 1 auto; min-height: 0; display: flex; align-items: center; justify-content: center; }
-  /* Rounded-rectangle avatar sized to the SMALLER of the container width and the
-     leftover height, so it can never exceed its area and cover the controls above
-     it. Every surrounding row is fixed-height, so the leftover is constant — the
-     card doesn't resize or make the layout jump between rounds. */
+  /* Full-width image: fills the whole flexible row between the mode toggle and
+     the prompt. object-fit: cover on the layers keeps it from distorting, and the
+     row is height-bounded so the image never grows to cover the controls. */
   #card {
-    position: relative; aspect-ratio: 4 / 5;
-    height: 100%; max-height: 100%; max-width: 100%;
+    position: relative;
+    width: 100%; height: 100%;
     border-radius: 28px; overflow: hidden;
     box-shadow: var(--shadow); background: var(--fill);
   }
@@ -996,7 +995,9 @@
   const state = { score:0, rounds:0, correct:0, streak:0, best:0, age:0, seed:0, opts:null, answered:false, photo:null };
 
   let mode = 'photo';        // Photos primary; falls back to Cartoon if none loaded.
-  let photos = [];           // verified-age real photos (photos/manifest.json)
+  let photos = [];           // verified-age real photos (core files + streamed URLs)
+  let photoFails = 0;        // consecutive streamed-image load failures
+  photoImg.addEventListener('load', () => { photoFails = 0; });
 
   // Cartoon ages span 5..85 (nothing 4 or under); photos use each verified age.
   function randAge() { return 5 + Math.floor(Math.random() * 81); }
@@ -1141,8 +1142,24 @@
       const a = p.attribution || {};
       // Photographer credit only — never the subject's name (it would spoil the age).
       credit.innerHTML = escapeHtml((a.author || 'Unknown') + (a.license ? ' · ' + a.license : ''));
-      photoImg.onerror = () => { card.classList.remove('photo'); startFaceAnim(); };
-      photoImg.src = 'photos/' + p.file;
+      photoImg.onerror = () => {
+        // A streamed (remote) image failed — drop it and try another photo;
+        // only fall back to the cartoon if the whole pool is exhausted.
+        const i = photos.indexOf(p); if (i >= 0) photos.splice(i, 1);
+        if (photos.length && photoFails++ < 8) newRound();
+        else { card.classList.remove('photo'); startFaceAnim(); }
+      };
+      // CORE photos are pre-cropped 640² local files; STREAM photos are
+      // Commons thumbnails referenced by URL (framed via object-position).
+      if (p.url) {
+        photoImg.referrerPolicy = 'no-referrer';
+        photoImg.style.objectPosition = (p.pos && p.pos.length === 2)
+          ? (p.pos[0] * 100).toFixed(1) + '% ' + (p.pos[1] * 100).toFixed(1) + '%' : '';
+        photoImg.src = p.url;
+      } else {
+        photoImg.style.objectPosition = '';
+        photoImg.src = 'photos/' + p.file;
+      }
     } else {
       state.photo = null;
       card.classList.remove('photo');
@@ -1261,17 +1278,22 @@
     if (pb) pb.disabled = true;
     if (mode === 'photo') setActiveMode('cartoon');
   }
-  fetch('photos/manifest.json', { cache: 'no-store' })
-    .then(r => r.ok ? r.json() : null)
-    .then(d => {
-      if (d && Array.isArray(d.photos) && d.photos.length) {
-        photos = d.photos;
-        // If a round already started in photo mode before the list loaded (and
-        // fell back to cartoon), refresh so it actually shows a photo.
-        if (mode === 'photo' && !state.answered && el('start').classList.contains('hidden')) newRound();
-      } else disablePhotos();
-    })
-    .catch(disablePhotos);
+  // Load both photo pools: the committed CORE (local cropped files, manifest.json)
+  // and the STREAM (thousands of Wikimedia-hosted thumbnails, stream.json). Play
+  // from the combined pool; if a round already started before they loaded (and
+  // fell back to cartoon), refresh so it shows a photo.
+  Promise.all([
+    fetch('photos/manifest.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null),
+    fetch('photos/stream.json',   { cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null),
+  ]).then(([core, stream]) => {
+    const pool = [];
+    if (core && Array.isArray(core.photos)) for (const p of core.photos) pool.push(p);
+    if (stream && Array.isArray(stream.photos)) for (const p of stream.photos) pool.push(p);
+    if (pool.length) {
+      photos = pool;
+      if (mode === 'photo' && !state.answered && el('start').classList.contains('hidden')) newRound();
+    } else disablePhotos();
+  }).catch(disablePhotos);
 
   let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (mode === 'cartoon') drawFace(canvas, state.age, state.seed); }, 120); });
 
