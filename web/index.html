@@ -219,6 +219,8 @@
   #quiz .quiz-cat { display: inline-flex; align-items: center; gap: 6px; font-family: var(--round);
     font-weight: 700; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: #ffd15c; }
   #quiz .quiz-cat .msym { font-size: 18px; }
+  #quiz .quiz-cat .quiz-lvl { background: rgba(255,209,92,.16); color: #ffd15c; border: 1px solid rgba(255,209,92,.4);
+    border-radius: 999px; padding: 2px 9px; font-size: 10.5px; letter-spacing: .06em; margin-left: 2px; }
   #quiz .quiz-q { font-family: 'Anton', 'Fredoka', sans-serif; font-weight: 400; text-transform: uppercase;
     font-size: clamp(23px, 6.2vw, 33px); line-height: 1.08; letter-spacing: .5px; color: #fff;
     text-shadow: 0 2px 0 rgba(0,0,0,.3); max-width: 16ch; }
@@ -1238,88 +1240,96 @@
   let photos = [];           // verified-age real photos (core files + streamed URLs)
 
   // ---- Baseball trivia questions (verified facts). correct = index into options. ----
+  // Each question carries a difficulty `d` (1 easy -> 4 expert). The baseball
+  // league ladder draws harder bands as the player climbs toward Major Leaguer.
   const TRIVIA = [
-    { q: "Who holds MLB's career home-run record?", options: ['Barry Bonds', 'Hank Aaron', 'Babe Ruth', 'Alex Rodriguez'], correct: 0 },
-    { q: 'How many stitches are on a regulation baseball?', options: ['108', '88', '216', '120'], correct: 0 },
-    { q: 'Which team has won the most World Series titles?', options: ['NY Yankees', 'St. Louis Cardinals', 'Boston Red Sox', 'LA Dodgers'], correct: 0 },
-    { q: "Who broke baseball's color barrier in 1947?", options: ['Jackie Robinson', 'Larry Doby', 'Satchel Paige', 'Willie Mays'], correct: 0 },
-    { q: 'How many feet are between the bases?', options: ['90', '60', '100', '120'], correct: 0 },
-    { q: 'Which pitcher has the most career strikeouts?', options: ['Nolan Ryan', 'Randy Johnson', 'Roger Clemens', 'Steve Carlton'], correct: 0 },
-    { q: 'The "Curse of the Bambino" haunted which team?', options: ['Boston Red Sox', 'Chicago Cubs', 'Chicago White Sox', 'Cleveland'], correct: 0 },
-    { q: 'How many consecutive games did Cal Ripken Jr. play?', options: ['2,632', '2,130', '3,000', '1,999'], correct: 0 },
-    { q: 'How many innings are in a regulation game?', options: ['9', '7', '11', '6'], correct: 0 },
-    { q: 'Which legend was known as "The Iron Horse"?', options: ['Lou Gehrig', 'Babe Ruth', 'Joe DiMaggio', 'Ty Cobb'], correct: 0 },
-    { q: "Who is MLB's all-time hits leader?", options: ['Pete Rose', 'Ty Cobb', 'Hank Aaron', 'Derek Jeter'], correct: 0 },
-    { q: 'Who was first to hit 60 home runs in a season?', options: ['Babe Ruth', 'Roger Maris', 'Mark McGwire', 'Barry Bonds'], correct: 0 },
-    { q: 'The World Series is a best-of how many games?', options: ['7', '5', '9', '3'], correct: 0 },
-    { q: 'Which position wears the "tools of ignorance"?', options: ['Catcher', 'Pitcher', 'Shortstop', 'Umpire'], correct: 0 },
-    { q: 'Which team plays its home games at Wrigley Field?', options: ['Chicago Cubs', 'Chicago White Sox', 'Milwaukee Brewers', 'St. Louis Cardinals'], correct: 0 },
-    { q: 'What is the single-season home-run record?', options: ['73', '70', '61', '66'], correct: 0 },
-    { q: 'The "Green Monster" is a wall in which ballpark?', options: ['Fenway Park', 'Yankee Stadium', 'Wrigley Field', 'Dodger Stadium'], correct: 0 },
-    { q: "Who holds MLB's career RBI record?", options: ['Hank Aaron', 'Babe Ruth', 'Barry Bonds', 'Alex Rodriguez'], correct: 0 },
-    { q: "How many players from one team take the field on defense?", options: ["9", "8", "10", "11"], correct: 0 },
-    { q: "On a scorecard, the letter K stands for?", options: ["Strikeout", "Walk", "Home run", "Stolen base"], correct: 0 },
-    { q: "Which slugger was called the Sultan of Swat?", options: ["Babe Ruth", "Hank Aaron", "Ted Williams", "Willie Mays"], correct: 0 },
-    { q: "Who was the last MLB player to bat .400 in a season?", options: ["Ted Williams", "Tony Gwynn", "George Brett", "Rod Carew"], correct: 0 },
-    { q: "How many strikes make a strikeout?", options: ["3", "2", "4", "1"], correct: 0 },
-    { q: "How many balls draw a walk?", options: ["4", "3", "5", "6"], correct: 0 },
-    { q: "A single, double, triple and homer in one game is called?", options: ["The cycle", "A grand slam", "A perfect game", "A triple play"], correct: 0 },
-    { q: "A home run with the bases loaded is a?", options: ["Grand slam", "Walk-off", "Squeeze", "Cycle"], correct: 0 },
-    { q: "Which pitcher threw a record seven no-hitters?", options: ["Nolan Ryan", "Sandy Koufax", "Bob Feller", "Justin Verlander"], correct: 0 },
-    { q: "Who hit 61 home runs in 1961?", options: ["Roger Maris", "Mickey Mantle", "Willie Mays", "Hank Aaron"], correct: 0 },
-    { q: "What year was Jackie Robinson's MLB debut?", options: ["1947", "1942", "1950", "1936"], correct: 0 },
-    { q: "Which team is nicknamed the Bronx Bombers?", options: ["New York Yankees", "New York Mets", "Boston Red Sox", "LA Dodgers"], correct: 0 },
-    { q: "Who holds the career stolen-base record?", options: ["Rickey Henderson", "Lou Brock", "Ty Cobb", "Billy Hamilton"], correct: 0 },
-    { q: "In a perfect game, how many batters reach base?", options: ["0", "1", "3", "9"], correct: 0 },
-    { q: "Which fielding position is number 6 on a scorecard?", options: ["Shortstop", "Second base", "Center field", "Third base"], correct: 0 },
-    { q: "Who was known as the Say Hey Kid?", options: ["Willie Mays", "Hank Aaron", "Ernie Banks", "Roberto Clemente"], correct: 0 },
-    { q: "How many outs end a half-inning?", options: ["3", "2", "4", "1"], correct: 0 },
-    { q: "Which fielder crouches behind home plate?", options: ["Catcher", "Shortstop", "Pitcher", "First baseman"], correct: 0 },
-    { q: "MLB's championship series is called the?", options: ["World Series", "League Cup", "Commissioner's Cup", "Grand Final"], correct: 0 },
-    { q: "The home team winning on a hit in its last at-bat is a?", options: ["Walk-off", "Shutout", "Grand slam", "Comeback"], correct: 0 },
-    { q: "How far is the pitching rubber from home plate?", options: ["60 ft 6 in", "55 ft", "66 ft", "90 ft"], correct: 0 },
-    { q: "Which team plays at Dodger Stadium?", options: ["Los Angeles Dodgers", "Los Angeles Angels", "San Francisco Giants", "San Diego Padres"], correct: 0 },
-    { q: "Who broke Hank Aaron's career home-run record in 2007?", options: ["Barry Bonds", "Alex Rodriguez", "Ken Griffey Jr.", "Sammy Sosa"], correct: 0 },
-    { q: "The best pitcher in each league wins which award?", options: ["Cy Young Award", "MVP", "Gold Glove", "Silver Slugger"], correct: 0 },
-    { q: "Which award honors the best fielder at each position?", options: ["Gold Glove", "Silver Slugger", "Cy Young", "Rookie of the Year"], correct: 0 },
-    { q: "Which is MLB's oldest ballpark still in use?", options: ["Fenway Park", "Wrigley Field", "Dodger Stadium", "Yankee Stadium"], correct: 0 },
-    { q: "Who set the single-season record with 262 hits?", options: ["Ichiro Suzuki", "Pete Rose", "George Sisler", "Ty Cobb"], correct: 0 },
-    { q: "Which team won the first modern World Series in 1903?", options: ["Boston Americans", "Pittsburgh Pirates", "New York Giants", "Chicago Cubs"], correct: 0 },
-    { q: "Three outs recorded on one play is a?", options: ["Triple play", "Double play", "Grand slam", "Hat trick"], correct: 0 },
-    { q: "Whose number 42 is retired across all of MLB?", options: ["Jackie Robinson", "Babe Ruth", "Willie Mays", "Roberto Clemente"], correct: 0 },
-    { q: "Which pitcher won a record 511 games?", options: ["Cy Young", "Walter Johnson", "Nolan Ryan", "Warren Spahn"], correct: 0 },
-    { q: "How many umpires work an MLB regular-season game?", options: ["4", "2", "6", "3"], correct: 0 },
-    { q: "MLB bats must be made of what material?", options: ["Wood", "Aluminum", "Carbon fiber", "Titanium"], correct: 0 },
-    { q: "Who is MLB's all-time leader in runs scored?", options: ["Rickey Henderson", "Ty Cobb", "Barry Bonds", "Hank Aaron"], correct: 0 },
-    { q: "Who threw a perfect game in the 1956 World Series?", options: ["Don Larsen", "Sandy Koufax", "Whitey Ford", "Bob Gibson"], correct: 0 },
-    { q: "Which two-way star was unanimous AL MVP in 2021 and 2023?", options: ["Shohei Ohtani", "Aaron Judge", "Mike Trout", "Mookie Betts"], correct: 0 },
-    { q: "Who hit 70 home runs in 1998?", options: ["Mark McGwire", "Sammy Sosa", "Barry Bonds", "Ken Griffey Jr."], correct: 0 },
-    { q: "How many teams are in MLB today?", options: ["30", "28", "32", "26"], correct: 0 },
-    { q: "Which league adopted the designated hitter first, in 1973?", options: ["American League", "National League", "Both at once", "Minor leagues"], correct: 0 },
-    { q: "Who holds MLB's career record for walks?", options: ["Barry Bonds", "Rickey Henderson", "Babe Ruth", "Ted Williams"], correct: 0 },
-    { q: "A game in which the pitcher allows no hits is a?", options: ["No-hitter", "Shutout", "Save", "Quality start"], correct: 0 },
-    { q: "Which Yankee legend wore number 7?", options: ["Mickey Mantle", "Babe Ruth", "Lou Gehrig", "Joe DiMaggio"], correct: 0 },
-    { q: "Which Yankee legend wore number 3?", options: ["Babe Ruth", "Lou Gehrig", "Mickey Mantle", "Derek Jeter"], correct: 0 },
-    { q: "Derek Jeter spent his whole career with which team?", options: ["New York Yankees", "New York Mets", "Boston Red Sox", "Miami Marlins"], correct: 0 },
-    { q: "What does RBI stand for?", options: ["Runs Batted In", "Runs Between Innings", "Rally Batting Index", "Reached Base Instances"], correct: 0 },
-    { q: "A pitcher's ERA measures?", options: ["Earned Run Average", "Extra Run Attempts", "Effective Reach Area", "Estimated Runs Allowed"], correct: 0 },
-    { q: "A batted ball landing outside the foul lines is a?", options: ["Foul ball", "Fair ball", "Ground-rule double", "Balk"], correct: 0 },
-    { q: "How many World Series have the Cubs won?", options: ["3", "1", "5", "2"], correct: 0 },
-    { q: "Baseball is the traditional national pastime of which country?", options: ["United States", "Canada", "Mexico", "Japan"], correct: 0 },
-    { q: "Turning two outs on one ground ball is a?", options: ["Double play", "Triple play", "Force play", "Rundown"], correct: 0 },
-    { q: "Who managed the Yankees to seven titles in the 1950s?", options: ["Casey Stengel", "Joe Torre", "Billy Martin", "Miller Huggins"], correct: 0 },
-    { q: "The World Baseball Classic is contested between?", options: ["National teams", "MLB clubs", "College teams", "All-star squads"], correct: 0 },
-    { q: "Which legend was Hammerin' Hank and hit 755 home runs?", options: ["Hank Aaron", "Hank Greenberg", "Harmon Killebrew", "Frank Robinson"], correct: 0 },
-    { q: "Cal Ripken Jr. earned which durability nickname?", options: ["The Iron Man", "The Iron Horse", "The Big Hurt", "Mr. October"], correct: 0 },
-    { q: "Who was Mr. October for his clutch postseason hitting?", options: ["Reggie Jackson", "Derek Jeter", "David Ortiz", "Mickey Mantle"], correct: 0 },
-    { q: "Which slugger was nicknamed the Big Hurt?", options: ["Frank Thomas", "Frank Robinson", "Willie McCovey", "Mark McGwire"], correct: 0 },
-    { q: "A pitcher's illegal motion with runners on base is a?", options: ["Balk", "Foul", "Error", "Wild pitch"], correct: 0 },
-    { q: "David Ortiz became a postseason legend for which team?", options: ["Boston Red Sox", "New York Yankees", "Minnesota Twins", "Baltimore Orioles"], correct: 0 },
+    { q: "Who holds MLB's career home-run record?", options: ['Barry Bonds', 'Hank Aaron', 'Babe Ruth', 'Alex Rodriguez'], correct: 0, d: 2 },
+    { q: 'How many stitches are on a regulation baseball?', options: ['108', '88', '216', '120'], correct: 0, d: 3 },
+    { q: 'Which team has won the most World Series titles?', options: ['NY Yankees', 'St. Louis Cardinals', 'Boston Red Sox', 'LA Dodgers'], correct: 0, d: 1 },
+    { q: "Who broke baseball's color barrier in 1947?", options: ['Jackie Robinson', 'Larry Doby', 'Satchel Paige', 'Willie Mays'], correct: 0, d: 1 },
+    { q: 'How many feet are between the bases?', options: ['90', '60', '100', '120'], correct: 0, d: 2 },
+    { q: 'Which pitcher has the most career strikeouts?', options: ['Nolan Ryan', 'Randy Johnson', 'Roger Clemens', 'Steve Carlton'], correct: 0, d: 3 },
+    { q: 'The "Curse of the Bambino" haunted which team?', options: ['Boston Red Sox', 'Chicago Cubs', 'Chicago White Sox', 'Cleveland'], correct: 0, d: 2 },
+    { q: 'How many consecutive games did Cal Ripken Jr. play?', options: ['2,632', '2,130', '3,000', '1,999'], correct: 0, d: 4 },
+    { q: 'How many innings are in a regulation game?', options: ['9', '7', '11', '6'], correct: 0, d: 1 },
+    { q: 'Which legend was known as "The Iron Horse"?', options: ['Lou Gehrig', 'Babe Ruth', 'Joe DiMaggio', 'Ty Cobb'], correct: 0, d: 2 },
+    { q: "Who is MLB's all-time hits leader?", options: ['Pete Rose', 'Ty Cobb', 'Hank Aaron', 'Derek Jeter'], correct: 0, d: 2 },
+    { q: 'Who was first to hit 60 home runs in a season?', options: ['Babe Ruth', 'Roger Maris', 'Mark McGwire', 'Barry Bonds'], correct: 0, d: 3 },
+    { q: 'The World Series is a best-of how many games?', options: ['7', '5', '9', '3'], correct: 0, d: 1 },
+    { q: 'Which position wears the "tools of ignorance"?', options: ['Catcher', 'Pitcher', 'Shortstop', 'Umpire'], correct: 0, d: 3 },
+    { q: 'Which team plays its home games at Wrigley Field?', options: ['Chicago Cubs', 'Chicago White Sox', 'Milwaukee Brewers', 'St. Louis Cardinals'], correct: 0, d: 1 },
+    { q: 'What is the single-season home-run record?', options: ['73', '70', '61', '66'], correct: 0, d: 2 },
+    { q: 'The "Green Monster" is a wall in which ballpark?', options: ['Fenway Park', 'Yankee Stadium', 'Wrigley Field', 'Dodger Stadium'], correct: 0, d: 2 },
+    { q: "Who holds MLB's career RBI record?", options: ['Hank Aaron', 'Babe Ruth', 'Barry Bonds', 'Alex Rodriguez'], correct: 0, d: 3 },
+    { q: "How many players from one team take the field on defense?", options: ["9", "8", "10", "11"], correct: 0, d: 1 },
+    { q: "On a scorecard, the letter K stands for?", options: ["Strikeout", "Walk", "Home run", "Stolen base"], correct: 0, d: 1 },
+    { q: "Which slugger was called the Sultan of Swat?", options: ["Babe Ruth", "Hank Aaron", "Ted Williams", "Willie Mays"], correct: 0, d: 1 },
+    { q: "Who was the last MLB player to bat .400 in a season?", options: ["Ted Williams", "Tony Gwynn", "George Brett", "Rod Carew"], correct: 0, d: 3 },
+    { q: "How many strikes make a strikeout?", options: ["3", "2", "4", "1"], correct: 0, d: 1 },
+    { q: "How many balls draw a walk?", options: ["4", "3", "5", "6"], correct: 0, d: 1 },
+    { q: "A single, double, triple and homer in one game is called?", options: ["The cycle", "A grand slam", "A perfect game", "A triple play"], correct: 0, d: 2 },
+    { q: "A home run with the bases loaded is a?", options: ["Grand slam", "Walk-off", "Squeeze", "Cycle"], correct: 0, d: 1 },
+    { q: "Which pitcher threw a record seven no-hitters?", options: ["Nolan Ryan", "Sandy Koufax", "Bob Feller", "Justin Verlander"], correct: 0, d: 3 },
+    { q: "Who hit 61 home runs in 1961?", options: ["Roger Maris", "Mickey Mantle", "Willie Mays", "Hank Aaron"], correct: 0, d: 2 },
+    { q: "What year was Jackie Robinson's MLB debut?", options: ["1947", "1942", "1950", "1936"], correct: 0, d: 2 },
+    { q: "Which team is nicknamed the Bronx Bombers?", options: ["New York Yankees", "New York Mets", "Boston Red Sox", "LA Dodgers"], correct: 0, d: 1 },
+    { q: "Who holds the career stolen-base record?", options: ["Rickey Henderson", "Lou Brock", "Ty Cobb", "Billy Hamilton"], correct: 0, d: 3 },
+    { q: "In a perfect game, how many batters reach base?", options: ["0", "1", "3", "9"], correct: 0, d: 2 },
+    { q: "Which fielding position is number 6 on a scorecard?", options: ["Shortstop", "Second base", "Center field", "Third base"], correct: 0, d: 3 },
+    { q: "Who was known as the Say Hey Kid?", options: ["Willie Mays", "Hank Aaron", "Ernie Banks", "Roberto Clemente"], correct: 0, d: 2 },
+    { q: "How many outs end a half-inning?", options: ["3", "2", "4", "1"], correct: 0, d: 1 },
+    { q: "Which fielder crouches behind home plate?", options: ["Catcher", "Shortstop", "Pitcher", "First baseman"], correct: 0, d: 1 },
+    { q: "MLB's championship series is called the?", options: ["World Series", "League Cup", "Commissioner's Cup", "Grand Final"], correct: 0, d: 1 },
+    { q: "The home team winning on a hit in its last at-bat is a?", options: ["Walk-off", "Shutout", "Grand slam", "Comeback"], correct: 0, d: 2 },
+    { q: "How far is the pitching rubber from home plate?", options: ["60 ft 6 in", "55 ft", "66 ft", "90 ft"], correct: 0, d: 3 },
+    { q: "Which team plays at Dodger Stadium?", options: ["Los Angeles Dodgers", "Los Angeles Angels", "San Francisco Giants", "San Diego Padres"], correct: 0, d: 2 },
+    { q: "Who broke Hank Aaron's career home-run record in 2007?", options: ["Barry Bonds", "Alex Rodriguez", "Ken Griffey Jr.", "Sammy Sosa"], correct: 0, d: 2 },
+    { q: "The best pitcher in each league wins which award?", options: ["Cy Young Award", "MVP", "Gold Glove", "Silver Slugger"], correct: 0, d: 2 },
+    { q: "Which award honors the best fielder at each position?", options: ["Gold Glove", "Silver Slugger", "Cy Young", "Rookie of the Year"], correct: 0, d: 2 },
+    { q: "Which is MLB's oldest ballpark still in use?", options: ["Fenway Park", "Wrigley Field", "Dodger Stadium", "Yankee Stadium"], correct: 0, d: 3 },
+    { q: "Who set the single-season record with 262 hits?", options: ["Ichiro Suzuki", "Pete Rose", "George Sisler", "Ty Cobb"], correct: 0, d: 3 },
+    { q: "Which team won the first modern World Series in 1903?", options: ["Boston Americans", "Pittsburgh Pirates", "New York Giants", "Chicago Cubs"], correct: 0, d: 4 },
+    { q: "Three outs recorded on one play is a?", options: ["Triple play", "Double play", "Grand slam", "Hat trick"], correct: 0, d: 2 },
+    { q: "Whose number 42 is retired across all of MLB?", options: ["Jackie Robinson", "Babe Ruth", "Willie Mays", "Roberto Clemente"], correct: 0, d: 2 },
+    { q: "Which pitcher won a record 511 games?", options: ["Cy Young", "Walter Johnson", "Nolan Ryan", "Warren Spahn"], correct: 0, d: 4 },
+    { q: "How many umpires work an MLB regular-season game?", options: ["4", "2", "6", "3"], correct: 0, d: 3 },
+    { q: "MLB bats must be made of what material?", options: ["Wood", "Aluminum", "Carbon fiber", "Titanium"], correct: 0, d: 2 },
+    { q: "Who is MLB's all-time leader in runs scored?", options: ["Rickey Henderson", "Ty Cobb", "Barry Bonds", "Hank Aaron"], correct: 0, d: 4 },
+    { q: "Who threw a perfect game in the 1956 World Series?", options: ["Don Larsen", "Sandy Koufax", "Whitey Ford", "Bob Gibson"], correct: 0, d: 4 },
+    { q: "Which two-way star was unanimous AL MVP in 2021 and 2023?", options: ["Shohei Ohtani", "Aaron Judge", "Mike Trout", "Mookie Betts"], correct: 0, d: 2 },
+    { q: "Who hit 70 home runs in 1998?", options: ["Mark McGwire", "Sammy Sosa", "Barry Bonds", "Ken Griffey Jr."], correct: 0, d: 2 },
+    { q: "How many teams are in MLB today?", options: ["30", "28", "32", "26"], correct: 0, d: 2 },
+    { q: "Which league adopted the designated hitter first, in 1973?", options: ["American League", "National League", "Both at once", "Minor leagues"], correct: 0, d: 3 },
+    { q: "Who holds MLB's career record for walks?", options: ["Barry Bonds", "Rickey Henderson", "Babe Ruth", "Ted Williams"], correct: 0, d: 4 },
+    { q: "A game in which the pitcher allows no hits is a?", options: ["No-hitter", "Shutout", "Save", "Quality start"], correct: 0, d: 2 },
+    { q: "Which Yankee legend wore number 7?", options: ["Mickey Mantle", "Babe Ruth", "Lou Gehrig", "Joe DiMaggio"], correct: 0, d: 3 },
+    { q: "Which Yankee legend wore number 3?", options: ["Babe Ruth", "Lou Gehrig", "Mickey Mantle", "Derek Jeter"], correct: 0, d: 3 },
+    { q: "Derek Jeter spent his whole career with which team?", options: ["New York Yankees", "New York Mets", "Boston Red Sox", "Miami Marlins"], correct: 0, d: 1 },
+    { q: "What does RBI stand for?", options: ["Runs Batted In", "Runs Between Innings", "Rally Batting Index", "Reached Base Instances"], correct: 0, d: 1 },
+    { q: "A pitcher's ERA measures?", options: ["Earned Run Average", "Extra Run Attempts", "Effective Reach Area", "Estimated Runs Allowed"], correct: 0, d: 2 },
+    { q: "A batted ball landing outside the foul lines is a?", options: ["Foul ball", "Fair ball", "Ground-rule double", "Balk"], correct: 0, d: 1 },
+    { q: "How many World Series have the Cubs won?", options: ["3", "1", "5", "2"], correct: 0, d: 3 },
+    { q: "Baseball is the traditional national pastime of which country?", options: ["United States", "Canada", "Mexico", "Japan"], correct: 0, d: 1 },
+    { q: "Turning two outs on one ground ball is a?", options: ["Double play", "Triple play", "Force play", "Rundown"], correct: 0, d: 1 },
+    { q: "Who managed the Yankees to seven titles in the 1950s?", options: ["Casey Stengel", "Joe Torre", "Billy Martin", "Miller Huggins"], correct: 0, d: 4 },
+    { q: "The World Baseball Classic is contested between?", options: ["National teams", "MLB clubs", "College teams", "All-star squads"], correct: 0, d: 2 },
+    { q: "Which legend was Hammerin' Hank and hit 755 home runs?", options: ["Hank Aaron", "Hank Greenberg", "Harmon Killebrew", "Frank Robinson"], correct: 0, d: 2 },
+    { q: "Cal Ripken Jr. earned which durability nickname?", options: ["The Iron Man", "The Iron Horse", "The Big Hurt", "Mr. October"], correct: 0, d: 3 },
+    { q: "Who was Mr. October for his clutch postseason hitting?", options: ["Reggie Jackson", "Derek Jeter", "David Ortiz", "Mickey Mantle"], correct: 0, d: 3 },
+    { q: "Which slugger was nicknamed the Big Hurt?", options: ["Frank Thomas", "Frank Robinson", "Willie McCovey", "Mark McGwire"], correct: 0, d: 3 },
+    { q: "A pitcher's illegal motion with runners on base is a?", options: ["Balk", "Foul", "Error", "Wild pitch"], correct: 0, d: 2 },
+    { q: "David Ortiz became a postseason legend for which team?", options: ["Boston Red Sox", "New York Yankees", "Minnesota Twins", "Baltimore Orioles"], correct: 0, d: 3 },
   ];
-  let triviaQueue = [];
+  // The queue is rebuilt whenever the active difficulty band changes (i.e. the
+  // player levels up), so harder questions phase in as they climb the ladder.
+  let triviaQueue = [], triviaQueueBand = '';
   function nextTrivia() {
-    if (!triviaQueue.length) {
-      triviaQueue = TRIVIA.map((_, i) => i);
+    const band = LEVELS[triviaProfile.rank].diff;
+    const key = band.join(',');
+    if (!triviaQueue.length || key !== triviaQueueBand) {
+      triviaQueueBand = key;
+      triviaQueue = [];
+      TRIVIA.forEach((q, i) => { if (band.indexOf(q.d || 1) >= 0) triviaQueue.push(i); });
       for (let i = triviaQueue.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [triviaQueue[i], triviaQueue[j]] = [triviaQueue[j], triviaQueue[i]]; }
     }
     return TRIVIA[triviaQueue.pop()];
@@ -1615,7 +1625,8 @@
     const rnd = rngFrom(randSeed());
     for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
     state.opts = { values: idx.map(i => q.options[i]), correctIndex: idx.indexOf(q.correct) };
-    el('quiz').innerHTML = '<div class="quiz-cat"><span class="msym">sports_baseball</span> Baseball</div>'
+    el('quiz').innerHTML = '<div class="quiz-cat"><span class="msym">sports_baseball</span> Baseball'
+      + '<span class="quiz-lvl">' + escapeHtml(LEVELS[triviaProfile.rank].name) + '</span></div>'
       + '<div class="quiz-q">' + escapeHtml(q.q) + '</div>';
     optEls.forEach((b, i) => {
       b.innerHTML = '<span class="opt-text opt-answer">' + escapeHtml(state.opts.values[i]) + '</span>';
@@ -1691,6 +1702,31 @@
       + '<circle cx="50" cy="50" r="11" fill="' + r.fill + '"/>'
       + '<circle cx="50" cy="50" r="4.5" fill="' + (oracle ? '#fffdf6' : '#1c1830') + '"/></svg>';
   }
+  // ---- Baseball Trivia: its own league ladder, Novice -> Major Leaguer -------
+  // `diff` is the difficulty band each level draws questions from, so the quiz
+  // gets harder the higher you climb. XP is difficulty-weighted (see answer()).
+  const LEVELS = [
+    { name: 'Novice',        short: 'Novice',  xp: 0,    acc: 0,    diff: [1],    fill: '#10b5aa', ring: '#10b5aa' },
+    { name: 'Little Leaguer', short: 'Little', xp: 250,  acc: 0,    diff: [1, 2], fill: '#3b82f6', ring: '#3b82f6' },
+    { name: 'High Schooler', short: 'High Sch.', xp: 700, acc: 0,  diff: [2],    fill: '#6d5efc', ring: '#6d5efc' },
+    { name: 'Collegian',     short: 'College', xp: 1500, acc: 0.5,  diff: [2, 3], fill: '#f0653a', ring: '#f0653a' },
+    { name: 'Minor Leaguer', short: 'Minors',  xp: 3000, acc: 0.55, diff: [3],    fill: '#e30f74', ring: '#e30f74' },
+    { name: 'Major Leaguer', short: 'Majors',  xp: 5500, acc: 0.6,  diff: [3, 4], fill: '#facc15', ring: '#e0a80f' },
+  ];
+  const LEVEL_BLURB = ['Welcome to the sandlot.', 'You know the basics now.', 'Making the varsity squad.',
+    'Playing ball at the next level.', 'One step from the show.', 'You made it to The Show!'];
+  function leagueBadge(i, size) {
+    const L = LEVELS[i], top = i === LEVELS.length - 1;
+    return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 100 100" aria-hidden="true">'
+      + '<circle cx="50" cy="50" r="46" fill="none" stroke="' + L.ring + '" stroke-width="8"/>'
+      + '<circle cx="50" cy="50" r="34" fill="' + (top ? '#facc15' : '#fffdf6') + '" stroke="#1c1830" stroke-width="2.5"/>'
+      + '<path d="M30 22 Q42 50 30 78" fill="none" stroke="#d92d20" stroke-width="3" stroke-linecap="round"/>'
+      + '<path d="M70 22 Q58 50 70 78" fill="none" stroke="#d92d20" stroke-width="3" stroke-linecap="round"/></svg>';
+  }
+  // Harder questions pay more; a running streak adds a capped bonus.
+  function scoreForTrivia(d, streak) {
+    return (8 + (d || 1) * 6) + Math.min(Math.max(streak - 1, 0), 5) * 4;
+  }
   const PKEY = 'guessage.profile.v1';
   function loadProfile() {
     let p; try { p = JSON.parse(localStorage.getItem(PKEY)); } catch (e) {}
@@ -1700,45 +1736,64 @@
   }
   const saveProfile = () => { try { localStorage.setItem(PKEY, JSON.stringify(profile)); } catch (e) {} };
   let profile = loadProfile();
+  // Baseball trivia keeps its own progression (league levels) on a separate key,
+  // so the two games never share XP. `rank` is the tier index into LEVELS here.
+  const TLKEY = 'guessage.trivia.v1';
+  function loadTrivia() {
+    let p; try { p = JSON.parse(localStorage.getItem(TLKEY)); } catch (e) {}
+    if (!p || typeof p.xp !== 'number') p = { xp: 0, correct: 0, rounds: 0, rank: 0 };
+    p.rank = Math.max(0, Math.min(LEVELS.length - 1, p.rank | 0));
+    return p;
+  }
+  const saveTrivia = () => { try { localStorage.setItem(TLKEY, JSON.stringify(triviaProfile)); } catch (e) {} };
+  let triviaProfile = loadTrivia();
+  // The active progression track — league ladder in trivia, Eye Ranks in age.
+  function track() {
+    return game === 'trivia'
+      ? { p: triviaProfile, L: LEVELS, badge: leagueBadge, blurb: LEVEL_BLURB, save: saveTrivia, top: 'Major Leaguer', word: 'Level up!', kind: 'League' }
+      : { p: profile, L: RANKS, badge: rankBadge, blurb: RANK_BLURB, save: saveProfile, top: 'The Oracle', word: 'Rank up!', kind: 'Rank' };
+  }
   let setRounds = 0, setCorrect = 0, setXp = 0, comboNow = 0, comboBest = 0, pendingRankUp = -1;
-  const lifeAcc = () => profile.rounds ? profile.correct / profile.rounds : 0;
-  const nextRank = () => profile.rank < RANKS.length - 1 ? RANKS[profile.rank + 1] : null;
+  const lifeAcc = () => { const p = track().p; return p.rounds ? p.correct / p.rounds : 0; };
+  const nextRank = () => { const t = track(); return t.p.rank < t.L.length - 1 ? t.L[t.p.rank + 1] : null; };
 
   function renderRankTile() {
-    const t = el('s-rank'); if (t) t.querySelector('b').textContent = RANKS[profile.rank].short;
+    const tk = track(), t = el('s-rank');
+    if (t) { t.querySelector('b').textContent = tk.L[tk.p.rank].short; t.querySelector('span').textContent = tk.kind; }
   }
   function renderRankStrip() {
     renderRankTile();
-    const r = RANKS[profile.rank], nx = nextRank();
-    el('rkBadge').innerHTML = rankBadge(profile.rank, 30);
+    const tk = track(), p = tk.p, r = tk.L[p.rank], nx = nextRank();
+    el('rkBadge').innerHTML = tk.badge(p.rank, 30);
     el('rkName').textContent = r.name;
     if (nx) {
-      const span = nx.xp - r.xp, into = Math.max(0, profile.xp - r.xp);
+      const span = nx.xp - r.xp, into = Math.max(0, p.xp - r.xp);
       el('rkFill').style.width = Math.max(3, Math.min(100, Math.round(into / span * 100))) + '%';
-      el('rkXp').textContent = profile.xp.toLocaleString() + ' / ' + nx.xp.toLocaleString() + ' XP';
-      el('rkNext').textContent = Math.max(0, nx.xp - profile.xp).toLocaleString() + ' XP to ' + nx.name
+      el('rkXp').textContent = p.xp.toLocaleString() + ' / ' + nx.xp.toLocaleString() + ' XP';
+      el('rkNext').textContent = Math.max(0, nx.xp - p.xp).toLocaleString() + ' XP to ' + nx.name
         + (nx.acc ? ' · keep ' + Math.round(nx.acc * 100) + '%+' : '');
     } else {
       el('rkFill').style.width = '100%';
-      el('rkXp').textContent = profile.xp.toLocaleString() + ' XP';
-      el('rkNext').textContent = 'Top rank — The Oracle';
+      el('rkXp').textContent = p.xp.toLocaleString() + ' XP';
+      el('rkNext').textContent = 'Top ' + tk.kind.toLowerCase() + ' — ' + tk.top;
     }
   }
   function checkRankUp() {
+    const tk = track(), p = tk.p;
     let up = -1;
-    while (profile.rank < RANKS.length - 1) {
-      const nx = RANKS[profile.rank + 1];
-      if (profile.xp >= nx.xp && lifeAcc() >= nx.acc) { profile.rank++; up = profile.rank; } else break;
+    while (p.rank < tk.L.length - 1) {
+      const nx = tk.L[p.rank + 1];
+      if (p.xp >= nx.xp && lifeAcc() >= nx.acc) { p.rank++; up = p.rank; } else break;
     }
     return up;
   }
   function showRankUp(i) {
-    const r = RANKS[i];
+    const tk = track(), r = tk.L[i];
     el('rankupSheet').innerHTML =
-      '<div style="font-family:\'Luckiest Guy\',var(--round);font-size:40px;color:#facc15;letter-spacing:1px;text-shadow:0 4px 0 rgba(0,0,0,.25)">Rank up!</div>'
-      + '<div style="filter:drop-shadow(0 14px 26px rgba(0,0,0,.45))">' + rankBadge(i, 168) + '</div>'
+      '<div style="font-family:\'Luckiest Guy\',var(--round);font-size:40px;color:#facc15;letter-spacing:1px;text-shadow:0 4px 0 rgba(0,0,0,.25)">' + tk.word + '</div>'
+      + '<div style="filter:drop-shadow(0 14px 26px rgba(0,0,0,.45))">' + tk.badge(i, 168) + '</div>'
       + '<div style="font-family:\'Luckiest Guy\',var(--round);font-size:32px;color:#fff;letter-spacing:.5px">' + r.name + '</div>'
-      + '<div style="font-size:13px;color:#c9bcd8">' + RANK_BLURB[i] + '</div>'
+      + '<div style="font-size:13px;color:#c9bcd8">' + tk.blurb[i] + '</div>'
       + '<button class="next" id="rankupGo" style="width:100%;max-width:300px">Keep climbing</button>';
     el('rankup').classList.remove('hidden');
     el('rankupGo').addEventListener('click', () => {
@@ -1749,9 +1804,9 @@
   function showRecap() {
     const pct = setRounds ? Math.round(setCorrect / setRounds * 100) : 0;
     const C = 326.7, off = C * (1 - pct / 100);
-    const r = RANKS[profile.rank], nx = nextRank();
-    const bar = nx ? Math.max(3, Math.min(100, Math.round((profile.xp - r.xp) / (nx.xp - r.xp) * 100))) : 100;
-    const toNext = nx ? Math.max(0, nx.xp - profile.xp).toLocaleString() + ' XP to ' + nx.name : 'Top rank reached';
+    const tk = track(), p = tk.p, r = tk.L[p.rank], nx = nextRank();
+    const bar = nx ? Math.max(3, Math.min(100, Math.round((p.xp - r.xp) / (nx.xp - r.xp) * 100))) : 100;
+    const toNext = nx ? Math.max(0, nx.xp - p.xp).toLocaleString() + ' XP to ' + nx.name : (tk.kind === 'League' ? 'Top level — Major Leaguer' : 'Top rank reached');
     const cheer = pct === 100 ? 'Flawless set.' : pct >= 60 ? 'Nice set — keep it rolling.' : 'Shake it off, next set is yours.';
     el('recapSheet').innerHTML =
       '<div style="font-family:var(--round);font-weight:800;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-2)">Set complete</div>'
@@ -1766,7 +1821,7 @@
         + '<span style="font-family:\'Luckiest Guy\',var(--round);font-size:26px;color:var(--good)">+' + setXp + '</span></div>'
       + (comboBest >= 2 ? '<div style="font-size:12.5px;color:var(--text-2)">Best combo <b style="color:var(--accent)">×' + comboBest + '</b></div>' : '')
       + '<div style="width:100%;background:var(--card);border:1px solid var(--hair-line);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:10px">'
-        + '<span style="flex:none">' + rankBadge(profile.rank, 30) + '</span>'
+        + '<span style="flex:none">' + tk.badge(p.rank, 30) + '</span>'
         + '<span style="flex-grow:1"><span style="display:flex;justify-content:space-between"><b style="font-size:13px;color:var(--text)">' + r.name + '</b><span style="font-size:11px;color:var(--text-2)">' + toNext + '</span></span>'
         + '<span style="display:block;height:8px;border-radius:999px;background:var(--fill);overflow:hidden;margin-top:5px"><span style="display:block;height:100%;width:' + bar + '%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--blue))"></span></span></span></div>'
       + '<div style="font-size:13px;color:var(--text-2)">' + cheer + '</div>'
@@ -1796,19 +1851,21 @@
     state.answered = true; state.rounds++;
     const correctIdx = state.opts.correctIndex;
     const isRight = i === correctIdx;
+    const tk = track(), prof = tk.p;
     let xpGain = 0;
     if (isRight) {
       state.correct++; state.streak++; state.best = Math.max(state.best, state.streak);
-      xpGain = scoreForStreak(state.streak);
+      // Trivia XP scales with the question's difficulty; age XP with the streak.
+      xpGain = game === 'trivia' ? scoreForTrivia(state.question && state.question.d, state.streak) : scoreForStreak(state.streak);
       state.score += xpGain;
-      profile.xp += xpGain; profile.correct++; setXp += xpGain; setCorrect++;
+      prof.xp += xpGain; prof.correct++; setXp += xpGain; setCorrect++;
       comboNow++; comboBest = Math.max(comboBest, comboNow);
     } else {
       state.streak = 0; comboNow = 0;
     }
-    profile.rounds++; setRounds++;
+    prof.rounds++; setRounds++;
     pendingRankUp = checkRankUp();
-    saveProfile();
+    tk.save();
     // Cartoon face reacts: big smile + head bop when right, a frown when wrong.
     if (game === 'age' && !state.photo) reactFace(isRight);
     el('options').classList.add('answered');
@@ -1848,7 +1905,7 @@
     if (isRight) {
       // The payoff: confetti from the winning button, +points off the score, a green bump.
       celebrate(optEls[correctIdx]);
-      pointsFloat(scoreForStreak(state.streak));
+      pointsFloat(xpGain);
       const sc = el('s-score'), st = el('s-streak');
       sc.classList.add('win'); st.classList.add('win');
       setTimeout(() => { sc.classList.remove('win'); st.classList.remove('win'); }, 640);
@@ -1897,6 +1954,7 @@
   });
   function startGame(g) {
     game = (g === 'trivia') ? 'trivia' : 'age';
+    if (game === 'trivia') triviaQueueBand = '';   // rebuild queue for the current level's difficulty
     Object.assign(state, { score: 0, rounds: 0, correct: 0, streak: 0, best: 0, answered: false });
     comboNow = 0; resetSet(); startNewSession(); renderScores(false);
     document.body.classList.add('playing');   // reveals #phone, hides #home
