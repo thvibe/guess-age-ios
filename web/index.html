@@ -492,6 +492,7 @@
     display: flex; flex-direction: column;
     padding: max(14px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(22px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
     transition: opacity .3s ease, transform .3s ease; transform-origin: center 42%;
+    overflow-y: auto; -webkit-overflow-scrolling: touch;   /* scroll if the tiles + hero exceed the screen */
   }
   #home.hidden { display: none; }
   /* Play -> game transition: the home layer fades + zooms out while the game
@@ -511,7 +512,16 @@
     font-size: clamp(46px, 14vw, 60px); color: var(--accent); letter-spacing: 1px; line-height: 1;
     text-shadow: 0 3px 0 rgba(0,0,0,.16), 0 7px 16px rgba(0,0,0,.14); }
   .home-tag { margin: 2px 0 0; font-size: 15px; font-weight: 600; color: var(--text); max-width: 280px; line-height: 1.35; }
-  .home-rules { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 340px; margin: 6px auto 0; }
+  /* "How to play" toggle — keeps the instructions tucked away so the tiles lead. */
+  .home-how { appearance: none; border: 0; background: none; cursor: pointer; margin-top: 2px;
+    font-family: var(--round); font-weight: 700; font-size: 13px; color: var(--text); opacity: .72;
+    display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px; }
+  .home-how:hover { opacity: 1; }
+  .home-how .how-caret { font-size: 11px; transition: transform .18s ease; }
+  .home-how[aria-expanded="true"] .how-caret { transform: rotate(180deg); }
+  .home-how[aria-expanded="true"] { opacity: 1; }
+  .home-rules { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 340px; margin: 10px auto 0; }
+  .home-rules.is-collapsed { display: none; }
   .home-rule { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; color: var(--text); line-height: 1.35; text-align: left; }
   .home-rule .n { flex: none; width: 24px; height: 24px; border-radius: 8px; background: var(--card); color: var(--accent);
     font-family: var(--round); font-weight: 800; display: grid; place-items: center; font-size: 13px; box-shadow: var(--shadow); }
@@ -656,11 +666,12 @@
       <circle cx="60" cy="93" r="7.5" fill="#e30f74"/>
     </svg>
     <h1 class="home-title">Trivia League</h1>
-    <p class="home-tag">Pick a topic. Climb from Novice to Hall of Famer.</p>
-    <div class="home-rules">
+    <p class="home-tag">Pick a topic. Climb the ranks.</p>
+    <button class="home-how" id="homeHowBtn" type="button" aria-expanded="false" aria-controls="homeRules">How to play <span class="how-caret" aria-hidden="true">▾</span></button>
+    <div class="home-rules is-collapsed" id="homeRules">
       <div class="home-rule"><span class="n">1</span><span>Answer <b>four-choice</b> questions — they get <b>harder as you level up</b>.</span></div>
       <div class="home-rule"><span class="n">2</span><span>Build a <b>streak</b> for bonus points. A miss resets it.</span></div>
-      <div class="home-rule"><span class="n">3</span><span>Climb each topic's ladder from <b>Novice to Hall of Famer</b>.</span></div>
+      <div class="home-rule"><span class="n">3</span><span>Climb each topic's ladder to the <b>top rank</b>.</span></div>
     </div>
   </div>
   <div class="home-bottom">
@@ -1471,6 +1482,44 @@
     { q: "The ancient Library of Alexandria was in which country?", options: ["Egypt", "Greece", "Italy", "Turkey"], correct: 0, d: 4 },
     { q: "Which 1919 treaty formally ended World War I?", options: ["Treaty of Versailles", "Treaty of Paris", "Treaty of Ghent", "Treaty of Tordesillas"], correct: 0, d: 4 },
   ];
+  const MUSIC_Q = [
+    { q: "Which British band recorded Hey Jude?", options: ["The Beatles", "The Rolling Stones", "The Who", "Queen"], correct: 0, d: 1 },
+    { q: "Who is known as the King of Pop?", options: ["Michael Jackson", "Elvis Presley", "Prince", "Justin Timberlake"], correct: 0, d: 1 },
+    { q: "How many strings does a standard guitar have?", options: ["6", "4", "5", "12"], correct: 0, d: 1 },
+    { q: "Which instrument has 88 keys?", options: ["Piano", "Guitar", "Violin", "Harp"], correct: 0, d: 1 },
+    { q: "Who sang Rolling in the Deep?", options: ["Adele", "Beyonce", "Rihanna", "Taylor Swift"], correct: 0, d: 1 },
+    { q: "What do you call a group of musicians who play together?", options: ["A band", "A choir", "A troupe", "A cast"], correct: 0, d: 1 },
+    { q: "Which pop star released the album 1989?", options: ["Taylor Swift", "Katy Perry", "Lady Gaga", "Ariana Grande"], correct: 0, d: 1 },
+    { q: "The trumpet belongs to which instrument family?", options: ["Brass", "Woodwind", "String", "Percussion"], correct: 0, d: 1 },
+    { q: "Who is often called the Queen of Pop?", options: ["Madonna", "Cher", "Whitney Houston", "Mariah Carey"], correct: 0, d: 1 },
+    { q: "Which band performed Bohemian Rhapsody?", options: ["Queen", "The Beatles", "Led Zeppelin", "Pink Floyd"], correct: 0, d: 2 },
+    { q: "Who sang Like a Rolling Stone?", options: ["Bob Dylan", "Bruce Springsteen", "Neil Young", "Johnny Cash"], correct: 0, d: 2 },
+    { q: "Which rapper released The Marshall Mathers LP?", options: ["Eminem", "Jay-Z", "Dr. Dre", "Snoop Dogg"], correct: 0, d: 2 },
+    { q: "Bob Marley is most associated with which genre?", options: ["Reggae", "Jazz", "Blues", "Soul"], correct: 0, d: 2 },
+    { q: "Who is the lead singer of U2?", options: ["Bono", "Sting", "Chris Martin", "Thom Yorke"], correct: 0, d: 2 },
+    { q: "Which instrument did Jimi Hendrix famously play?", options: ["Guitar", "Drums", "Bass", "Piano"], correct: 0, d: 2 },
+    { q: "Which 1982 album is the best-selling of all time?", options: ["Thriller", "Back in Black", "The Dark Side of the Moon", "Rumours"], correct: 0, d: 2 },
+    { q: "How many members were in The Beatles?", options: ["4", "3", "5", "2"], correct: 0, d: 2 },
+    { q: "Who sang I Will Always Love You in The Bodyguard?", options: ["Whitney Houston", "Mariah Carey", "Celine Dion", "Tina Turner"], correct: 0, d: 2 },
+    { q: "Which country is the band ABBA from?", options: ["Sweden", "Norway", "Germany", "United Kingdom"], correct: 0, d: 2 },
+    { q: "What musical term describes the speed of a piece?", options: ["Tempo", "Pitch", "Timbre", "Dynamics"], correct: 0, d: 2 },
+    { q: "Who composed the Ninth Symphony with Ode to Joy?", options: ["Ludwig van Beethoven", "Mozart", "Bach", "Brahms"], correct: 0, d: 3 },
+    { q: "Who was the frontman of Nirvana?", options: ["Kurt Cobain", "Eddie Vedder", "Chris Cornell", "Dave Grohl"], correct: 0, d: 3 },
+    { q: "How many lines make up a musical staff?", options: ["5", "4", "6", "7"], correct: 0, d: 3 },
+    { q: "Which 1969 festival was held on a New York dairy farm?", options: ["Woodstock", "Coachella", "Glastonbury", "Lollapalooza"], correct: 0, d: 3 },
+    { q: "Who is known as the Godfather of Soul?", options: ["James Brown", "Ray Charles", "Marvin Gaye", "Otis Redding"], correct: 0, d: 3 },
+    { q: "Who composed The Four Seasons?", options: ["Antonio Vivaldi", "Bach", "Handel", "Mozart"], correct: 0, d: 3 },
+    { q: "Which Motown group featured Diana Ross?", options: ["The Supremes", "The Temptations", "The Jackson 5", "The Four Tops"], correct: 0, d: 3 },
+    { q: "What is the highest female singing voice?", options: ["Soprano", "Alto", "Tenor", "Bass"], correct: 0, d: 3 },
+    { q: "Who released the 1984 album Purple Rain?", options: ["Prince", "Michael Jackson", "David Bowie", "Stevie Wonder"], correct: 0, d: 3 },
+    { q: "Which instrument is Yo-Yo Ma famous for playing?", options: ["Cello", "Violin", "Piano", "Flute"], correct: 0, d: 3 },
+    { q: "How many symphonies did Beethoven complete?", options: ["9", "5", "12", "7"], correct: 0, d: 4 },
+    { q: "Who composed the opera The Magic Flute?", options: ["Wolfgang Amadeus Mozart", "Bach", "Haydn", "Verdi"], correct: 0, d: 4 },
+    { q: "Which Italian term means very loud in music?", options: ["Fortissimo", "Pianissimo", "Crescendo", "Staccato"], correct: 0, d: 4 },
+    { q: "Which jazz trumpeter was nicknamed Satchmo?", options: ["Louis Armstrong", "Miles Davis", "Dizzy Gillespie", "Duke Ellington"], correct: 0, d: 4 },
+    { q: "How many black keys are on a standard piano?", options: ["36", "52", "40", "32"], correct: 0, d: 4 },
+    { q: "The Grammy Awards are presented by which body?", options: ["The Recording Academy", "The RIAA", "Billboard", "MTV"], correct: 0, d: 4 },
+  ];
   // The topic registry. `accent` tints the topic's card and quiz backdrop; the
   // age game is intentionally left out of this list (kept in code, off the home
   // grid). Add a topic here and it appears on the home screen automatically.
@@ -1480,6 +1529,11 @@
     { id: 'geography', name: 'Geography',        icon: 'public',          accent: '#0e7a6b', questions: GEO_Q },
     { id: 'science',   name: 'Science & Nature', icon: 'science',         accent: '#2563a8', questions: SCI_Q },
     { id: 'history',   name: 'History',          icon: 'history_edu',     accent: '#9a5a2a', questions: HIST_Q },
+    { id: 'music',     name: 'Music',            icon: 'music_note',      accent: '#c02e63', questions: MUSIC_Q,
+      // Music uses its own level names instead of the generic ladder.
+      tiers:      ['Broke Artist', 'Open Mic', 'Local Act', 'Touring Act', 'Chart-Topper', 'Music Icon'],
+      tiersShort: ['Broke', 'Open Mic', 'Local', 'Touring', 'Chart', 'Icon'],
+      blurbs:     ['Playing for tips.', 'First open-mic night.', 'Packing local clubs.', 'Out on the road now.', 'Climbing the charts.', 'A bona fide Music Icon!'] },
   ];
   const topicById = id => TOPICS.find(t => t.id === id) || TOPICS[0];
   let activeTopic = TOPICS[0];
@@ -1789,7 +1843,7 @@
     const rnd = rngFrom(randSeed());
     for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
     state.opts = { values: idx.map(i => q.options[i]), correctIndex: idx.indexOf(q.correct) };
-    const t = activeTopic, lvl = LEVELS[topicProfile(t.id).rank].name;
+    const t = activeTopic, lvl = topicLadder(t)[topicProfile(t.id).rank].name;
     el('quiz').style.background = 'radial-gradient(120% 90% at 50% 18%, ' + t.accent + ' 0%, #15182b 66%, #0c0e1a 100%)';
     el('quiz').innerHTML = '<div class="quiz-cat"><span class="msym">' + t.icon + '</span> ' + escapeHtml(t.name)
       + '<span class="quiz-lvl">' + escapeHtml(lvl) + '</span></div>'
@@ -1889,6 +1943,17 @@
       + '<circle cx="50" cy="50" r="34" fill="' + L.fill + '" stroke="#1c1830" stroke-width="2.5"/>'
       + '<path d="M50 32 L54.2 44.2 L67.1 44.4 L56.8 52.2 L60.6 64.6 L50 57.2 L39.4 64.6 L43.2 52.2 L32.9 44.4 L45.8 44.2 Z" fill="' + (top ? '#1c1830' : '#fffdf6') + '"/></svg>';
   }
+  // A topic's ladder: the shared thresholds (xp/acc/diff/colors) with the topic's
+  // own tier names layered on when it defines `tiers` (e.g. Music), else generic.
+  function topicLadder(t) {
+    const names = t && t.tiers, shorts = t && t.tiersShort;
+    return LEVELS.map((L, i) => ({
+      xp: L.xp, acc: L.acc, diff: L.diff, fill: L.fill, ring: L.ring,
+      name: (names && names[i]) || L.name,
+      short: (shorts && shorts[i]) || (names && names[i]) || L.short,
+    }));
+  }
+  const topicBlurbs = t => LEVELS.map((L, i) => (t && t.blurbs && t.blurbs[i]) || LEVEL_BLURB[i]);
   // Harder questions pay more; a running streak adds a capped bonus.
   function scoreForTrivia(d, streak) {
     return (8 + (d || 1) * 6) + Math.min(Math.max(streak - 1, 0), 5) * 4;
@@ -1923,9 +1988,12 @@
   // The active progression track — the active topic's league ladder in trivia,
   // Eye Ranks in the (hidden) age game.
   function track() {
-    return game === 'trivia'
-      ? { p: topicProfile(activeTopic.id), L: LEVELS, badge: leagueBadge, blurb: LEVEL_BLURB, save: saveTrivia, top: 'Hall of Famer', word: 'Level up!', kind: 'League' }
-      : { p: profile, L: RANKS, badge: rankBadge, blurb: RANK_BLURB, save: saveProfile, top: 'The Oracle', word: 'Rank up!', kind: 'Rank' };
+    if (game === 'trivia') {
+      const L = topicLadder(activeTopic);
+      return { p: topicProfile(activeTopic.id), L, badge: leagueBadge, blurb: topicBlurbs(activeTopic),
+        save: saveTrivia, top: L[L.length - 1].name, word: 'Level up!', kind: 'League' };
+    }
+    return { p: profile, L: RANKS, badge: rankBadge, blurb: RANK_BLURB, save: saveProfile, top: 'The Oracle', word: 'Rank up!', kind: 'Rank' };
   }
   let setRounds = 0, setCorrect = 0, setXp = 0, comboNow = 0, comboBest = 0, pendingRankUp = -1;
   const lifeAcc = () => { const p = track().p; return p.rounds ? p.correct / p.rounds : 0; };
@@ -1980,7 +2048,7 @@
     const C = 326.7, off = C * (1 - pct / 100);
     const tk = track(), p = tk.p, r = tk.L[p.rank], nx = nextRank();
     const bar = nx ? Math.max(3, Math.min(100, Math.round((p.xp - r.xp) / (nx.xp - r.xp) * 100))) : 100;
-    const toNext = nx ? Math.max(0, nx.xp - p.xp).toLocaleString() + ' XP to ' + nx.name : (tk.kind === 'League' ? 'Top level — Major Leaguer' : 'Top rank reached');
+    const toNext = nx ? Math.max(0, nx.xp - p.xp).toLocaleString() + ' XP to ' + nx.name : (tk.kind === 'League' ? 'Top level — ' + tk.top : 'Top rank reached');
     const cheer = pct === 100 ? 'Flawless set.' : pct >= 60 ? 'Nice set — keep it rolling.' : 'Shake it off, next set is yours.';
     el('recapSheet').innerHTML =
       '<div style="font-family:var(--round);font-weight:800;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-2)">Set complete</div>'
@@ -2132,7 +2200,7 @@
     game = (g === 'trivia') ? 'trivia' : 'age';
     if (game === 'trivia') triviaQueueBand = '';   // rebuild queue for the current topic + level
     Object.assign(state, { score: 0, rounds: 0, correct: 0, streak: 0, best: 0, answered: false });
-    comboNow = 0; resetSet(); startNewSession(); renderScores(false);
+    comboNow = 0; resetSet(); startNewSession(); renderScores(false); renderRankStrip();
     document.body.classList.add('playing');   // reveals #phone, hides #home
     el('home').setAttribute('aria-hidden', 'true');
     el('phone').setAttribute('aria-hidden', 'false');
@@ -2146,7 +2214,7 @@
   function renderTopics() {
     const wrap = el('homeTopics'); if (!wrap) return;
     wrap.innerHTML = TOPICS.map(t => {
-      const p = topicProfile(t.id), lv = LEVELS[p.rank], nx = p.rank < LEVELS.length - 1 ? LEVELS[p.rank + 1] : null;
+      const p = topicProfile(t.id), L = topicLadder(t), lv = L[p.rank], nx = p.rank < L.length - 1 ? L[p.rank + 1] : null;
       const pct = nx ? Math.max(5, Math.min(100, Math.round((p.xp - lv.xp) / (nx.xp - lv.xp) * 100))) : 100;
       return '<button class="topic-card" type="button" data-id="' + t.id + '" style="--tk:' + t.accent + '">'
         + '<span class="msym topic-ic">' + t.icon + '</span>'
@@ -2157,6 +2225,15 @@
     wrap.querySelectorAll('.topic-card').forEach(b => b.addEventListener('click', () => startTopic(b.dataset.id)));
   }
   renderTopics();
+  // Collapsible "How to play" — hidden by default so the tiles get the room.
+  (() => {
+    const btn = el('homeHowBtn'), rules = el('homeRules');
+    if (!btn || !rules) return;
+    btn.addEventListener('click', () => {
+      const collapsed = rules.classList.toggle('is-collapsed');
+      btn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    });
+  })();
 
   el('historyBtn').addEventListener('click', openHistory);
   el('histClose').addEventListener('click', closeHistory);
