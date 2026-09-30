@@ -8,8 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="How Old?">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" id="tcLight" content="#ffddb8" media="(prefers-color-scheme: light)">
-<meta name="theme-color" id="tcDark" content="#201628" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" id="tc" content="#ffddb8">
 <meta name="color-scheme" content="light dark">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1973,22 +1972,20 @@
   const TKEY = 'guessage.theme';
   const systemDark = () => matchMedia('(prefers-color-scheme: dark)').matches;
   const currentTheme = () => document.documentElement.dataset.theme || (systemDark() ? 'dark' : 'light');
-  // Match Safari's top/bottom UI bars to the app's dark/light edge. Two
-  // media-scoped <meta theme-color> tags let the browser pick natively (reliable
-  // on iOS, unlike a script-changed single tag); a manual toggle forces one by
-  // flipping the media queries on/off.
+  // Match Safari's top/bottom UI bars to the app's dark/light edge. A single
+  // <meta theme-color> driven from JS to the *resolved* theme is what keeps the
+  // chrome correct when the in-app toggle disagrees with the system setting —
+  // media-scoped metas follow the system, so the bars go light in a
+  // system-light / app-dark mix (and vice versa).
   function setThemeColor(mode) {
-    const l = el('tcLight'), d = el('tcDark');
-    if (!l || !d) return;
-    if (mode === 'dark')       { l.media = 'not all';                       d.media = 'all'; }
-    else if (mode === 'light') { l.media = 'all';                           d.media = 'not all'; }
-    else                       { l.media = '(prefers-color-scheme: light)'; d.media = '(prefers-color-scheme: dark)'; }
+    const m = el('tc');
+    if (m) m.setAttribute('content', mode === 'dark' ? '#201628' : '#ffddb8');
   }
   function updateThemeIcon() {
     const dark = currentTheme() === 'dark';
     el('themeBtn').textContent = dark ? 'light_mode' : 'dark_mode';
     const ht = el('homeTheme'); if (ht) ht.textContent = dark ? 'light_mode' : 'dark_mode';
-    setThemeColor(document.documentElement.dataset.theme || 'system');
+    setThemeColor(dark ? 'dark' : 'light');
   }
   function applyTheme(t) {
     if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
