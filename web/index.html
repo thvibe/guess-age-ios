@@ -585,16 +585,16 @@
   <div class="scores">
     <div class="stat" id="s-score"><b>0</b><span>Score</span></div>
     <div class="stat" id="s-streak"><b>0</b><span>Streak</span></div>
-    <div class="stat rank" id="s-rank"><b>Rookie</b><span>Rank</span></div>
+    <div class="stat rank" id="s-rank"><b>Novice</b><span>League</span></div>
     <div class="stat" id="s-acc"><b>0%</b><span>Accuracy</span></div>
   </div>
 
   <div class="rankstrip" id="rankstrip">
     <span class="rk-badge" id="rkBadge"></span>
     <span class="rk-mid">
-      <span class="rk-top"><span class="rk-name" id="rkName">Rookie Eye</span><span class="rk-xp" id="rkXp">0 XP</span></span>
+      <span class="rk-top"><span class="rk-name" id="rkName">Novice</span><span class="rk-xp" id="rkXp">0 XP</span></span>
       <span class="rk-track"><span class="rk-fill" id="rkFill" style="width:0%"></span></span>
-      <span class="rk-next" id="rkNext">300 XP to Keen Eye</span>
+      <span class="rk-next" id="rkNext">250 XP to Amateur</span>
     </span>
   </div>
 
@@ -1246,7 +1246,10 @@
   const state = { score:0, rounds:0, correct:0, streak:0, best:0, age:0, seed:0, opts:null, answered:false, photo:null };
 
   let mode = 'photo';        // Photos primary; falls back to Cartoon if none loaded.
-  let game = 'age';          // 'age' = guess-the-age, 'trivia' = baseball trivia
+  // 'trivia' = a Trivia League topic (the whole app), 'age' = the hidden
+  // guess-the-age game kept in code only. Default to trivia so no age-game
+  // Eye Rank is ever rendered — all ratings come from the trivia league.
+  let game = 'trivia';
   let photos = [];           // verified-age real photos (core files + streamed URLs)
 
   // ---- Baseball trivia questions (verified facts). correct = index into options. ----
