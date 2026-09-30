@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>How Old?</title>
+<title>Trivia League</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="How Old?">
+<meta name="apple-mobile-web-app-title" content="Trivia League">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" id="tc" content="#ffddb8">
 <meta name="color-scheme" content="light dark">
@@ -519,18 +519,21 @@
   .home-bottom { display: flex; flex-direction: column; align-items: center; gap: 12px; }
   .home-teaser { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
     color: var(--text-2); background: var(--card); padding: 7px 14px; border-radius: 999px; box-shadow: var(--shadow); }
-  /* Two icon game-cards on the splash — pick which game to play. */
-  .home-modes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: min(340px, 100%); }
-  .mode-card { appearance: none; border: 0; cursor: pointer; border-radius: 18px; padding: 16px 8px 14px;
-    display: flex; flex-direction: column; align-items: center; gap: 7px; color: #fff;
-    font-family: var(--round); font-weight: 800; font-size: 14.5px; line-height: 1.12; text-align: center;
+  /* Topic picker on the splash — one card per trivia topic. */
+  .home-topics { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; width: min(360px, 100%); }
+  .topic-card { appearance: none; border: 0; cursor: pointer; border-radius: 18px; padding: 14px 12px 12px;
+    display: flex; flex-direction: column; align-items: flex-start; gap: 4px; color: #fff; text-align: left;
+    background: var(--tk); box-shadow: 0 6px 0 rgba(0,0,0,.28), 0 11px 22px rgba(0,0,0,.28);
     transition: transform .08s, box-shadow .08s; }
-  .mode-card .mode-ic { font-size: 30px; }
-  .mode-card.age { background: var(--accent); box-shadow: 0 6px 0 var(--accent-press), 0 11px 22px rgba(227,15,116,.34); }
-  .mode-card.age:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--accent-press); }
-  .mode-card.trivia { background: #1f3a5c; box-shadow: 0 6px 0 #0d1b2e, 0 11px 22px rgba(20,38,62,.42); }
-  .mode-card.trivia .mode-ic { color: #ffd15c; }
-  .mode-card.trivia:active { transform: translateY(4px); box-shadow: 0 2px 0 #0d1b2e; }
+  .topic-card:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,.28); }
+  .topic-card .topic-ic { font-size: 28px; opacity: .95; }
+  .topic-card .topic-name { font-family: var(--round); font-weight: 800; font-size: 15px; line-height: 1.1; }
+  .topic-card .topic-lvl { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: rgba(255,255,255,.82); }
+  .topic-card .topic-bar { width: 100%; height: 5px; border-radius: 999px; background: rgba(255,255,255,.22); overflow: hidden; margin-top: 3px; }
+  .topic-card .topic-bar > span { display: block; height: 100%; border-radius: 999px; background: #fff; opacity: .9; }
+  /* When the grid has an odd count the last card spans both columns. */
+  .topic-card:last-child:nth-child(odd) { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 10px; }
+  .topic-card:last-child:nth-child(odd) .topic-bar { width: 90px; margin-top: 0; margin-left: auto; }
   .home-caption { font-size: 12px; color: var(--text); opacity: .62; letter-spacing: .05em; }
   @keyframes logoBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
   @media (max-height: 720px) { .home-teaser { display: none; } }
@@ -561,7 +564,7 @@
 <div id="phone" aria-hidden="true">
   <div class="scrim" aria-hidden="true"></div>
   <header class="bar">
-    <div class="title"><svg class="mark" viewBox="0 0 120 120" aria-hidden="true"><rect x="4" y="4" width="112" height="112" rx="28" fill="#1c1830"/><rect x="39.5" y="41.5" width="13" height="13" rx="3" fill="#10b5aa" transform="rotate(18 46 48)"/><circle cx="43" cy="38" r="6" fill="#facc15"/><rect x="43.5" y="22.5" width="13" height="13" rx="3" fill="#6d5efc" transform="rotate(-12 50 29)"/><circle cx="60" cy="26" r="6.5" fill="#f0653a"/><rect x="63.5" y="22.5" width="13" height="13" rx="3" fill="#e30f74" transform="rotate(14 70 29)"/><circle cx="77" cy="38" r="6" fill="#12b26a"/><rect x="70.5" y="42.5" width="13" height="13" rx="3" fill="#ffffff" transform="rotate(-18 77 49)"/><circle cx="70" cy="57" r="6" fill="#10b5aa"/><rect x="56.5" y="55.5" width="13" height="13" rx="3" fill="#facc15" transform="rotate(20 63 62)"/><circle cx="60" cy="70" r="6" fill="#6d5efc"/><rect x="53.5" y="72.5" width="13" height="13" rx="3" fill="#f0653a" transform="rotate(-14 60 79)"/><circle cx="60" cy="93" r="7.5" fill="#e30f74"/></svg><span>How Old? <small>· demo</small></span></div>
+    <div class="title"><svg class="mark" viewBox="0 0 120 120" aria-hidden="true"><rect x="4" y="4" width="112" height="112" rx="28" fill="#1c1830"/><rect x="39.5" y="41.5" width="13" height="13" rx="3" fill="#10b5aa" transform="rotate(18 46 48)"/><circle cx="43" cy="38" r="6" fill="#facc15"/><rect x="43.5" y="22.5" width="13" height="13" rx="3" fill="#6d5efc" transform="rotate(-12 50 29)"/><circle cx="60" cy="26" r="6.5" fill="#f0653a"/><rect x="63.5" y="22.5" width="13" height="13" rx="3" fill="#e30f74" transform="rotate(14 70 29)"/><circle cx="77" cy="38" r="6" fill="#12b26a"/><rect x="70.5" y="42.5" width="13" height="13" rx="3" fill="#ffffff" transform="rotate(-18 77 49)"/><circle cx="70" cy="57" r="6" fill="#10b5aa"/><rect x="56.5" y="55.5" width="13" height="13" rx="3" fill="#facc15" transform="rotate(20 63 62)"/><circle cx="60" cy="70" r="6" fill="#6d5efc"/><rect x="53.5" y="72.5" width="13" height="13" rx="3" fill="#f0653a" transform="rotate(-14 60 79)"/><circle cx="60" cy="93" r="7.5" fill="#e30f74"/></svg><span>Trivia League <small>· demo</small></span></div>
     <div class="bar-btns">
       <button class="icon-btn msym" id="themeBtn" title="Light / dark" aria-label="Toggle light or dark mode">dark_mode</button>
       <button class="icon-btn msym" id="historyBtn" title="Score history" aria-label="Score history">leaderboard</button>
@@ -637,7 +640,7 @@
     </div>
   </div>
   <div class="home-hero">
-    <svg class="home-logo" viewBox="0 0 120 120" role="img" aria-label="How Old? logo">
+    <svg class="home-logo" viewBox="0 0 120 120" role="img" aria-label="Trivia League logo">
       <rect x="4" y="4" width="112" height="112" rx="28" fill="#1c1830"/>
       <rect x="39.5" y="41.5" width="13" height="13" rx="3" fill="#10b5aa" transform="rotate(18 46 48)"/>
       <circle cx="43" cy="38" r="6" fill="#facc15"/>
@@ -652,21 +655,18 @@
       <rect x="53.5" y="72.5" width="13" height="13" rx="3" fill="#f0653a" transform="rotate(-14 60 79)"/>
       <circle cx="60" cy="93" r="7.5" fill="#e30f74"/>
     </svg>
-    <h1 class="home-title">How Old?</h1>
-    <p class="home-tag">One face, four ages — trust your gut.</p>
+    <h1 class="home-title">Trivia League</h1>
+    <p class="home-tag">Pick a topic. Climb from Novice to Hall of Famer.</p>
     <div class="home-rules">
-      <div class="home-rule"><span class="n">1</span><span>Each round shows a <b>real person's face</b> (age verified from public records) — pick which of <b>four ages</b> is right.</span></div>
+      <div class="home-rule"><span class="n">1</span><span>Answer <b>four-choice</b> questions — they get <b>harder as you level up</b>.</span></div>
       <div class="home-rule"><span class="n">2</span><span>Build a <b>streak</b> for bonus points. A miss resets it.</span></div>
-      <div class="home-rule"><span class="n">3</span><span>There's no finish line. It just <b>keeps going</b>.</span></div>
+      <div class="home-rule"><span class="n">3</span><span>Climb each topic's ladder from <b>Novice to Hall of Famer</b>.</span></div>
     </div>
   </div>
   <div class="home-bottom">
     <div class="home-teaser" id="homeTeaser">First run — set the record.</div>
-    <div class="home-modes">
-      <button class="mode-card age" id="play"><span class="msym mode-ic">face</span><span>Guess<br>the Age</span></button>
-      <button class="mode-card trivia" id="playTrivia"><span class="msym mode-ic">sports_baseball</span><span>Baseball<br>Trivia</span></button>
-    </div>
-    <div class="home-caption">solo · endless · pick a game</div>
+    <div class="home-topics" id="homeTopics"></div>
+    <div class="home-caption">solo · endless · pick a topic</div>
   </div>
 </div>
 
@@ -1239,9 +1239,9 @@
   let photos = [];           // verified-age real photos (core files + streamed URLs)
 
   // ---- Baseball trivia questions (verified facts). correct = index into options. ----
-  // Each question carries a difficulty `d` (1 easy -> 4 expert). The baseball
-  // league ladder draws harder bands as the player climbs toward Major Leaguer.
-  const TRIVIA = [
+  // Each question carries a difficulty `d` (1 easy -> 4 expert). Every topic's
+  // league ladder draws harder bands as the player climbs toward Hall of Famer.
+  const BASEBALL_Q = [
     { q: "Who holds MLB's career home-run record?", options: ['Barry Bonds', 'Hank Aaron', 'Babe Ruth', 'Alex Rodriguez'], correct: 0, d: 2 },
     { q: 'How many stitches are on a regulation baseball?', options: ['108', '88', '216', '120'], correct: 0, d: 3 },
     { q: 'Which team has won the most World Series titles?', options: ['NY Yankees', 'St. Louis Cardinals', 'Boston Red Sox', 'LA Dodgers'], correct: 0, d: 1 },
@@ -1319,19 +1319,184 @@
     { q: "A pitcher's illegal motion with runners on base is a?", options: ["Balk", "Foul", "Error", "Wild pitch"], correct: 0, d: 2 },
     { q: "David Ortiz became a postseason legend for which team?", options: ["Boston Red Sox", "New York Yankees", "Minnesota Twins", "Baltimore Orioles"], correct: 0, d: 3 },
   ];
+  const MOVIES_Q = [
+    { q: "Which film features a shark terrorizing Amity Island?", options: ["Jaws", "The Meg", "Deep Blue Sea", "Open Water"], correct: 0, d: 1 },
+    { q: "Who directed the original Star Wars (1977)?", options: ["George Lucas", "Steven Spielberg", "Ridley Scott", "James Cameron"], correct: 0, d: 1 },
+    { q: "In The Lion King, what kind of animal is Simba?", options: ["Lion", "Tiger", "Leopard", "Cheetah"], correct: 0, d: 1 },
+    { q: "Which cowboy toy does Tom Hanks voice in Toy Story?", options: ["Woody", "Buzz Lightyear", "Rex", "Hamm"], correct: 0, d: 1 },
+    { q: "Which superhero is known as the Caped Crusader?", options: ["Batman", "Superman", "Spider-Man", "Iron Man"], correct: 0, d: 1 },
+    { q: "What does the abbreviation TV stand for?", options: ["Television", "Total Video", "Tape Viewer", "Tele-Vision"], correct: 0, d: 1 },
+    { q: "Which boy wizard attends Hogwarts?", options: ["Harry Potter", "Frodo Baggins", "Percy Jackson", "Bilbo Baggins"], correct: 0, d: 1 },
+    { q: "Which two royal sisters star in Frozen?", options: ["Elsa and Anna", "Elsa and Belle", "Anna and Aurora", "Merida and Elsa"], correct: 0, d: 1 },
+    { q: "Which green ogre leads a DreamWorks franchise?", options: ["Shrek", "The Hulk", "The Grinch", "Gumby"], correct: 0, d: 1 },
+    { q: "Who played Jack in Titanic (1997)?", options: ["Leonardo DiCaprio", "Brad Pitt", "Matt Damon", "Tom Cruise"], correct: 0, d: 2 },
+    { q: "Which film won the 1994 Academy Award for Best Picture?", options: ["Forrest Gump", "Pulp Fiction", "The Shawshank Redemption", "Braveheart"], correct: 0, d: 2 },
+    { q: "Which superhero team assembles in the 2012 Marvel film?", options: ["The Avengers", "Justice League", "X-Men", "Guardians of the Galaxy"], correct: 0, d: 2 },
+    { q: "Who directed Jurassic Park (1993)?", options: ["Steven Spielberg", "George Lucas", "James Cameron", "Ron Howard"], correct: 0, d: 2 },
+    { q: "In The Matrix, which pill does Neo take?", options: ["Red", "Blue", "Green", "Yellow"], correct: 0, d: 2 },
+    { q: "Which sitcom is set around the Central Perk coffee house?", options: ["Friends", "Seinfeld", "Cheers", "How I Met Your Mother"], correct: 0, d: 2 },
+    { q: "Who provided the voice of Darth Vader?", options: ["James Earl Jones", "Morgan Freeman", "Samuel L. Jackson", "Idris Elba"], correct: 0, d: 2 },
+    { q: "Which film features the line I'll be back?", options: ["The Terminator", "RoboCop", "Predator", "Total Recall"], correct: 0, d: 2 },
+    { q: "What fictional African nation is home to Black Panther?", options: ["Wakanda", "Genovia", "Zamunda", "Latveria"], correct: 0, d: 2 },
+    { q: "Which show features the Upside Down and a girl named Eleven?", options: ["Stranger Things", "Dark", "The OA", "Wednesday"], correct: 0, d: 2 },
+    { q: "Who directed Pulp Fiction?", options: ["Quentin Tarantino", "Martin Scorsese", "David Fincher", "Spike Lee"], correct: 0, d: 2 },
+    { q: "Which 2020 Best Picture winner was the first non-English film to win?", options: ["Parasite", "1917", "Joker", "Roma"], correct: 0, d: 3 },
+    { q: "Who directed Inception and The Dark Knight?", options: ["Christopher Nolan", "Denis Villeneuve", "Zack Snyder", "Guillermo del Toro"], correct: 0, d: 3 },
+    { q: "Who played Jack Sparrow in Pirates of the Caribbean?", options: ["Johnny Depp", "Orlando Bloom", "Russell Crowe", "Colin Farrell"], correct: 0, d: 3 },
+    { q: "What is the family surname in The Godfather?", options: ["Corleone", "Soprano", "Montana", "Gambino"], correct: 0, d: 3 },
+    { q: "Which film features the Overlook Hotel and Here's Johnny?", options: ["The Shining", "Psycho", "The Exorcist", "Misery"], correct: 0, d: 3 },
+    { q: "Who composed the scores for Jaws, Star Wars and E.T.?", options: ["John Williams", "Hans Zimmer", "Ennio Morricone", "Danny Elfman"], correct: 0, d: 3 },
+    { q: "Which series follows chemistry teacher Walter White?", options: ["Breaking Bad", "The Wire", "Ozark", "Better Call Saul"], correct: 0, d: 3 },
+    { q: "Which 1939 film follows Dorothy down the Yellow Brick Road?", options: ["The Wizard of Oz", "Gone with the Wind", "Snow White", "Pinocchio"], correct: 0, d: 3 },
+    { q: "Who played the Joker in The Dark Knight (2008)?", options: ["Heath Ledger", "Jack Nicholson", "Joaquin Phoenix", "Jared Leto"], correct: 0, d: 3 },
+    { q: "Which studio made Toy Story, the first feature-length CGI film?", options: ["Pixar", "DreamWorks", "Blue Sky", "Laika"], correct: 0, d: 3 },
+    { q: "Who was the first African American to win the Best Actor Oscar?", options: ["Sidney Poitier", "Denzel Washington", "Morgan Freeman", "James Earl Jones"], correct: 0, d: 4 },
+    { q: "Which film won all 11 Oscars it was nominated for in 2004?", options: ["The Lord of the Rings: The Return of the King", "Titanic", "Ben-Hur", "Gladiator"], correct: 0, d: 4 },
+    { q: "Who directed the 1941 classic Citizen Kane?", options: ["Orson Welles", "Alfred Hitchcock", "John Ford", "Frank Capra"], correct: 0, d: 4 },
+    { q: "What 1927 film was the first feature-length talkie?", options: ["The Jazz Singer", "Metropolis", "Nosferatu", "The General"], correct: 0, d: 4 },
+    { q: "Which director has won the most Best Director Oscars, with four?", options: ["John Ford", "Steven Spielberg", "William Wyler", "Frank Capra"], correct: 0, d: 4 },
+    { q: "In which year was the first Academy Awards ceremony held?", options: ["1929", "1935", "1927", "1941"], correct: 0, d: 4 },
+  ];
+  const GEO_Q = [
+    { q: "What is the capital of France?", options: ["Paris", "London", "Rome", "Berlin"], correct: 0, d: 1 },
+    { q: "Which is the largest ocean?", options: ["Pacific", "Atlantic", "Indian", "Arctic"], correct: 0, d: 1 },
+    { q: "What is the capital of Japan?", options: ["Tokyo", "Beijing", "Seoul", "Bangkok"], correct: 0, d: 1 },
+    { q: "On which continent is the Sahara Desert?", options: ["Africa", "Asia", "Australia", "South America"], correct: 0, d: 1 },
+    { q: "What is the tallest mountain on Earth?", options: ["Mount Everest", "K2", "Kilimanjaro", "Denali"], correct: 0, d: 1 },
+    { q: "Which country is shaped like a boot?", options: ["Italy", "Spain", "Greece", "Portugal"], correct: 0, d: 1 },
+    { q: "What is the capital of the United States?", options: ["Washington, D.C.", "New York", "Los Angeles", "Chicago"], correct: 0, d: 1 },
+    { q: "The Nile river runs through which country?", options: ["Egypt", "Brazil", "India", "Spain"], correct: 0, d: 1 },
+    { q: "How many continents are there?", options: ["7", "5", "6", "8"], correct: 0, d: 1 },
+    { q: "What is the capital of Australia?", options: ["Canberra", "Sydney", "Melbourne", "Perth"], correct: 0, d: 2 },
+    { q: "Which is the largest hot desert in the world?", options: ["Sahara", "Gobi", "Kalahari", "Mojave"], correct: 0, d: 2 },
+    { q: "What is the smallest country in the world?", options: ["Vatican City", "Monaco", "San Marino", "Nauru"], correct: 0, d: 2 },
+    { q: "Which country has the largest population?", options: ["India", "China", "United States", "Indonesia"], correct: 0, d: 2 },
+    { q: "On which continent is the Amazon rainforest?", options: ["South America", "Africa", "Asia", "Australia"], correct: 0, d: 2 },
+    { q: "What is the capital of Canada?", options: ["Ottawa", "Toronto", "Vancouver", "Montreal"], correct: 0, d: 2 },
+    { q: "Which mountain range separates Europe and Asia?", options: ["Ural Mountains", "The Alps", "The Andes", "Himalayas"], correct: 0, d: 2 },
+    { q: "What is the largest country by area?", options: ["Russia", "Canada", "China", "United States"], correct: 0, d: 2 },
+    { q: "In which sea can you float easily due to its salt?", options: ["Dead Sea", "Red Sea", "Black Sea", "Caspian Sea"], correct: 0, d: 2 },
+    { q: "What is the capital of Brazil?", options: ["Brasilia", "Rio de Janeiro", "Sao Paulo", "Salvador"], correct: 0, d: 2 },
+    { q: "Which country spans Europe and Asia and contains Istanbul?", options: ["Turkey", "Greece", "Russia", "Egypt"], correct: 0, d: 2 },
+    { q: "What is the capital of New Zealand?", options: ["Wellington", "Auckland", "Christchurch", "Hamilton"], correct: 0, d: 3 },
+    { q: "Which African country was never colonized by Europeans?", options: ["Ethiopia", "Kenya", "Ghana", "Nigeria"], correct: 0, d: 3 },
+    { q: "The Strait of Gibraltar separates Spain from which continent?", options: ["Africa", "Asia", "South America", "Antarctica"], correct: 0, d: 3 },
+    { q: "Lake Baikal, the world's deepest lake, is in which country?", options: ["Russia", "Mongolia", "China", "Kazakhstan"], correct: 0, d: 3 },
+    { q: "What is the capital of South Korea?", options: ["Seoul", "Busan", "Incheon", "Pyongyang"], correct: 0, d: 3 },
+    { q: "Mount Kilimanjaro is located in which country?", options: ["Tanzania", "Kenya", "Uganda", "Ethiopia"], correct: 0, d: 3 },
+    { q: "Machu Picchu is found in which country?", options: ["Peru", "Mexico", "Bolivia", "Chile"], correct: 0, d: 3 },
+    { q: "The Great Barrier Reef lies off the coast of which country?", options: ["Australia", "Indonesia", "Philippines", "Fiji"], correct: 0, d: 3 },
+    { q: "What is the capital of Egypt?", options: ["Cairo", "Alexandria", "Giza", "Luxor"], correct: 0, d: 3 },
+    { q: "Which capital is split by the Danube into Buda and Pest?", options: ["Budapest", "Vienna", "Belgrade", "Prague"], correct: 0, d: 3 },
+    { q: "What is the capital of Kazakhstan?", options: ["Astana", "Almaty", "Bishkek", "Tashkent"], correct: 0, d: 4 },
+    { q: "Which country has the most natural lakes?", options: ["Canada", "Russia", "United States", "Finland"], correct: 0, d: 4 },
+    { q: "What is the capital of Mongolia?", options: ["Ulaanbaatar", "Astana", "Bishkek", "Tashkent"], correct: 0, d: 4 },
+    { q: "The Atacama, the driest desert, is in which country?", options: ["Chile", "Peru", "Argentina", "Bolivia"], correct: 0, d: 4 },
+    { q: "What is the world's largest island?", options: ["Greenland", "Australia", "New Guinea", "Borneo"], correct: 0, d: 4 },
+    { q: "Which two countries share the world's longest land border?", options: ["USA and Canada", "Russia and China", "Argentina and Chile", "Kazakhstan and Russia"], correct: 0, d: 4 },
+  ];
+  const SCI_Q = [
+    { q: "What planet do we live on?", options: ["Earth", "Mars", "Venus", "Jupiter"], correct: 0, d: 1 },
+    { q: "Which gas do humans need to breathe to survive?", options: ["Oxygen", "Carbon dioxide", "Nitrogen", "Helium"], correct: 0, d: 1 },
+    { q: "How many legs does an insect have?", options: ["6", "8", "4", "10"], correct: 0, d: 1 },
+    { q: "What is H2O commonly known as?", options: ["Water", "Salt", "Hydrogen", "Air"], correct: 0, d: 1 },
+    { q: "Which planet is known as the Red Planet?", options: ["Mars", "Venus", "Jupiter", "Mercury"], correct: 0, d: 1 },
+    { q: "What do bees collect to make honey?", options: ["Nectar", "Pollen", "Water", "Sap"], correct: 0, d: 1 },
+    { q: "What is the largest land animal?", options: ["African elephant", "Giraffe", "Hippopotamus", "Rhinoceros"], correct: 0, d: 1 },
+    { q: "Which star sits at the center of our solar system?", options: ["The Sun", "The Moon", "Polaris", "Sirius"], correct: 0, d: 1 },
+    { q: "Which organ pumps blood through the body?", options: ["Heart", "Brain", "Lungs", "Liver"], correct: 0, d: 1 },
+    { q: "How many planets are in our solar system?", options: ["8", "9", "7", "10"], correct: 0, d: 2 },
+    { q: "What is the chemical symbol for gold?", options: ["Au", "Go", "Gd", "Ag"], correct: 0, d: 2 },
+    { q: "What is often called the powerhouse of the cell?", options: ["Mitochondria", "Nucleus", "Ribosome", "Chloroplast"], correct: 0, d: 2 },
+    { q: "What force keeps us on the ground?", options: ["Gravity", "Magnetism", "Friction", "Inertia"], correct: 0, d: 2 },
+    { q: "Which gas makes up most of Earth's atmosphere?", options: ["Nitrogen", "Oxygen", "Carbon dioxide", "Argon"], correct: 0, d: 2 },
+    { q: "What is the fastest land animal?", options: ["Cheetah", "Lion", "Pronghorn", "Horse"], correct: 0, d: 2 },
+    { q: "How many bones are in the adult human body?", options: ["206", "201", "250", "187"], correct: 0, d: 2 },
+    { q: "How do plants make food from sunlight?", options: ["Photosynthesis", "Respiration", "Digestion", "Fermentation"], correct: 0, d: 2 },
+    { q: "Which is the largest planet in our solar system?", options: ["Jupiter", "Saturn", "Neptune", "Earth"], correct: 0, d: 2 },
+    { q: "What is the hardest natural substance?", options: ["Diamond", "Gold", "Iron", "Quartz"], correct: 0, d: 2 },
+    { q: "Through which medium does sound travel fastest?", options: ["Solids", "Liquids", "Gases", "A vacuum"], correct: 0, d: 2 },
+    { q: "Approximately how fast does light travel?", options: ["300,000 km/s", "30,000 km/s", "3,000 km/s", "3 million km/s"], correct: 0, d: 3 },
+    { q: "Who proposed the theory of general relativity?", options: ["Albert Einstein", "Isaac Newton", "Niels Bohr", "Galileo"], correct: 0, d: 3 },
+    { q: "What is the most abundant element in the universe?", options: ["Hydrogen", "Helium", "Oxygen", "Nitrogen"], correct: 0, d: 3 },
+    { q: "What type of animal is a Komodo dragon?", options: ["Lizard", "Snake", "Amphibian", "Crocodile"], correct: 0, d: 3 },
+    { q: "Which part of the atom has a negative charge?", options: ["Electron", "Proton", "Neutron", "Nucleus"], correct: 0, d: 3 },
+    { q: "How many chambers does the human heart have?", options: ["4", "2", "3", "6"], correct: 0, d: 3 },
+    { q: "Which planet is closest to the Sun?", options: ["Mercury", "Venus", "Earth", "Mars"], correct: 0, d: 3 },
+    { q: "Who formulated the laws of motion and universal gravitation?", options: ["Isaac Newton", "Albert Einstein", "Charles Darwin", "Nikola Tesla"], correct: 0, d: 3 },
+    { q: "What is the largest organ of the human body?", options: ["Skin", "Liver", "Brain", "Lungs"], correct: 0, d: 3 },
+    { q: "Which blood type is the universal donor?", options: ["O negative", "AB positive", "A positive", "B negative"], correct: 0, d: 3 },
+    { q: "What is the chemical symbol for sodium?", options: ["Na", "So", "Sd", "S"], correct: 0, d: 4 },
+    { q: "About how many elements are on the periodic table?", options: ["118", "100", "92", "150"], correct: 0, d: 4 },
+    { q: "Who proposed evolution by natural selection?", options: ["Charles Darwin", "Gregor Mendel", "Louis Pasteur", "Carl Linnaeus"], correct: 0, d: 4 },
+    { q: "Which subatomic particle carries no electric charge?", options: ["Neutron", "Proton", "Electron", "Photon"], correct: 0, d: 4 },
+    { q: "What is the pH of pure water?", options: ["7", "0", "14", "1"], correct: 0, d: 4 },
+    { q: "What is the scientific study of fungi called?", options: ["Mycology", "Botany", "Zoology", "Ecology"], correct: 0, d: 4 },
+  ];
+  const HIST_Q = [
+    { q: "Who was the first President of the United States?", options: ["George Washington", "Abraham Lincoln", "Thomas Jefferson", "John Adams"], correct: 0, d: 1 },
+    { q: "The Great Pyramids were built in which country?", options: ["Egypt", "Mexico", "Greece", "Iraq"], correct: 0, d: 1 },
+    { q: "Which ship sank in 1912 after hitting an iceberg?", options: ["Titanic", "Lusitania", "Bismarck", "Queen Mary"], correct: 0, d: 1 },
+    { q: "In which country did the Olympic Games originate?", options: ["Greece", "Italy", "Egypt", "China"], correct: 0, d: 1 },
+    { q: "Who was Britain's Prime Minister during most of WWII?", options: ["Winston Churchill", "Neville Chamberlain", "Tony Blair", "Clement Attlee"], correct: 0, d: 1 },
+    { q: "The U.S. Declaration of Independence was signed in which year?", options: ["1776", "1492", "1812", "1865"], correct: 0, d: 1 },
+    { q: "Which civilization built Machu Picchu?", options: ["Inca", "Aztec", "Maya", "Roman"], correct: 0, d: 1 },
+    { q: "Who sailed to the Americas in 1492?", options: ["Christopher Columbus", "Ferdinand Magellan", "Vasco da Gama", "Marco Polo"], correct: 0, d: 1 },
+    { q: "The Berlin Wall divided which city?", options: ["Berlin", "Munich", "Hamburg", "Frankfurt"], correct: 0, d: 1 },
+    { q: "Who was the 16th U.S. President, who led during the Civil War?", options: ["Abraham Lincoln", "George Washington", "Ulysses S. Grant", "Andrew Jackson"], correct: 0, d: 2 },
+    { q: "In which year did World War II end?", options: ["1945", "1918", "1939", "1950"], correct: 0, d: 2 },
+    { q: "Who painted the Mona Lisa?", options: ["Leonardo da Vinci", "Michelangelo", "Raphael", "Vincent van Gogh"], correct: 0, d: 2 },
+    { q: "The French Revolution began in which year?", options: ["1789", "1776", "1804", "1815"], correct: 0, d: 2 },
+    { q: "Which empire did Julius Caesar help lead?", options: ["Roman", "Greek", "Ottoman", "Persian"], correct: 0, d: 2 },
+    { q: "Who delivered the I Have a Dream speech?", options: ["Martin Luther King Jr.", "Malcolm X", "Frederick Douglass", "Rosa Parks"], correct: 0, d: 2 },
+    { q: "Who was the first person to walk on the Moon?", options: ["Neil Armstrong", "Buzz Aldrin", "Yuri Gagarin", "Michael Collins"], correct: 0, d: 2 },
+    { q: "Which queen ruled Britain for over 63 years in the 1800s?", options: ["Queen Victoria", "Elizabeth I", "Elizabeth II", "Mary I"], correct: 0, d: 2 },
+    { q: "The Cold War was primarily between the U.S. and which country?", options: ["Soviet Union", "China", "Germany", "Japan"], correct: 0, d: 2 },
+    { q: "Which Egyptian queen allied with Caesar and Mark Antony?", options: ["Cleopatra", "Nefertiti", "Hatshepsut", "Isis"], correct: 0, d: 2 },
+    { q: "Sparta and Athens were city-states of which civilization?", options: ["Greek", "Roman", "Persian", "Egyptian"], correct: 0, d: 2 },
+    { q: "In which year did the Berlin Wall fall?", options: ["1989", "1991", "1985", "1979"], correct: 0, d: 3 },
+    { q: "Who was the first Emperor of Rome?", options: ["Augustus", "Julius Caesar", "Nero", "Constantine"], correct: 0, d: 3 },
+    { q: "The Renaissance began in which country?", options: ["Italy", "France", "England", "Germany"], correct: 0, d: 3 },
+    { q: "Which U.S. war was fought between North and South (1861-65)?", options: ["Civil War", "Revolutionary War", "War of 1812", "Mexican-American War"], correct: 0, d: 3 },
+    { q: "Who was assassinated in Dallas in 1963?", options: ["John F. Kennedy", "Abraham Lincoln", "Martin Luther King Jr.", "Robert Kennedy"], correct: 0, d: 3 },
+    { q: "The Ottoman Empire was centered in which modern country?", options: ["Turkey", "Egypt", "Iran", "Greece"], correct: 0, d: 3 },
+    { q: "Whose expedition first circumnavigated the globe?", options: ["Ferdinand Magellan", "Christopher Columbus", "James Cook", "Francis Drake"], correct: 0, d: 3 },
+    { q: "Who wrote the Communist Manifesto with Friedrich Engels?", options: ["Karl Marx", "Vladimir Lenin", "Joseph Stalin", "Leon Trotsky"], correct: 0, d: 3 },
+    { q: "The attack on Pearl Harbor occurred in which year?", options: ["1941", "1939", "1945", "1937"], correct: 0, d: 3 },
+    { q: "Which civilization built the city of Tenochtitlan?", options: ["Aztec", "Inca", "Maya", "Olmec"], correct: 0, d: 3 },
+    { q: "Who was the first woman to win a Nobel Prize?", options: ["Marie Curie", "Rosalind Franklin", "Ada Lovelace", "Florence Nightingale"], correct: 0, d: 4 },
+    { q: "Which English king was forced to sign the Magna Carta?", options: ["King John", "Henry VIII", "Richard I", "Edward I"], correct: 0, d: 4 },
+    { q: "In which year did World War I begin?", options: ["1914", "1918", "1912", "1905"], correct: 0, d: 4 },
+    { q: "Who was the last Tsar of Russia?", options: ["Nicholas II", "Alexander III", "Peter the Great", "Ivan IV"], correct: 0, d: 4 },
+    { q: "The ancient Library of Alexandria was in which country?", options: ["Egypt", "Greece", "Italy", "Turkey"], correct: 0, d: 4 },
+    { q: "Which 1919 treaty formally ended World War I?", options: ["Treaty of Versailles", "Treaty of Paris", "Treaty of Ghent", "Treaty of Tordesillas"], correct: 0, d: 4 },
+  ];
+  // The topic registry. `accent` tints the topic's card and quiz backdrop; the
+  // age game is intentionally left out of this list (kept in code, off the home
+  // grid). Add a topic here and it appears on the home screen automatically.
+  const TOPICS = [
+    { id: 'baseball',  name: 'Baseball',         icon: 'sports_baseball', accent: '#1f3a5c', questions: BASEBALL_Q },
+    { id: 'movies',    name: 'Movies & TV',      icon: 'movie',           accent: '#7b2d8e', questions: MOVIES_Q },
+    { id: 'geography', name: 'Geography',        icon: 'public',          accent: '#0e7a6b', questions: GEO_Q },
+    { id: 'science',   name: 'Science & Nature', icon: 'science',         accent: '#2563a8', questions: SCI_Q },
+    { id: 'history',   name: 'History',          icon: 'history_edu',     accent: '#9a5a2a', questions: HIST_Q },
+  ];
+  const topicById = id => TOPICS.find(t => t.id === id) || TOPICS[0];
+  let activeTopic = TOPICS[0];
   // The queue is rebuilt whenever the active difficulty band changes (i.e. the
   // player levels up), so harder questions phase in as they climb the ladder.
   let triviaQueue = [], triviaQueueBand = '';
   function nextTrivia() {
-    const band = LEVELS[triviaProfile.rank].diff;
-    const key = band.join(',');
+    const qs = activeTopic.questions;
+    const band = LEVELS[topicProfile(activeTopic.id).rank].diff;
+    const key = activeTopic.id + ':' + band.join(',');
     if (!triviaQueue.length || key !== triviaQueueBand) {
       triviaQueueBand = key;
       triviaQueue = [];
-      TRIVIA.forEach((q, i) => { if (band.indexOf(q.d || 1) >= 0) triviaQueue.push(i); });
+      qs.forEach((q, i) => { if (band.indexOf(q.d || 1) >= 0) triviaQueue.push(i); });
       for (let i = triviaQueue.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [triviaQueue[i], triviaQueue[j]] = [triviaQueue[j], triviaQueue[i]]; }
     }
-    return TRIVIA[triviaQueue.pop()];
+    return qs[triviaQueue.pop()];
   }
   let photoFails = 0;        // consecutive streamed-image load failures
   photoImg.addEventListener('load', () => { photoFails = 0; });
@@ -1624,8 +1789,10 @@
     const rnd = rngFrom(randSeed());
     for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
     state.opts = { values: idx.map(i => q.options[i]), correctIndex: idx.indexOf(q.correct) };
-    el('quiz').innerHTML = '<div class="quiz-cat"><span class="msym">sports_baseball</span> Baseball'
-      + '<span class="quiz-lvl">' + escapeHtml(LEVELS[triviaProfile.rank].name) + '</span></div>'
+    const t = activeTopic, lvl = LEVELS[topicProfile(t.id).rank].name;
+    el('quiz').style.background = 'radial-gradient(120% 90% at 50% 18%, ' + t.accent + ' 0%, #15182b 66%, #0c0e1a 100%)';
+    el('quiz').innerHTML = '<div class="quiz-cat"><span class="msym">' + t.icon + '</span> ' + escapeHtml(t.name)
+      + '<span class="quiz-lvl">' + escapeHtml(lvl) + '</span></div>'
       + '<div class="quiz-q">' + escapeHtml(q.q) + '</div>';
     optEls.forEach((b, i) => {
       b.innerHTML = '<span class="opt-text opt-answer">' + escapeHtml(state.opts.values[i]) + '</span>';
@@ -1701,26 +1868,26 @@
       + '<circle cx="50" cy="50" r="11" fill="' + r.fill + '"/>'
       + '<circle cx="50" cy="50" r="4.5" fill="' + (oracle ? '#fffdf6' : '#1c1830') + '"/></svg>';
   }
-  // ---- Baseball Trivia: its own league ladder, Novice -> Major Leaguer -------
+  // ---- Trivia league ladder, Novice -> Hall of Famer (shared by all topics) --
   // `diff` is the difficulty band each level draws questions from, so the quiz
   // gets harder the higher you climb. XP is difficulty-weighted (see answer()).
+  // Each topic climbs this ladder independently (see the per-topic store below).
   const LEVELS = [
-    { name: 'Novice',        short: 'Novice',  xp: 0,    acc: 0,    diff: [1],    fill: '#10b5aa', ring: '#10b5aa' },
-    { name: 'Little Leaguer', short: 'Little', xp: 250,  acc: 0,    diff: [1, 2], fill: '#3b82f6', ring: '#3b82f6' },
-    { name: 'High Schooler', short: 'High Sch.', xp: 700, acc: 0,  diff: [2],    fill: '#6d5efc', ring: '#6d5efc' },
-    { name: 'Collegian',     short: 'College', xp: 1500, acc: 0.5,  diff: [2, 3], fill: '#f0653a', ring: '#f0653a' },
-    { name: 'Minor Leaguer', short: 'Minors',  xp: 3000, acc: 0.55, diff: [3],    fill: '#e30f74', ring: '#e30f74' },
-    { name: 'Major Leaguer', short: 'Majors',  xp: 5500, acc: 0.6,  diff: [3, 4], fill: '#facc15', ring: '#e0a80f' },
+    { name: 'Novice',        short: 'Novice',   xp: 0,    acc: 0,    diff: [1],    fill: '#10b5aa', ring: '#10b5aa' },
+    { name: 'Amateur',       short: 'Amateur',  xp: 250,  acc: 0,    diff: [1, 2], fill: '#3b82f6', ring: '#3b82f6' },
+    { name: 'Semi-Pro',      short: 'Semi-Pro', xp: 700,  acc: 0,    diff: [2],    fill: '#6d5efc', ring: '#6d5efc' },
+    { name: 'Pro',           short: 'Pro',      xp: 1500, acc: 0.5,  diff: [2, 3], fill: '#f0653a', ring: '#f0653a' },
+    { name: 'All-Star',      short: 'All-Star', xp: 3000, acc: 0.55, diff: [3],    fill: '#e30f74', ring: '#e30f74' },
+    { name: 'Hall of Famer', short: 'HOF',      xp: 5500, acc: 0.6,  diff: [3, 4], fill: '#facc15', ring: '#e0a80f' },
   ];
-  const LEVEL_BLURB = ['Welcome to the sandlot.', 'You know the basics now.', 'Making the varsity squad.',
-    'Playing ball at the next level.', 'One step from the show.', 'You made it to The Show!'];
+  const LEVEL_BLURB = ['Just getting started.', 'Finding your footing.', 'Real skills showing now.',
+    'Playing like a pro.', 'Among the very best.', 'A true Hall of Famer!'];
   function leagueBadge(i, size) {
     const L = LEVELS[i], top = i === LEVELS.length - 1;
     return '<svg width="' + size + '" height="' + size + '" viewBox="0 0 100 100" aria-hidden="true">'
       + '<circle cx="50" cy="50" r="46" fill="none" stroke="' + L.ring + '" stroke-width="8"/>'
-      + '<circle cx="50" cy="50" r="34" fill="' + (top ? '#facc15' : '#fffdf6') + '" stroke="#1c1830" stroke-width="2.5"/>'
-      + '<path d="M30 22 Q42 50 30 78" fill="none" stroke="#d92d20" stroke-width="3" stroke-linecap="round"/>'
-      + '<path d="M70 22 Q58 50 70 78" fill="none" stroke="#d92d20" stroke-width="3" stroke-linecap="round"/></svg>';
+      + '<circle cx="50" cy="50" r="34" fill="' + L.fill + '" stroke="#1c1830" stroke-width="2.5"/>'
+      + '<path d="M50 32 L54.2 44.2 L67.1 44.4 L56.8 52.2 L60.6 64.6 L50 57.2 L39.4 64.6 L43.2 52.2 L32.9 44.4 L45.8 44.2 Z" fill="' + (top ? '#1c1830' : '#fffdf6') + '"/></svg>';
   }
   // Harder questions pay more; a running streak adds a capped bonus.
   function scoreForTrivia(d, streak) {
@@ -1735,21 +1902,29 @@
   }
   const saveProfile = () => { try { localStorage.setItem(PKEY, JSON.stringify(profile)); } catch (e) {} };
   let profile = loadProfile();
-  // Baseball trivia keeps its own progression (league levels) on a separate key,
-  // so the two games never share XP. `rank` is the tier index into LEVELS here.
+  // Trivia progression lives on its own key, separate from the age game's Eye
+  // Ranks, as a map of topic id -> { xp, correct, rounds, rank } so every topic
+  // climbs the league ladder independently. `rank` is the tier index into LEVELS.
   const TLKEY = 'guessage.trivia.v1';
-  function loadTrivia() {
-    let p; try { p = JSON.parse(localStorage.getItem(TLKEY)); } catch (e) {}
+  function loadTriviaStore() {
+    let s; try { s = JSON.parse(localStorage.getItem(TLKEY)); } catch (e) {}
+    if (s && typeof s.xp === 'number') s = { baseball: s };   // migrate the old single-topic save
+    return (s && typeof s === 'object') ? s : {};
+  }
+  let triviaStore = loadTriviaStore();
+  function topicProfile(id) {
+    let p = triviaStore[id];
     if (!p || typeof p.xp !== 'number') p = { xp: 0, correct: 0, rounds: 0, rank: 0 };
     p.rank = Math.max(0, Math.min(LEVELS.length - 1, p.rank | 0));
+    triviaStore[id] = p;
     return p;
   }
-  const saveTrivia = () => { try { localStorage.setItem(TLKEY, JSON.stringify(triviaProfile)); } catch (e) {} };
-  let triviaProfile = loadTrivia();
-  // The active progression track — league ladder in trivia, Eye Ranks in age.
+  const saveTrivia = () => { try { localStorage.setItem(TLKEY, JSON.stringify(triviaStore)); } catch (e) {} };
+  // The active progression track — the active topic's league ladder in trivia,
+  // Eye Ranks in the (hidden) age game.
   function track() {
     return game === 'trivia'
-      ? { p: triviaProfile, L: LEVELS, badge: leagueBadge, blurb: LEVEL_BLURB, save: saveTrivia, top: 'Major Leaguer', word: 'Level up!', kind: 'League' }
+      ? { p: topicProfile(activeTopic.id), L: LEVELS, badge: leagueBadge, blurb: LEVEL_BLURB, save: saveTrivia, top: 'Hall of Famer', word: 'Level up!', kind: 'League' }
       : { p: profile, L: RANKS, badge: rankBadge, blurb: RANK_BLURB, save: saveProfile, top: 'The Oracle', word: 'Rank up!', kind: 'Rank' };
   }
   let setRounds = 0, setCorrect = 0, setXp = 0, comboNow = 0, comboBest = 0, pendingRankUp = -1;
@@ -1842,7 +2017,9 @@
     el('home').setAttribute('aria-hidden', 'false');
     el('phone').setAttribute('aria-hidden', 'true');
     Object.assign(state, { score: 0, rounds: 0, correct: 0, streak: 0, best: 0, answered: false });
-    startNewSession(); renderScores(false); if (typeof updateHomeTeaser === 'function') updateHomeTeaser();
+    startNewSession(); renderScores(false);
+    if (typeof renderTopics === 'function') renderTopics();   // refresh per-topic level + progress
+    if (typeof updateHomeTeaser === 'function') updateHomeTeaser();
   }
 
   function answer(i) {
@@ -1953,7 +2130,7 @@
   });
   function startGame(g) {
     game = (g === 'trivia') ? 'trivia' : 'age';
-    if (game === 'trivia') triviaQueueBand = '';   // rebuild queue for the current level's difficulty
+    if (game === 'trivia') triviaQueueBand = '';   // rebuild queue for the current topic + level
     Object.assign(state, { score: 0, rounds: 0, correct: 0, streak: 0, best: 0, answered: false });
     comboNow = 0; resetSet(); startNewSession(); renderScores(false);
     document.body.classList.add('playing');   // reveals #phone, hides #home
@@ -1961,8 +2138,25 @@
     el('phone').setAttribute('aria-hidden', 'false');
     newRound();
   }
-  el('play').addEventListener('click', () => startGame('age'));
-  el('playTrivia').addEventListener('click', () => startGame('trivia'));
+  // Pick a trivia topic from the home grid, then play it. (The age game is kept
+  // in code via startGame('age') but has no home entry.)
+  function startTopic(id) { activeTopic = topicById(id); startGame('trivia'); }
+  // Build the home screen's topic grid, each card showing the player's level
+  // and progress in that topic.
+  function renderTopics() {
+    const wrap = el('homeTopics'); if (!wrap) return;
+    wrap.innerHTML = TOPICS.map(t => {
+      const p = topicProfile(t.id), lv = LEVELS[p.rank], nx = p.rank < LEVELS.length - 1 ? LEVELS[p.rank + 1] : null;
+      const pct = nx ? Math.max(5, Math.min(100, Math.round((p.xp - lv.xp) / (nx.xp - lv.xp) * 100))) : 100;
+      return '<button class="topic-card" type="button" data-id="' + t.id + '" style="--tk:' + t.accent + '">'
+        + '<span class="msym topic-ic">' + t.icon + '</span>'
+        + '<span class="topic-name">' + escapeHtml(t.name) + '</span>'
+        + '<span class="topic-lvl">' + escapeHtml(lv.name) + '</span>'
+        + '<span class="topic-bar"><span style="width:' + pct + '%"></span></span></button>';
+    }).join('');
+    wrap.querySelectorAll('.topic-card').forEach(b => b.addEventListener('click', () => startTopic(b.dataset.id)));
+  }
+  renderTopics();
 
   el('historyBtn').addEventListener('click', openHistory);
   el('histClose').addEventListener('click', closeHistory);

@@ -28,6 +28,10 @@ GuessAge/Resources/manifest.json
 # Local render-harness / preview output
 /preview/
 
+# Node (web unit tests use the built-in runner; deps are only for local smoke tests)
+node_modules/
+package-lock.json
+
 # Python
 __pycache__/
 *.pyc
