@@ -1540,20 +1540,32 @@
   ];
   const topicById = id => TOPICS.find(t => t.id === id) || TOPICS[0];
   let activeTopic = TOPICS[0];
-  // The queue is rebuilt whenever the active difficulty band changes (i.e. the
-  // player levels up), so harder questions phase in as they climb the ladder.
-  let triviaQueue = [], triviaQueueBand = '';
+  // Each topic remembers which questions the player has already seen (persisted
+  // per topic, by question index). nextTrivia draws an UNSEEN question from the
+  // current level's difficulty band, so a question shown at one level never
+  // reappears at another. Only once a band is fully exhausted of unseen
+  // questions does that band's history reset and cycle fresh.
+  let lastTriviaPick = -1;
   function nextTrivia() {
-    const qs = activeTopic.questions;
-    const band = LEVELS[topicProfile(activeTopic.id).rank].diff;
-    const key = activeTopic.id + ':' + band.join(',');
-    if (!triviaQueue.length || key !== triviaQueueBand) {
-      triviaQueueBand = key;
-      triviaQueue = [];
-      qs.forEach((q, i) => { if (band.indexOf(q.d || 1) >= 0) triviaQueue.push(i); });
-      for (let i = triviaQueue.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [triviaQueue[i], triviaQueue[j]] = [triviaQueue[j], triviaQueue[i]]; }
+    const t = activeTopic, qs = t.questions, prof = topicProfile(t.id);
+    const band = LEVELS[prof.rank].diff;
+    const inBand = i => band.indexOf(qs[i].d || 1) >= 0;
+    if (!Array.isArray(prof.seen)) prof.seen = [];
+    const seen = new Set(prof.seen);
+    let pool = [];
+    qs.forEach((q, i) => { if (inBand(i) && !seen.has(i)) pool.push(i); });
+    if (!pool.length) {                           // band exhausted -> forget only this band's history
+      prof.seen = prof.seen.filter(i => !inBand(i));
+      qs.forEach((q, i) => { if (inBand(i)) pool.push(i); });
     }
-    return qs[triviaQueue.pop()];
+    if (pool.length > 1 && lastTriviaPick >= 0) { // never repeat the immediately previous question
+      const k = pool.indexOf(lastTriviaPick); if (k >= 0) pool.splice(k, 1);
+    }
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    lastTriviaPick = pick;
+    prof.seen.push(pick);
+    saveTrivia();
+    return qs[pick];
   }
   let photoFails = 0;        // consecutive streamed-image load failures
   photoImg.addEventListener('load', () => { photoFails = 0; });
@@ -2201,7 +2213,7 @@
   });
   function startGame(g) {
     game = (g === 'trivia') ? 'trivia' : 'age';
-    if (game === 'trivia') triviaQueueBand = '';   // rebuild queue for the current topic + level
+    if (game === 'trivia') lastTriviaPick = -1;   // fresh start, no carry-over of the last question
     Object.assign(state, { score: 0, rounds: 0, correct: 0, streak: 0, best: 0, answered: false });
     comboNow = 0; resetSet(); startNewSession(); renderScores(false); renderRankStrip();
     document.body.classList.add('playing');   // reveals #phone, hides #home
