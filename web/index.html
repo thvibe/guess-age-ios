@@ -533,8 +533,9 @@
   .home-topics { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; width: min(360px, 100%); }
   .topic-card { appearance: none; border: 0; cursor: pointer; border-radius: 18px; padding: 14px 12px 12px;
     display: flex; flex-direction: column; align-items: flex-start; gap: 4px; color: #fff; text-align: left;
-    background: var(--tk); box-shadow: 0 6px 0 rgba(0,0,0,.28), 0 11px 22px rgba(0,0,0,.28);
+    min-width: 0; background: var(--tk); box-shadow: 0 6px 0 rgba(0,0,0,.28), 0 11px 22px rgba(0,0,0,.28);
     transition: transform .08s, box-shadow .08s; }
+  .topic-card .topic-name { overflow-wrap: anywhere; }
   .topic-card:active { transform: translateY(4px); box-shadow: 0 2px 0 rgba(0,0,0,.28); }
   .topic-card .topic-ic { font-size: 28px; opacity: .95; }
   .topic-card .topic-name { font-family: var(--round); font-weight: 800; font-size: 15px; line-height: 1.1; }
@@ -1913,6 +1914,65 @@
     { q: "Which drummer of The Who died in 1978?", options: ["Keith Moon", "John Bonham", "Ginger Baker", "Neil Peart"], correct: 0, d: 4 },
     { q: "Which opera soprano was nicknamed La Divina?", options: ["Maria Callas", "Renata Tebaldi", "Joan Sutherland", "Montserrat Caballe"], correct: 0, d: 4 },
   ];
+  // Vincent's Social Studies Test — Exploration & the Columbian Exchange.
+  const VINCENT_Q = [
+    { q: "Who sailed west in 1492 and reached the Americas?", options: ["Columbus", "Da Gama", "Hudson", "Cartier"], correct: 0, d: 1 },
+    { q: "Columbus sailed for which country?", options: ["Spain", "Portugal", "France", "England"], correct: 0, d: 1 },
+    { q: "Who reached the Americas by accident while looking for Asia?", options: ["Columbus", "Dias", "Cartier", "Verrazzano"], correct: 0, d: 1 },
+    { q: "Which explorer explored the St. Lawrence River in Canada?", options: ["Cartier", "Columbus", "Da Gama", "Dias"], correct: 0, d: 1 },
+    { q: "Which explorer sailed for France and mapped much of the Atlantic coast?", options: ["Verrazzano", "Columbus", "Dias", "Hudson"], correct: 0, d: 1 },
+    { q: "Which explorer gave France its claim to Canada?", options: ["Cartier", "Verrazzano", "Hudson", "Columbus"], correct: 0, d: 2 },
+    { q: "The Hudson River and Hudson Bay are named after which explorer?", options: ["Hudson", "Cartier", "Dias", "Da Gama"], correct: 0, d: 2 },
+    { q: "Dutch claims in New York came from whose voyage?", options: ["Hudson", "Verrazzano", "Columbus", "Cartier"], correct: 0, d: 2 },
+    { q: "Who was the first European to sail into New York Harbor?", options: ["Verrazzano", "Hudson", "Cartier", "Dias"], correct: 0, d: 2 },
+    { q: "Dias and Da Gama both sailed for which country?", options: ["Portugal", "Spain", "France", "England"], correct: 0, d: 2 },
+    { q: "Which two explorers both sailed around Africa for Portugal?", options: ["Dias and Da Gama", "Columbus and Hudson", "Cartier and Verrazzano", "Hudson and Cartier"], correct: 0, d: 2 },
+    { q: "Who was the first European to sail around the southern tip of Africa?", options: ["Dias", "Da Gama", "Columbus", "Hudson"], correct: 0, d: 3 },
+    { q: "The southern tip of Africa that Dias rounded is called?", options: ["Cape of Good Hope", "Cape Horn", "Cape Cod", "Cape Verde"], correct: 0, d: 3 },
+    { q: "Who was the first to sail from Europe to India by sea?", options: ["Da Gama", "Dias", "Columbus", "Cartier"], correct: 0, d: 3 },
+    { q: "Da Gama's new sea route to India opened trade in what?", options: ["Spices", "Gold", "Silk", "Cotton"], correct: 0, d: 3 },
+    { q: "Verrazzano sailed for France, but which country was he from?", options: ["Italy", "Spain", "Portugal", "England"], correct: 0, d: 3 },
+    { q: "Besides England, Hudson also sailed for which country?", options: ["The Dutch", "France", "Spain", "Portugal"], correct: 0, d: 3 },
+    { q: "In what year did Columbus reach the Americas?", options: ["1492", "1488", "1497", "1534"], correct: 0, d: 4 },
+    { q: "In what year did Dias round the tip of Africa?", options: ["1488", "1492", "1498", "1524"], correct: 0, d: 4 },
+    { q: "Da Gama first reached India in which years?", options: ["1497 to 1498", "1492", "1534 to 1536", "1609"], correct: 0, d: 4 },
+    { q: "Cartier explored the St. Lawrence River in which years?", options: ["1534 to 1536", "1524", "1609 to 1610", "1488"], correct: 0, d: 4 },
+    { q: "Verrazzano sailed into New York Harbor in what year?", options: ["1524", "1534", "1492", "1609"], correct: 0, d: 4 },
+    { q: "Hudson explored his river and bay in which years?", options: ["1609 to 1610", "1497", "1488", "1524"], correct: 0, d: 4 },
+    { q: "Which tool showed sailors which way was north?", options: ["Compass", "Astrolabe", "Caravel", "Cannon"], correct: 0, d: 1 },
+    { q: "What was a caravel?", options: ["A fast, light ship", "A map", "A compass", "A weapon"], correct: 0, d: 1 },
+    { q: "Which tool helped sailors find their location using the sun and stars?", options: ["Astrolabe", "Compass", "Caravel", "Printing press"], correct: 0, d: 2 },
+    { q: "Which ship could sail against the wind and carry supplies for long trips?", options: ["Caravel", "Canoe", "Raft", "Kayak"], correct: 0, d: 2 },
+    { q: "Which invention helped spread maps and travel stories quickly?", options: ["Printing press", "Compass", "Astrolabe", "Cannon"], correct: 0, d: 2 },
+    { q: "How did new tools like the compass and caravel help exploration?", options: ["They made long ocean trips safer and possible", "They made ships cheaper", "They ended all wars", "They grew more food"], correct: 0, d: 2 },
+    { q: "What protected ships and gave Europeans power over people they met?", options: ["Cannons and gunpowder", "The compass", "Better maps", "The printing press"], correct: 0, d: 3 },
+    { q: "The Columbian Exchange began after whose 1492 voyage?", options: ["Columbus", "Dias", "Hudson", "Cartier"], correct: 0, d: 1 },
+    { q: "The Columbian Exchange moved plants, animals, people, ideas, and what else?", options: ["Diseases", "Money", "Books", "Weather"], correct: 0, d: 2 },
+    { q: "Which of these is part of the Old World?", options: ["Europe", "North America", "South America", "The Caribbean"], correct: 0, d: 2 },
+    { q: "Which of these is part of the New World?", options: ["North America", "Europe", "Asia", "Africa"], correct: 0, d: 2 },
+    { q: "The Old World means Asia, Africa, and which other continent?", options: ["Europe", "North America", "South America", "Australia"], correct: 0, d: 3 },
+    { q: "Which food came from the New World?", options: ["Potatoes", "Wheat", "Rice", "Bananas"], correct: 0, d: 1 },
+    { q: "Which grain first came from the New World?", options: ["Corn", "Wheat", "Rice", "Oats"], correct: 0, d: 1 },
+    { q: "Which of these foods came from the New World?", options: ["Tomatoes", "Sugarcane", "Rice", "Grapes"], correct: 0, d: 2 },
+    { q: "Chocolate (cacao) first came from which world?", options: ["New World", "Old World", "Only Asia", "Only Africa"], correct: 0, d: 2 },
+    { q: "Which came from the New World?", options: ["Chili peppers", "Onions", "Oranges", "Grapes"], correct: 0, d: 2 },
+    { q: "Which food came from the Old World?", options: ["Wheat", "Potatoes", "Corn", "Tomatoes"], correct: 0, d: 3 },
+    { q: "Which grain came to the Americas from the Old World?", options: ["Rice", "Beans", "Squash", "Peanuts"], correct: 0, d: 3 },
+    { q: "Which came to the Americas from the Old World?", options: ["Coffee", "Chocolate", "Tomatoes", "Pineapple"], correct: 0, d: 3 },
+    { q: "Which animals came from the Old World to the Americas?", options: ["Cattle", "Turkeys", "Llamas", "Bison"], correct: 0, d: 2 },
+    { q: "Which came from the Old World to the Americas?", options: ["Horses", "Corn", "Potatoes", "Tobacco"], correct: 0, d: 3 },
+    { q: "In French fries, the potato came from which world?", options: ["New World", "Old World", "Asia", "Africa"], correct: 0, d: 1 },
+    { q: "In a pizza, the tomato came from which world?", options: ["New World", "Old World", "Asia", "Africa"], correct: 0, d: 2 },
+    { q: "In hot chocolate, the cacao came from which world?", options: ["New World", "Old World", "Europe", "Africa"], correct: 0, d: 3 },
+    { q: "Tobacco came from which world?", options: ["New World", "Old World", "Europe", "Asia"], correct: 0, d: 3 },
+    { q: "Which was a harmful effect of exploration?", options: ["Millions of Native Americans died", "Better maps", "New trade goods", "New foods"], correct: 0, d: 2 },
+    { q: "Which was a helpful effect of exploration?", options: ["New trade routes and goods", "Loss of Native land", "Spread of disease", "Enslavement"], correct: 0, d: 2 },
+    { q: "Exploration led to the enslavement of people from which continent?", options: ["Africa", "Asia", "Europe", "Australia"], correct: 0, d: 3 },
+    { q: "Who was impacted more by disease in the Columbian Exchange?", options: ["Native Americans", "Europeans", "Africans", "Asians"], correct: 0, d: 1 },
+    { q: "Which diseases did Europeans bring to the Americas?", options: ["Smallpox, measles, and flu", "Malaria only", "Chickenpox only", "None of these"], correct: 0, d: 2 },
+    { q: "Why did disease spread so badly among Native Americans?", options: ["They had no immunity to it", "They were weaker", "They had poor food", "They lived in the cold"], correct: 0, d: 2 },
+    { q: "In some areas, about what percent of the Native population died from disease?", options: ["90 percent", "10 percent", "50 percent", "25 percent"], correct: 0, d: 4 },
+  ];
   // The topic registry. `accent` tints the topic's card and quiz backdrop; the
   // age game is intentionally left out of this list (kept in code, off the home
   // grid). Add a topic here and it appears on the home screen automatically.
@@ -1942,6 +2002,10 @@
       tiers:      ['Broke Artist', 'Open Mic', 'Local Act', 'Touring Act', 'Chart-Topper', 'Music Icon'],
       tiersShort: ['Broke', 'Open Mic', 'Local', 'Touring', 'Chart', 'Icon'],
       blurbs:     ['Playing for tips.', 'First open-mic night.', 'Packing local clubs.', 'Out on the road now.', 'Climbing the charts.', 'A bona fide Music Icon!'] },
+    { id: 'vincent',   name: "Vincent's Social Studies Test", icon: 'sailing', accent: '#155e75', questions: VINCENT_Q,
+      tiers:      ['Cabin Boy', 'Deckhand', 'Navigator', 'First Mate', 'Captain', 'Master Explorer'],
+      tiersShort: ['Cabin Boy', 'Deckhand', 'Navigator', 'First Mate', 'Captain', 'Explorer'],
+      blurbs:     ['Swabbing the deck.', 'Learning the ropes.', 'Charting the course.', 'Running the ship.', 'Commanding the voyage.', 'A master of exploration!'] },
   ];
   const topicById = id => TOPICS.find(t => t.id === id) || TOPICS[0];
   let activeTopic = TOPICS[0];
