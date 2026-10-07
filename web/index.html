@@ -180,13 +180,23 @@
   .rankstrip .rk-next { font-size: 10px; font-weight: 600; color: var(--text-3); margin-top: 3px; }
 
   /* Set Recap + Rank Up overlays (content is rendered by JS into the sheet). */
-  #recap, #rankup { position: fixed; inset: 0; z-index: 7; display: grid; place-items: center; padding: 22px;
+  #recap, #rankup, #lenpick { position: fixed; inset: 0; z-index: 7; display: grid; place-items: center; padding: 22px;
     background: rgba(20,16,28,.55); background: color-mix(in srgb, var(--bg) 82%, transparent);
     -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
-  #recap.hidden, #rankup.hidden { display: none; }
-  .recap-sheet { width: 100%; max-width: 380px; background: var(--card); border-radius: 26px; box-shadow: var(--shadow);
+  #recap.hidden, #rankup.hidden, #lenpick.hidden { display: none; }
+  .recap-sheet, .lenpick-sheet { width: 100%; max-width: 380px; background: var(--card); border-radius: 26px; box-shadow: var(--shadow);
     padding: 24px 22px 20px; display: flex; flex-direction: column; align-items: center; gap: 13px;
     animation: gameIn .4s cubic-bezier(.2,.9,.3,1) both; }
+  /* Question-count picker, shown after choosing a topic. */
+  .lenpick-opts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; }
+  .lenbtn { appearance: none; border: 0; cursor: pointer; border-radius: 16px; padding: 16px 6px;
+    background: var(--fill); color: var(--text); font-family: var(--round); font-weight: 800;
+    display: flex; flex-direction: column; align-items: center; gap: 2px; transition: transform .08s, background .15s; }
+  .lenbtn:active { transform: scale(.97); }
+  .lenbtn .n { font-size: 26px; line-height: 1; }
+  .lenbtn .u { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-2); }
+  .lenbtn.unlimited { grid-column: 1 / -1; background: var(--accent); color: #fff; flex-direction: row; justify-content: center; gap: 8px; }
+  .lenbtn.unlimited .u { color: rgba(255,255,255,.85); }
   #rankup { background: rgba(10,7,20,.72); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
   .rankup-sheet { width: 100%; max-width: 340px; display: flex; flex-direction: column; align-items: center;
     gap: 18px; text-align: center; animation: spring .55s cubic-bezier(.2,1.4,.35,1) both; }
@@ -215,14 +225,10 @@
     background: radial-gradient(120% 90% at 50% 18%, #1f3a5c 0%, #14263e 62%, #0d1b2e 100%); color: #fff; }
   body.trivia #quiz { display: flex; }
   body.trivia #face, body.trivia #photo { display: none !important; }
-  #quiz .quiz-cat { display: inline-flex; align-items: center; gap: 6px; font-family: var(--round);
-    font-weight: 700; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: #ffd15c; }
-  #quiz .quiz-cat .msym { font-size: 18px; }
-  #quiz .quiz-cat .quiz-lvl { background: rgba(255,209,92,.16); color: #ffd15c; border: 1px solid rgba(255,209,92,.4);
-    border-radius: 999px; padding: 2px 9px; font-size: 10.5px; letter-spacing: .06em; margin-left: 2px; }
+  /* The question fills the whole card (no category/level line here). */
   #quiz .quiz-q { font-family: 'Anton', 'Fredoka', sans-serif; font-weight: 400; text-transform: uppercase;
-    font-size: clamp(25px, 7.1vw, 40px); line-height: 1.07; letter-spacing: .5px; color: #fff;
-    text-shadow: 0 2px 0 rgba(0,0,0,.3); max-width: 17ch; }
+    font-size: clamp(27px, 7.8vw, 44px); line-height: 1.08; letter-spacing: .5px; color: #fff;
+    text-shadow: 0 2px 0 rgba(0,0,0,.3); max-width: 20ch; }
   /* Trivia answer buttons show a wrapped text answer instead of a big number. */
   .opt-answer { font-family: var(--round); font-weight: 700; font-size: 16px; line-height: 1.12; padding: 0 8px; text-align: center; }
   .opt.opt-trivia { padding: 8px 4px; }
@@ -642,6 +648,7 @@
 
 <div id="recap" class="hidden" role="dialog" aria-label="Set recap"><div class="recap-sheet" id="recapSheet"></div></div>
 <div id="rankup" class="hidden" role="dialog" aria-label="Rank up"><div class="rankup-sheet" id="rankupSheet"></div></div>
+<div id="lenpick" class="hidden" role="dialog" aria-label="Choose how many questions"><div class="lenpick-sheet" id="lenpickSheet"></div></div>
 
 <div id="home">
   <div class="home-top">
@@ -2381,11 +2388,9 @@
     const rnd = rngFrom(randSeed());
     for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
     state.opts = { values: idx.map(i => q.options[i]), correctIndex: idx.indexOf(q.correct) };
-    const t = activeTopic, lvl = topicLadder(t)[topicProfile(t.id).rank].name;
+    const t = activeTopic;
     el('quiz').style.background = 'radial-gradient(120% 90% at 50% 18%, ' + t.accent + ' 0%, #15182b 66%, #0c0e1a 100%)';
-    el('quiz').innerHTML = '<div class="quiz-cat"><span class="msym">' + t.icon + '</span> ' + escapeHtml(t.name)
-      + '<span class="quiz-lvl">' + escapeHtml(lvl) + '</span></div>'
-      + '<div class="quiz-q">' + escapeHtml(q.q) + '</div>';
+    el('quiz').innerHTML = '<div class="quiz-q">' + escapeHtml(q.q) + '</div>';
     optEls.forEach((b, i) => {
       b.innerHTML = '<span class="opt-text opt-answer">' + escapeHtml(state.opts.values[i]) + '</span>';
       b.className = 'opt opt-trivia'; b.disabled = false;
@@ -2439,8 +2444,13 @@
     setTimeout(() => f.remove(), 1200);
   }
 
-  // ---- Progression: XP, Eye Ranks, and sets of 5 (engagement) -------------
-  const SET_SIZE = 5;
+  // ---- Progression: XP, ranks, and the chosen round length ----------------
+  // How many questions before the set recap. The player picks this per topic
+  // (5/10/15, or Infinity for an endless run); it is remembered for next time.
+  const LENKEY = 'guessage.len';
+  function loadLen() { try { const r = localStorage.getItem(LENKEY); const v = r === 'Infinity' ? Infinity : +r; return [5,10,15,Infinity].includes(v) ? v : 10; } catch (e) { return 10; } }
+  let setSize = loadLen();
+  const saveLen = () => { try { localStorage.setItem(LENKEY, String(setSize)); } catch (e) {} };
   const RANKS = [
     { name: 'Rookie Eye',    short: 'Rookie',    xp: 0,     acc: 0,    fill: '#10b5aa', ring: '#10b5aa' },
     { name: 'Keen Eye',      short: 'Keen',      xp: 300,   acc: 0,    fill: '#3b82f6', ring: '#3b82f6' },
@@ -2578,7 +2588,7 @@
     el('rankup').classList.remove('hidden');
     el('rankupGo').addEventListener('click', () => {
       el('rankup').classList.add('hidden'); pendingRankUp = -1;
-      if (setRounds >= SET_SIZE) showRecap(); else newRound();
+      if (setRounds >= setSize) showRecap(); else newRound();
     }, { once: true });
   }
   function showRecap() {
@@ -2605,7 +2615,7 @@
         + '<span style="flex-grow:1"><span style="display:flex;justify-content:space-between"><b style="font-size:13px;color:var(--text)">' + r.name + '</b><span style="font-size:11px;color:var(--text-2)">' + toNext + '</span></span>'
         + '<span style="display:block;height:8px;border-radius:999px;background:var(--fill);overflow:hidden;margin-top:5px"><span style="display:block;height:100%;width:' + bar + '%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--blue))"></span></span></span></div>'
       + '<div style="font-size:13px;color:var(--text-2)">' + cheer + '</div>'
-      + '<button class="next" id="recapNext" style="width:100%">Next 5 &rarr;</button>'
+      + '<button class="next" id="recapNext" style="width:100%">Next ' + setSize + ' &rarr;</button>'
       + '<button id="recapDone" style="border:0;background:none;color:var(--text-2);font-family:var(--round);font-weight:700;font-size:13px;padding:4px;cursor:pointer">Done for now</button>';
     el('recap').classList.remove('hidden');
     el('recapNext').addEventListener('click', () => { el('recap').classList.add('hidden'); resetSet(); newRound(); }, { once: true });
@@ -2614,7 +2624,7 @@
   function resetSet() { setRounds = 0; setCorrect = 0; setXp = 0; comboNow = 0; comboBest = 0; }
   function advance() {
     if (pendingRankUp >= 0) { showRankUp(pendingRankUp); return; }
-    if (setRounds >= SET_SIZE) { showRecap(); return; }
+    if (setRounds >= setSize) { showRecap(); return; }
     newRound();
   }
   function goHome() {
@@ -2746,7 +2756,28 @@
   }
   // Pick a trivia topic from the home grid, then play it. (The age game is kept
   // in code via startGame('age') but has no home entry.)
-  function startTopic(id) { activeTopic = topicById(id); startGame('trivia'); }
+  function startTopic(id) { activeTopic = topicById(id); showLenPick(); }
+  // Ask how many questions this run should be before starting.
+  function showLenPick() {
+    const t = activeTopic;
+    const opt = (n, label) => '<button class="lenbtn' + (n === Infinity ? ' unlimited' : '') + '" type="button" data-n="' + n + '">'
+      + '<span class="n">' + (n === Infinity ? '∞' : n) + '</span><span class="u">' + label + '</span></button>';
+    el('lenpickSheet').innerHTML =
+      '<div style="font-family:var(--round);font-weight:800;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-2)">' + escapeHtml(t.name) + '</div>'
+      + '<div style="font-family:\'Luckiest Guy\',var(--round);font-size:26px;color:var(--text);line-height:1.1;text-align:center">How many questions?</div>'
+      + '<div class="lenpick-opts">' + opt(5, 'questions') + opt(10, 'questions') + opt(15, 'questions') + opt(Infinity, 'Unlimited') + '</div>'
+      + '<button id="lenCancel" type="button" style="border:0;background:none;color:var(--text-2);font-family:var(--round);font-weight:700;font-size:13px;padding:4px;cursor:pointer">Back</button>';
+    el('lenpick').classList.remove('hidden');
+    el('lenpickSheet').querySelectorAll('.lenbtn').forEach(b => b.addEventListener('click', () => {
+      beginWithLength(b.dataset.n === 'Infinity' ? Infinity : +b.dataset.n);
+    }, { once: true }));
+    el('lenCancel').addEventListener('click', () => el('lenpick').classList.add('hidden'), { once: true });
+  }
+  function beginWithLength(n) {
+    setSize = n; saveLen();
+    el('lenpick').classList.add('hidden');
+    startGame('trivia');
+  }
   // Build the home screen's topic grid, each card showing the player's level
   // and progress in that topic.
   function renderTopics() {
