@@ -1,16 +1,21 @@
 /**
  * Study Tracker — Google Apps Script Web App for the Trivia League app.
  *
- * It records play sessions and test scores from the app into a Google Sheet
- * ("events" tab) and serves back an aggregated per-subject summary the app
- * reads to show a cross-device Study Tracker.
+ * Records play sessions and test scores from the app into a Google Sheet
+ * ("events" tab) and serves back an aggregated per-player, per-subject summary
+ * the app reads to show a cross-device Study Tracker.
+ *
+ * Every row is tagged with a PLAYER. doGet only aggregates the player passed in
+ * ?player=<name>, so one person's data never counts toward another's.
+ *
+ * Each subject keeps ONE test (the latest); older test rows stay in the sheet
+ * as raw history but the app shows the most recent.
  *
  * Setup + deploy steps: tools/study-sheet.md. Deploy as a Web app
  * (Execute as: Me, Who has access: Anyone), then paste the /exec URL into the
  * app's Study Tracker ("Connect Google Sheet").
  *
- * Note: the Web app URL is the only key, so keep it private. Anyone who has it
- * can append study rows. Fine for a personal/family tracker.
+ * The Web app URL is the only key — keep it private.
  */
 
 function doPost(e) {
@@ -19,6 +24,7 @@ function doPost(e) {
     sheet_().appendRow([
       new Date(),
       b.type || '',
+      b.player || '',
       b.id || '',
       b.subject || '',
       (b.score == null ? '' : b.score),
@@ -33,14 +39,16 @@ function doPost(e) {
   }
 }
 
-function doGet() {
+function doGet(e) {
+  var want = (e && e.parameter && e.parameter.player) ? String(e.parameter.player) : '';
   var rows = sheet_().getDataRange().getValues();
   var by = {};
   for (var i = 1; i < rows.length; i++) {
     var r = rows[i];
-    var type = r[1], id = r[2], subject = r[3], score = r[4], accuracy = r[5], questions = r[6], level = r[7];
+    var type = r[1], player = r[2], id = r[3], subject = r[4], score = r[5], accuracy = r[6], questions = r[7], level = r[8];
     if (!id) continue;
-    var s = by[id] || (by[id] = { id: id, subject: subject, plays: 0, questions: 0, accuracy: null, level: '', tests: [] });
+    if (want && String(player) !== want) continue;   // only this player's rows
+    var s = by[id] || (by[id] = { id: id, subject: subject, plays: 0, questions: 0, accuracy: null, level: '', test: null });
     if (subject) s.subject = subject;
     if (type === 'play') {
       s.plays++;
@@ -48,7 +56,7 @@ function doGet() {
       if (questions !== '' && questions != null) s.questions = Number(questions);
       if (level) s.level = level;
     } else if (type === 'test') {
-      s.tests.push({ at: r[0], score: Number(score) });
+      s.test = { at: r[0], score: Number(score) };   // rows are chronological, so the last wins
     }
   }
   var out = Object.keys(by).map(function (k) { return by[k]; });
@@ -60,7 +68,7 @@ function sheet_() {
   var sh = ss.getSheetByName('events');
   if (!sh) {
     sh = ss.insertSheet('events');
-    sh.appendRow(['timestamp', 'type', 'id', 'subject', 'score', 'accuracy', 'questions', 'level', 'device']);
+    sh.appendRow(['timestamp', 'type', 'player', 'id', 'subject', 'score', 'accuracy', 'questions', 'level', 'device']);
   }
   return sh;
 }

@@ -12,6 +12,24 @@ device. This is a one-time setup.
 - The app reads an aggregated per-subject summary back from the sheet, so the
   tracker shows totals across all devices that are connected.
 
+## Whose data counts
+
+- Every row is tagged with a **player name** (set per device when you connect,
+  default `Vinny`). The app only reads back the rows for that one player, so a
+  shared device or a sibling playing never muddies the numbers — only Vinny's
+  plays and scores are counted.
+- Change the name on a device from the tracker's sync row (tap the player chip,
+  e.g. `Vinny ✎`). Keep it spelled the same on every device that should feed
+  into the same tracker.
+
+## One test per subject
+
+Each subject shows a **single** test score — the latest one you logged. Log a
+new score and it replaces the old one in the tracker (every score still lands
+as its own row in the sheet, so the full history is there if you want to chart
+it). This matches "one test per category" for now; when a subject grows to
+several distinct tests we can revisit.
+
 ## One-time setup
 
 1. **Create a Google Sheet** (or use the one already made for you). Name it
