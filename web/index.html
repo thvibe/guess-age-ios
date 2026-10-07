@@ -466,6 +466,8 @@
   .study-link { appearance: none; border: 0; background: var(--card); color: var(--text); box-shadow: var(--shadow);
     border-radius: 999px; padding: 9px 16px; font-family: var(--round); font-weight: 700; font-size: 13px; cursor: pointer;
     align-items: center; gap: 7px; }
+  .track-sync { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 10px; margin: -4px 0 14px; }
+  .link-btn { border: 0; background: none; color: var(--accent); font-family: var(--round); font-weight: 700; font-size: 12px; cursor: pointer; padding: 2px 4px; }
   .hist-list { max-height: 46vh; overflow-y: auto; margin: 4px 0 16px; text-align: left;
     display: flex; flex-direction: column; gap: 8px; -webkit-overflow-scrolling: touch; }
   .hist-row { display: flex; align-items: center; gap: 10px; background: var(--fill);
@@ -682,6 +684,7 @@
   <div class="sheet" style="max-width: 430px; text-align: left;">
     <h1 style="text-align: center;">Study Tracker</h1>
     <p class="tag" style="text-align: center;" id="trackSummary">Practice vs. real test scores.</p>
+    <div class="track-sync" id="trackSync"></div>
     <div id="trackList"></div>
     <div class="hist-actions">
       <button class="ghost" id="trackCopy">Copy data</button>
@@ -2800,6 +2803,7 @@
       lastTriviaPick = -1;   // fresh start, no carry-over of the last question
       const pr = topicProfile(activeTopic.id);   // count this play for the Study Tracker
       pr.plays = (pr.plays | 0) + 1; pr.lastPlayed = Date.now(); saveTrivia();
+      if (groupOf(activeTopic) === 'school') logPlay(activeTopic);   // sync to the sheet, if connected
     }
     Object.assign(state, { score: 0, rounds: 0, correct: 0, streak: 0, best: 0, answered: false });
     comboNow = 0; resetSet(); startNewSession(); renderScores(false); renderRankStrip();
@@ -2875,9 +2879,38 @@
   renderGroupTabs();
   renderTopics();
   // ---- Study Tracker (school topics): practice + in-game accuracy vs. the
-  // real test score the parent enters, to see whether the game is helping. ----
+  // real test score, optionally synced to a Google Sheet for a cross-device
+  // view. One-time Sheet setup: tools/study-sheet.md. ----
   const fmtDate = ms => { const d = new Date(ms); return (d.getMonth() + 1) + '/' + d.getDate() + '/' + String(d.getFullYear()).slice(2); };
   const cleanSubject = n => String(n).replace(/^[^']+'s\s+/, '').replace(/\s+Test$/i, '');
+  const SHEET_KEY = 'guessage.sheet';
+  const sheetUrl = () => { try { return localStorage.getItem(SHEET_KEY) || ''; } catch (e) { return ''; } };
+  function deviceId() { try { let d = localStorage.getItem('guessage.device'); if (!d) { d = Math.random().toString(36).slice(2, 8); localStorage.setItem('guessage.device', d); } return d; } catch (e) { return '?'; } }
+  function sheetPost(payload) {
+    const u = sheetUrl(); if (!u) return;
+    // no-cors text/plain = a "simple" request (no preflight); fire and forget.
+    try { fetch(u, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }).catch(() => {}); } catch (e) {}
+  }
+  let sheetSummary = null, sheetError = false;
+  function fetchSheetSummary() {
+    const u = sheetUrl(); if (!u) return Promise.resolve(null);
+    return fetch(u, { method: 'GET' }).then(r => r.json()).then(j => { sheetSummary = j; sheetError = false; return j; }).catch(() => { sheetError = true; return null; });
+  }
+  function logPlay(t) {
+    const p = topicProfile(t.id), rounds = p.rounds | 0;
+    sheetPost({ type: 'play', id: t.id, subject: cleanSubject(t.name), accuracy: rounds ? Math.round((p.correct | 0) / rounds * 100) : '', questions: rounds, level: topicLadder(t)[p.rank].name, device: deviceId() });
+  }
+  function logTest(t, score) { sheetPost({ type: 'test', id: t.id, subject: cleanSubject(t.name), score: score, device: deviceId() }); }
+  // Per-subject data for the tracker: the sheet (cross-device) when connected, else this device.
+  function subjData(t) {
+    const p = topicProfile(t.id);
+    if (sheetSummary && Array.isArray(sheetSummary.subjects)) {
+      const s = sheetSummary.subjects.find(x => x.id === t.id);
+      if (s) return { plays: s.plays | 0, questions: s.questions | 0, accuracy: (s.accuracy === '' || s.accuracy == null) ? null : Number(s.accuracy), level: s.level || topicLadder(t)[p.rank].name, tests: (s.tests || []).map(x => ({ at: +new Date(x.at), score: Number(x.score) })) };
+    }
+    const rounds = p.rounds | 0;
+    return { plays: p.plays | 0, questions: rounds, accuracy: rounds ? Math.round((p.correct | 0) / rounds * 100) : null, level: topicLadder(t)[p.rank].name, tests: (Array.isArray(p.tests) ? p.tests : []).map(x => ({ at: x.at, score: x.score })) };
+  }
   function addTest(id, score) {
     const s = Math.round(score);
     if (!isFinite(s) || s < 0 || s > 100) { showToast('Enter a score from 0 to 100'); return; }
@@ -2885,26 +2918,46 @@
     if (!Array.isArray(p.tests)) p.tests = [];
     p.tests.push({ at: Date.now(), score: s });
     saveTrivia();
-    renderTracker();
+    const t = topicById(id);
+    if (sheetUrl()) { logTest(t, s); fetchSheetSummary().then(() => renderTracker()); }
+    else renderTracker();
     showToast('Test score saved');
+  }
+  function renderSync() {
+    const box = el('trackSync'); if (!box) return;
+    if (!sheetUrl()) {
+      box.innerHTML = '<button class="track-addbtn" id="sheetConnect" type="button" style="background:var(--good)">Connect Google Sheet</button>'
+        + '<span style="font-size:11.5px;color:var(--text-2)">sync across devices</span>';
+      el('sheetConnect').addEventListener('click', () => {
+        const u = window.prompt('Paste your Google Apps Script Web App URL (setup: tools/study-sheet.md):', '');
+        if (u && /^https:\/\/script\.google(usercontent)?\.com\//.test(u.trim())) { try { localStorage.setItem(SHEET_KEY, u.trim()); } catch (e) {} showToast('Connected — syncing'); fetchSheetSummary().then(() => renderTracker()); }
+        else if (u) showToast('That does not look like a Web App URL');
+      });
+    } else {
+      box.innerHTML = '<span style="font-size:12px;font-weight:700;color:' + (sheetError ? 'var(--bad)' : 'var(--good)') + '">' + (sheetError ? '⚠ Sheet unreachable' : '✓ Synced to Google Sheet') + '</span>'
+        + '<button class="link-btn" id="sheetRefresh" type="button">Refresh</button>'
+        + '<button class="link-btn" id="sheetDisconnect" type="button">Disconnect</button>';
+      el('sheetRefresh').addEventListener('click', () => fetchSheetSummary().then(() => renderTracker()));
+      el('sheetDisconnect').addEventListener('click', () => { try { localStorage.removeItem(SHEET_KEY); } catch (e) {} sheetSummary = null; renderTracker(); });
+    }
   }
   function renderTracker() {
     const list = el('trackList'); if (!list) return;
+    renderSync();
     const subs = TOPICS.filter(t => groupOf(t) === 'school');
     let totalPlays = 0, totalTests = 0;
     list.innerHTML = subs.map(t => {
-      const p = topicProfile(t.id);
-      const plays = p.plays | 0, rounds = p.rounds | 0, correct = p.correct | 0;
-      const acc = rounds ? Math.round(correct / rounds * 100) : 0;
-      const lvl = topicLadder(t)[p.rank].name;
-      const tests = Array.isArray(p.tests) ? p.tests.slice().sort((a, b) => a.at - b.at) : [];
+      const d = subjData(t);
+      const plays = d.plays, rounds = d.questions, acc = d.accuracy == null ? 0 : d.accuracy;
+      const lvl = d.level;
+      const tests = d.tests.slice().sort((a, b) => a.at - b.at);
       totalPlays += plays; totalTests += tests.length;
       const latest = tests.length ? tests[tests.length - 1] : null;
       let trend = '';
       if (tests.length >= 2) {
-        const d = latest.score - tests[0].score;
+        const dd = latest.score - tests[0].score;
         trend = '<div class="track-trend">First ' + tests[0].score + '% &rarr; latest ' + latest.score + '% '
-          + '<b class="' + (d < 0 ? 'down' : '') + '">' + (d >= 0 ? '+' : '') + d + '%</b> across ' + tests.length + ' tests</div>';
+          + '<b class="' + (dd < 0 ? 'down' : '') + '">' + (dd >= 0 ? '+' : '') + dd + '%</b> across ' + tests.length + ' tests</div>';
       } else if (tests.length === 1) {
         trend = '<div class="track-trend">1 test logged — add the next one to see the trend.</div>';
       }
@@ -2923,7 +2976,7 @@
         + '<button class="track-addbtn" type="button" data-id="' + t.id + '">Add score</button></div>'
         + '</div>';
     }).join('') || '<div class="hist-empty">No school subjects yet. Add a folder of notes in Drive and a tile appears here.</div>';
-    el('trackSummary').textContent = subs.length + ' subject' + (subs.length === 1 ? '' : 's') + ' · ' + totalPlays + ' sessions · ' + totalTests + ' test' + (totalTests === 1 ? '' : 's') + ' logged';
+    el('trackSummary').textContent = subs.length + ' subject' + (subs.length === 1 ? '' : 's') + ' · ' + totalPlays + ' sessions · ' + totalTests + ' test' + (totalTests === 1 ? '' : 's') + ' logged' + (sheetSummary ? ' · from sheet' : '');
     const doAdd = id => { const inp = list.querySelector('.track-input[data-id="' + id + '"]'); addTest(id, parseFloat(inp.value)); };
     list.querySelectorAll('.track-addbtn').forEach(b => b.addEventListener('click', () => doAdd(b.dataset.id)));
     list.querySelectorAll('.track-input').forEach(inp => inp.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); doAdd(inp.dataset.id); } }));
@@ -2932,17 +2985,16 @@
     const subs = TOPICS.filter(t => groupOf(t) === 'school');
     const rows = [['subject', 'sessions', 'questions', 'ingame_accuracy_pct', 'test_date', 'test_score_pct']];
     subs.forEach(t => {
-      const p = topicProfile(t.id), rounds = p.rounds | 0;
-      const acc = rounds ? Math.round((p.correct | 0) / rounds * 100) : '';
-      const tests = Array.isArray(p.tests) ? p.tests.slice().sort((a, b) => a.at - b.at) : [];
-      if (!tests.length) rows.push([cleanSubject(t.name), p.plays | 0, rounds, acc, '', '']);
-      else tests.forEach(x => rows.push([cleanSubject(t.name), p.plays | 0, rounds, acc, new Date(x.at).toISOString().slice(0, 10), x.score]));
+      const d = subjData(t), acc = d.accuracy == null ? '' : d.accuracy;
+      const tests = d.tests.slice().sort((a, b) => a.at - b.at);
+      if (!tests.length) rows.push([cleanSubject(t.name), d.plays, d.questions, acc, '', '']);
+      else tests.forEach(x => rows.push([cleanSubject(t.name), d.plays, d.questions, acc, new Date(x.at).toISOString().slice(0, 10), x.score]));
     });
     const csv = rows.map(r => r.map(c => /[",\n]/.test(String(c)) ? '"' + String(c).replace(/"/g, '""') + '"' : c).join(',')).join('\n');
     try { navigator.clipboard.writeText(csv).then(() => showToast('Study data copied (CSV)'), () => showToast('Copy failed')); }
     catch (e) { showToast('Copy not supported here'); }
   }
-  if (el('studyBtn')) el('studyBtn').addEventListener('click', () => { renderTracker(); el('tracker').classList.remove('hidden'); });
+  if (el('studyBtn')) el('studyBtn').addEventListener('click', () => { renderTracker(); el('tracker').classList.remove('hidden'); if (sheetUrl()) fetchSheetSummary().then(() => renderTracker()); });
   if (el('trackClose')) el('trackClose').addEventListener('click', () => el('tracker').classList.add('hidden'));
   if (el('trackCopy')) el('trackCopy').addEventListener('click', copyTrackerCSV);
   // Collapsible "How to play" — hidden by default so the tiles get the room.
