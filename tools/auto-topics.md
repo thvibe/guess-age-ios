@@ -52,6 +52,7 @@ Spec shape:
   "name": "Vinny's Biology Test",
   "icon": "biotech",
   "accent": "#276a2c",
+  "group": "school",
   "tiers":      ["Single Cell","Tissue","Organ","Organ System","Organism","Master Biologist"],
   "tiersShort": ["Cell","Tissue","Organ","System","Organism","Biologist"],
   "blurbs":     ["Just one cell.","...","A master biologist!"],
@@ -62,6 +63,9 @@ Spec shape:
   ]
 }
 ```
+
+`group` is optional and defaults to `"school"` (Drive-sourced test prep shows
+under the **School** tab on the home screen; `"fun"` puts it under Just for Fun).
 
 Rules enforced: id is a unique lowercase slug; 6 tiers/tiersShort/blurbs;
 each question has 4 plain-text options with the correct answer FIRST

@@ -535,6 +535,13 @@
   .home-bottom { display: flex; flex-direction: column; align-items: center; gap: 12px; }
   .home-teaser { font-size: 11.5px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
     color: var(--text-2); background: var(--card); padding: 7px 14px; border-radius: 999px; box-shadow: var(--shadow); }
+  /* Fun / School group tabs above the topic grid. */
+  .group-tabs { display: flex; gap: 4px; background: var(--card); border-radius: 14px; padding: 4px; width: min(360px, 100%); box-shadow: var(--shadow); }
+  .group-tab { flex: 1; border: 0; border-radius: 11px; padding: 9px 8px; cursor: pointer; font-family: var(--round); font-weight: 800; font-size: 13.5px;
+    background: transparent; color: var(--text-2); display: inline-flex; align-items: center; justify-content: center; gap: 6px; transition: background .15s, color .15s; }
+  .group-tab[aria-selected="true"] { background: var(--accent); color: #fff; box-shadow: 0 3px 8px rgba(227,15,116,.3); }
+  .group-tab .cnt { font-size: 11px; font-weight: 700; opacity: .75; }
+  .group-tab[aria-selected="true"] .cnt { opacity: .9; }
   /* Topic picker on the splash — one card per trivia topic. */
   .home-topics { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; width: min(360px, 100%); }
   .topic-card { appearance: none; border: 0; cursor: pointer; border-radius: 18px; padding: 14px 12px 12px;
@@ -684,6 +691,7 @@
   </div>
   <div class="home-bottom">
     <div class="home-teaser" id="homeTeaser">First run — set the record.</div>
+    <div class="group-tabs" id="groupTabs" role="tablist" aria-label="Category groups"></div>
     <div class="home-topics" id="homeTopics"></div>
     <div class="home-caption">solo · endless · pick a topic</div>
   </div>
@@ -2035,35 +2043,35 @@
   // grid). Add a topic here and it appears on the home screen automatically.
   const TOPICS = [
     // Every topic defines its own themed level ladder (tiers / tiersShort / blurbs).
-    { id: 'baseball',  name: 'Baseball',         icon: 'sports_baseball', accent: '#1f3a5c', questions: BASEBALL_Q,
+    { id: 'baseball',  name: 'Baseball',         icon: 'sports_baseball', accent: '#1f3a5c', questions: BASEBALL_Q, group: 'fun',
       tiers:      ['Bat Boy', 'Rookie', 'Everyday Player', 'All-Star', 'MVP', 'Hall of Famer'],
       tiersShort: ['Bat Boy', 'Rookie', 'Everyday', 'All-Star', 'MVP', 'HOF'],
       blurbs:     ['Fetching the bats.', 'Called up to the bigs.', 'In the everyday lineup.', 'Named an All-Star!', 'Crowned league MVP!', 'A first-ballot Hall of Famer!'] },
-    { id: 'movies',    name: 'Movies & TV',      icon: 'movie',           accent: '#7b2d8e', questions: MOVIES_Q,
+    { id: 'movies',    name: 'Movies & TV',      icon: 'movie',           accent: '#7b2d8e', questions: MOVIES_Q, group: 'fun',
       tiers:      ['Extra', 'Co-Star', 'Rising Star', 'A-Lister', 'Oscar Winner', 'Hollywood Legend'],
       tiersShort: ['Extra', 'Co-Star', 'Rising', 'A-Lister', 'Oscar', 'Legend'],
       blurbs:     ['One scene, no lines.', 'Billed in the credits.', 'Your star is rising.', 'Top of the call sheet.', 'And the Oscar goes to you!', 'A true Hollywood legend!'] },
-    { id: 'geography', name: 'Geography',        icon: 'public',          accent: '#0e7a6b', questions: GEO_Q,
+    { id: 'geography', name: 'Geography',        icon: 'public',          accent: '#0e7a6b', questions: GEO_Q, group: 'fun',
       tiers:      ['Armchair Tourist', 'Backpacker', 'Globetrotter', 'Navigator', 'Cartographer', 'Grand Explorer'],
       tiersShort: ['Armchair', 'Backpack', 'Globe', 'Navigator', 'Cartog.', 'Explorer'],
       blurbs:     ['Traveling by map only.', 'Passport getting stamps.', 'Been everywhere now.', 'You chart the course.', 'You draw the maps.', 'A legendary explorer!'] },
-    { id: 'science',   name: 'Science & Nature', icon: 'science',         accent: '#2563a8', questions: SCI_Q,
+    { id: 'science',   name: 'Science & Nature', icon: 'science',         accent: '#2563a8', questions: SCI_Q, group: 'fun',
       tiers:      ['Lab Intern', 'Student', 'Researcher', 'Scientist', 'Professor', 'Nobel Laureate'],
       tiersShort: ['Intern', 'Student', 'Research', 'Scientist', 'Prof.', 'Laureate'],
       blurbs:     ['Washing the beakers.', 'Hitting the textbooks.', 'Running experiments.', 'A real scientist now.', 'Tenured professor!', 'A Nobel Prize winner!'] },
-    { id: 'history',   name: 'History',          icon: 'history_edu',     accent: '#9a5a2a', questions: HIST_Q,
+    { id: 'history',   name: 'History',          icon: 'history_edu',     accent: '#9a5a2a', questions: HIST_Q, group: 'fun',
       tiers:      ['Time Tourist', 'Apprentice', 'Scholar', 'Historian', 'Sage', 'Keeper of Time'],
       tiersShort: ['Tourist', 'Pupil', 'Scholar', 'Historian', 'Sage', 'Keeper'],
       blurbs:     ['Just visiting the past.', 'Learning the timeline.', 'Studying the records.', 'A proper historian.', 'A wise old sage.', 'Keeper of all history!'] },
-    { id: 'music',     name: 'Music',            icon: 'music_note',      accent: '#c02e63', questions: MUSIC_Q,
+    { id: 'music',     name: 'Music',            icon: 'music_note',      accent: '#c02e63', questions: MUSIC_Q, group: 'fun',
       tiers:      ['Broke Artist', 'Open Mic', 'Local Act', 'Touring Act', 'Chart-Topper', 'Music Icon'],
       tiersShort: ['Broke', 'Open Mic', 'Local', 'Touring', 'Chart', 'Icon'],
       blurbs:     ['Playing for tips.', 'First open-mic night.', 'Packing local clubs.', 'Out on the road now.', 'Climbing the charts.', 'A bona fide Music Icon!'] },
-    { id: 'vincent',   name: "Vincent's Social Studies Test", icon: 'sailing', accent: '#155e75', questions: VINCENT_Q,
+    { id: 'vincent',   name: "Vincent's Social Studies Test", icon: 'sailing', accent: '#155e75', questions: VINCENT_Q, group: 'school',
       tiers:      ['Cabin Boy', 'Deckhand', 'Navigator', 'First Mate', 'Captain', 'Master Explorer'],
       tiersShort: ['Cabin Boy', 'Deckhand', 'Navigator', 'First Mate', 'Captain', 'Explorer'],
       blurbs:     ['Swabbing the deck.', 'Learning the ropes.', 'Charting the course.', 'Running the ship.', 'Commanding the voyage.', 'A master of exploration!'] },
-    { id: 'vinny-biology', name: "Vinny's Biology Test", icon: 'biotech', accent: '#276a2c', questions: VINNY_BIOLOGY_Q,
+    { id: 'vinny-biology', name: "Vinny's Biology Test", icon: 'biotech', accent: '#276a2c', questions: VINNY_BIOLOGY_Q, group: 'school',
       tiers:      ["Single Cell", "Tissue", "Organ", "Organ System", "Organism", "Master Biologist"],
       tiersShort: ["Cell", "Tissue", "Organ", "System", "Organism", "Biologist"],
       blurbs:     ["Just one cell.", "Cells working together.", "A working organ now.", "Systems online!", "A whole organism!", "A master biologist!"] },
@@ -2634,6 +2642,7 @@
     el('phone').setAttribute('aria-hidden', 'true');
     Object.assign(state, { score: 0, rounds: 0, correct: 0, streak: 0, best: 0, answered: false });
     startNewSession(); renderScores(false);
+    if (typeof renderGroupTabs === 'function') renderGroupTabs();
     if (typeof renderTopics === 'function') renderTopics();   // refresh per-topic level + progress
     if (typeof updateHomeTeaser === 'function') updateHomeTeaser();
   }
@@ -2778,11 +2787,35 @@
     el('lenpick').classList.add('hidden');
     startGame('trivia');
   }
-  // Build the home screen's topic grid, each card showing the player's level
-  // and progress in that topic.
+  // Fun / School group tabs. Each topic carries a `group`; the home shows one
+  // group at a time (kept between visits). The switch hides if only one exists.
+  const GROUPS = [{ id: 'fun', label: 'Just for Fun' }, { id: 'school', label: 'School' }];
+  const groupOf = t => t.group === 'school' ? 'school' : 'fun';
+  const GRPKEY = 'guessage.group';
+  function loadGroup() { try { const g = localStorage.getItem(GRPKEY); return (g === 'school' || g === 'fun') ? g : 'fun'; } catch (e) { return 'fun'; } }
+  let activeGroup = loadGroup();
+  function renderGroupTabs() {
+    const wrap = el('groupTabs'); if (!wrap) return;
+    const avail = GROUPS.filter(g => TOPICS.some(t => groupOf(t) === g.id));
+    if (avail.length && !avail.some(g => g.id === activeGroup)) activeGroup = avail[0].id;
+    wrap.style.display = avail.length > 1 ? 'flex' : 'none';
+    wrap.innerHTML = avail.map(g => {
+      const n = TOPICS.filter(t => groupOf(t) === g.id).length;
+      return '<button class="group-tab" type="button" role="tab" aria-selected="' + (activeGroup === g.id) + '" data-g="' + g.id + '">'
+        + escapeHtml(g.label) + ' <span class="cnt">' + n + '</span></button>';
+    }).join('');
+    wrap.querySelectorAll('.group-tab').forEach(b => b.addEventListener('click', () => {
+      if (activeGroup === b.dataset.g) return;
+      activeGroup = b.dataset.g;
+      try { localStorage.setItem(GRPKEY, activeGroup); } catch (e) {}
+      renderGroupTabs(); renderTopics();
+    }));
+  }
+  // Build the home screen's topic grid for the active group, each card showing
+  // the player's level and progress in that topic.
   function renderTopics() {
     const wrap = el('homeTopics'); if (!wrap) return;
-    wrap.innerHTML = TOPICS.map(t => {
+    wrap.innerHTML = TOPICS.filter(t => groupOf(t) === activeGroup).map(t => {
       const p = topicProfile(t.id), L = topicLadder(t), lv = L[p.rank], nx = p.rank < L.length - 1 ? L[p.rank + 1] : null;
       const pct = nx ? Math.max(5, Math.min(100, Math.round((p.xp - lv.xp) / (nx.xp - lv.xp) * 100))) : 100;
       return '<button class="topic-card" type="button" data-id="' + t.id + '" style="--tk:' + t.accent + '">'
@@ -2793,6 +2826,7 @@
     }).join('');
     wrap.querySelectorAll('.topic-card').forEach(b => b.addEventListener('click', () => startTopic(b.dataset.id)));
   }
+  renderGroupTabs();
   renderTopics();
   // Collapsible "How to play" — hidden by default so the tiles get the room.
   (() => {

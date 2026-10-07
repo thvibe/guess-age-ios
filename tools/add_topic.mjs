@@ -73,7 +73,8 @@ const REG = '  // The topic registry.';
 if (!html.includes(REG)) fail('could not find the topic-registry anchor');
 html = html.replace(REG, bankBlock + REG);
 
-const entry = "    { id: '" + spec.id + "', name: " + J(spec.name) + ", icon: '" + spec.icon + "', accent: '" + spec.accent + "', questions: " + VAR + ",\n"
+const group = spec.group === 'fun' ? 'fun' : 'school';   // Drive-sourced test prep defaults to the School group
+const entry = "    { id: '" + spec.id + "', name: " + J(spec.name) + ", icon: '" + spec.icon + "', accent: '" + spec.accent + "', questions: " + VAR + ", group: '" + group + "',\n"
   + '      tiers:      [' + spec.tiers.map(J).join(', ') + '],\n'
   + '      tiersShort: [' + spec.tiersShort.map(J).join(', ') + '],\n'
   + '      blurbs:     [' + spec.blurbs.map(J).join(', ') + '] },\n';
