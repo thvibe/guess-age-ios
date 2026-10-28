@@ -180,11 +180,11 @@
   .rankstrip .rk-next { font-size: 10px; font-weight: 600; color: var(--text-3); margin-top: 3px; }
 
   /* Set Recap + Rank Up overlays (content is rendered by JS into the sheet). */
-  #recap, #rankup, #lenpick { position: fixed; inset: 0; z-index: 7; display: grid; place-items: center; padding: 22px;
+  #recap, #rankup, #lenpick, #testpick { position: fixed; inset: 0; z-index: 7; display: grid; place-items: center; padding: 22px;
     background: rgba(20,16,28,.55); background: color-mix(in srgb, var(--bg) 82%, transparent);
     -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
-  #recap.hidden, #rankup.hidden, #lenpick.hidden { display: none; }
-  .recap-sheet, .lenpick-sheet { width: 100%; max-width: 380px; background: var(--card); border-radius: 26px; box-shadow: var(--shadow);
+  #recap.hidden, #rankup.hidden, #lenpick.hidden, #testpick.hidden { display: none; }
+  .recap-sheet, .lenpick-sheet, .testpick-sheet { width: 100%; max-width: 380px; background: var(--card); border-radius: 26px; box-shadow: var(--shadow);
     padding: 24px 22px 20px; display: flex; flex-direction: column; align-items: center; gap: 13px;
     animation: gameIn .4s cubic-bezier(.2,.9,.3,1) both; }
   /* Question-count picker, shown after choosing a topic. */
@@ -197,6 +197,18 @@
   .lenbtn .u { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-2); }
   .lenbtn.unlimited { grid-column: 1 / -1; background: var(--accent); color: #fff; flex-direction: row; justify-content: center; gap: 8px; }
   .lenbtn.unlimited .u { color: rgba(255,255,255,.85); }
+  /* Test picker: a subject with more than one test opens this list of its tests. */
+  .testpick-list { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+  .testpick-row { appearance: none; border: 0; cursor: pointer; width: 100%; border-radius: 16px; padding: 12px 14px;
+    background: var(--fill); color: var(--text); display: flex; align-items: center; gap: 12px; text-align: left;
+    transition: transform .08s, background .15s; }
+  .testpick-row:active { transform: scale(.98); }
+  .testpick-ic { width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: 12px;
+    background: var(--tk, var(--accent)); color: #fff; font-size: 22px; }
+  .testpick-meta { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+  .testpick-name { font-family: var(--round); font-weight: 800; font-size: 16px; line-height: 1.12; }
+  .testpick-sub { font-size: 12px; color: var(--text-2); }
+  .testpick-go { color: var(--text-2); font-size: 22px; flex: none; }
   #rankup { background: rgba(10,7,20,.72); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
   .rankup-sheet { width: 100%; max-width: 340px; display: flex; flex-direction: column; align-items: center;
     gap: 18px; text-align: center; animation: spring .55s cubic-bezier(.2,1.4,.35,1) both; }
@@ -229,6 +241,12 @@
   #quiz .quiz-q { font-family: 'Anton', 'Fredoka', sans-serif; font-weight: 400; text-transform: uppercase;
     font-size: clamp(27px, 7.8vw, 44px); line-height: 1.08; letter-spacing: .5px; color: #fff;
     text-shadow: 0 2px 0 rgba(0,0,0,.3); max-width: 20ch; }
+  /* Visual (diagram) questions: an SVG figure sits on a light panel above the question. */
+  #quiz .quiz-fig { background: #f5f6fc; border-radius: 16px; padding: 10px 12px; width: min(100%, 300px);
+    max-height: 46%; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(0,0,0,.3); }
+  #quiz .quiz-fig svg { width: 100%; height: auto; max-height: 188px; display: block; }
+  body.trivia #quiz.has-fig { gap: 12px; }
+  #quiz.has-fig .quiz-q { font-size: clamp(17px, 4.6vw, 25px); max-width: 26ch; }
   /* Trivia answer buttons show a wrapped text answer instead of a big number. */
   .opt-answer { font-family: var(--round); font-weight: 700; font-size: 16px; line-height: 1.12; padding: 0 8px; text-align: center; }
   .opt.opt-trivia { padding: 8px 4px; }
@@ -696,6 +714,7 @@
 <div id="recap" class="hidden" role="dialog" aria-label="Set recap"><div class="recap-sheet" id="recapSheet"></div></div>
 <div id="rankup" class="hidden" role="dialog" aria-label="Rank up"><div class="rankup-sheet" id="rankupSheet"></div></div>
 <div id="lenpick" class="hidden" role="dialog" aria-label="Choose how many questions"><div class="lenpick-sheet" id="lenpickSheet"></div></div>
+<div id="testpick" class="hidden" role="dialog" aria-label="Choose a test"><div class="testpick-sheet" id="testpickSheet"></div></div>
 
 <div id="home">
   <div class="home-top">
@@ -2132,6 +2151,61 @@
     { q: "What is imagery?", options: ["Descriptive language that appeals to the senses and helps create a mood", "An extreme exaggeration used for emphasis", "Placing different or opposing ideas together to highlight a difference", "A comparison that continues throughout a text or across several lines"], correct: 0, d: 1 },
     { q: "Which term means: an ending that can be interpreted in more than one way?", options: ["Ambiguous ending", "Imagined dialogue", "Contrast", "Extended metaphor"], correct: 0, d: 1 },
   ];
+  // Biology: Macromolecules (auto-generated from source material).
+  const VINNY_BIOLOGY_2026_10_29_Q = [
+    { q: "The arrow points to the groove where the substrate fits into the enzyme. What is this part called?", options: ["The active site", "The substrate", "The product", "The ribosome"], correct: 0, d: 1, img: "<svg viewBox='0 0 300 170' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='Lock and key enzyme diagram'><text x='150' y='15' font-family='sans-serif' font-size='12' fill='#1f2340' text-anchor='middle'>substrate</text><path d='M137 22 l26 0 l-13 26 z' fill='#7c3aed'/><rect x='55' y='74' width='190' height='78' rx='16' fill='#2f8f4e'/><path d='M137 74 l26 0 l-13 26 z' fill='#f5f6fc'/><text x='150' y='134' font-family='sans-serif' font-size='13' fill='#ffffff' text-anchor='middle' font-weight='700'>enzyme</text><defs><marker id='ahk' markerWidth='9' markerHeight='9' refX='6' refY='3' orient='auto'><path d='M0 0 L6 3 L0 6 z' fill='#1f2340'/></marker></defs><path d='M244 58 L168 88' stroke='#1f2340' stroke-width='2.5' fill='none' marker-end='url(#ahk)'/><text x='252' y='54' font-family='sans-serif' font-size='20' fill='#1f2340' text-anchor='start' font-weight='800'>?</text></svg>" },
+    { q: "This graph shows how temperature affects the activity of a human enzyme. Around what temperature does it work best?", options: ["About 37 degrees C", "About 0 degrees C", "About 75 degrees C", "About 100 degrees C"], correct: 0, d: 2, img: "<svg viewBox='0 0 300 180' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='Enzyme activity versus temperature'><text x='18' y='82' font-family='sans-serif' font-size='11' fill='#1f2340' transform='rotate(-90 18 82)' text-anchor='middle'>reaction rate</text><line x1='44' y1='18' x2='44' y2='150' stroke='#1f2340' stroke-width='2'/><line x1='44' y1='150' x2='288' y2='150' stroke='#1f2340' stroke-width='2'/><path d='M54 146 C104 134 124 56 154 48 C182 56 208 134 248 146' fill='none' stroke='#2f6fd0' stroke-width='3'/><line x1='154' y1='150' x2='154' y2='157' stroke='#1f2340' stroke-width='2'/><text x='154' y='170' font-family='sans-serif' font-size='12' fill='#1f2340' text-anchor='middle'>37°C</text><text x='286' y='168' font-family='sans-serif' font-size='11' fill='#1f2340' text-anchor='end'>temperature</text></svg>" },
+    { q: "In this DNA molecule, which base belongs in the empty spot, paired with adenine (A)?", options: ["Thymine (T)", "Guanine (G)", "Cytosine (C)", "Uracil (U)"], correct: 0, d: 1, img: "<svg viewBox='0 0 300 170' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='DNA base pairing'><line x1='92' y1='16' x2='92' y2='154' stroke='#8a8f9a' stroke-width='6' stroke-linecap='round'/><line x1='208' y1='16' x2='208' y2='154' stroke='#8a8f9a' stroke-width='6' stroke-linecap='round'/><rect x='96' y='32' width='48' height='24' rx='5' fill='#e0533a'/><text x='120' y='49' font-family='sans-serif' font-size='14' fill='#fff' text-anchor='middle' font-weight='700'>A</text><rect x='156' y='32' width='48' height='24' rx='5' fill='#f5f6fc' stroke='#1f2340' stroke-width='2' stroke-dasharray='3 3'/><text x='180' y='50' font-family='sans-serif' font-size='16' fill='#1f2340' text-anchor='middle' font-weight='800'>?</text><rect x='96' y='72' width='48' height='24' rx='5' fill='#2f6fd0'/><text x='120' y='89' font-family='sans-serif' font-size='14' fill='#fff' text-anchor='middle' font-weight='700'>G</text><rect x='156' y='72' width='48' height='24' rx='5' fill='#2f8f4e'/><text x='180' y='89' font-family='sans-serif' font-size='14' fill='#fff' text-anchor='middle' font-weight='700'>C</text><rect x='96' y='112' width='48' height='24' rx='5' fill='#2f8f4e'/><text x='120' y='129' font-family='sans-serif' font-size='14' fill='#fff' text-anchor='middle' font-weight='700'>C</text><rect x='156' y='112' width='48' height='24' rx='5' fill='#2f6fd0'/><text x='180' y='129' font-family='sans-serif' font-size='14' fill='#fff' text-anchor='middle' font-weight='700'>G</text></svg>" },
+    { q: "A nucleotide has three parts: a phosphate, a nitrogen base, and the five-sided piece marked with a question mark. What is that piece?", options: ["A sugar", "A fatty acid", "An amino acid", "A glycerol"], correct: 0, d: 3, img: "<svg viewBox='0 0 300 160' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='Nucleotide parts'><line x1='80' y1='84' x2='124' y2='84' stroke='#1f2340' stroke-width='2'/><line x1='176' y1='80' x2='206' y2='70' stroke='#1f2340' stroke-width='2'/><circle cx='60' cy='84' r='22' fill='#e0a23a'/><text x='60' y='90' font-family='sans-serif' font-size='16' fill='#fff' text-anchor='middle' font-weight='700'>P</text><text x='60' y='124' font-family='sans-serif' font-size='11' fill='#1f2340' text-anchor='middle'>phosphate</text><polygon points='150,54 178,74 167,108 133,108 122,74' fill='#2f6fd0'/><text x='150' y='94' font-family='sans-serif' font-size='18' fill='#fff' text-anchor='middle' font-weight='800'>?</text><rect x='206' y='52' width='68' height='36' rx='6' fill='#2f8f4e'/><text x='240' y='75' font-family='sans-serif' font-size='13' fill='#fff' text-anchor='middle' font-weight='700'>base</text></svg>" },
+    { q: "This molecule is one glycerol joined to three long fatty-acid chains. Which macromolecule is it?", options: ["A lipid (fat)", "A carbohydrate", "A protein", "A nucleic acid"], correct: 0, d: 3, img: "<svg viewBox='0 0 300 170' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='Triglyceride structure'><rect x='40' y='42' width='24' height='92' rx='6' fill='#e0a23a'/><text x='52' y='150' font-family='sans-serif' font-size='11' fill='#1f2340' text-anchor='middle'>glycerol</text><polyline points='64,60 86,52 108,64 130,52 152,64 174,52 196,62' fill='none' stroke='#2f6fd0' stroke-width='3'/><polyline points='64,88 86,80 108,92 130,80 152,92 174,80 196,90' fill='none' stroke='#2f6fd0' stroke-width='3'/><polyline points='64,116 86,108 108,120 130,108 152,120 174,108 196,118' fill='none' stroke='#2f6fd0' stroke-width='3'/><text x='168' y='150' font-family='sans-serif' font-size='11' fill='#1f2340' text-anchor='middle'>3 fatty acids</text></svg>" },
+    { q: "This ring is a single simple-sugar unit, the building block of carbohydrates. What is one sugar unit called?", options: ["A monosaccharide", "A disaccharide", "A polysaccharide", "An amino acid"], correct: 0, d: 1, img: "<svg viewBox='0 0 300 160' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='Simple sugar ring'><text x='150' y='28' font-family='sans-serif' font-size='12' fill='#1f2340' text-anchor='middle'>CH2OH</text><polygon points='150,42 188,64 188,106 150,128 112,106 112,64' fill='#dbe7ff' stroke='#1f2340' stroke-width='2.5'/><text x='150' y='92' font-family='sans-serif' font-size='13' fill='#1f2340' text-anchor='middle' font-weight='700'>sugar</text><text x='150' y='150' font-family='sans-serif' font-size='11' fill='#1f2340' text-anchor='middle'>one simple sugar unit</text></svg>" },
+    { q: "Every organic compound must contain which element?", options: ["Carbon", "Sodium", "Only oxygen", "Any metal"], correct: 0, d: 1 },
+    { q: "How many valence (outer) electrons does a carbon atom have?", options: ["4", "6", "2", "8"], correct: 0, d: 1 },
+    { q: "Which of these substances is a hydrocarbon?", options: ["Methane (CH4)", "Ethanol", "Water (H2O)", "Table salt (NaCl)"], correct: 0, d: 2 },
+    { q: "Which of these substances is classified as inorganic?", options: ["Table salt (NaCl)", "Glucose", "Starch", "Octane"], correct: 0, d: 2 },
+    { q: "Alcohols such as ethanol are organic compounds. Which three elements do they contain?", options: ["Carbon, hydrogen, and oxygen", "Carbon and hydrogen only", "Carbon and oxygen only", "Hydrogen and oxygen only"], correct: 0, d: 2 },
+    { q: "Carbon dioxide (CO2) has carbon in it, yet the fact sheet still calls it inorganic. Why is that?", options: ["It is one of the few carbon-containing substances that count as exceptions and are still called inorganic", "It also contains hydrogen", "It is a hydrocarbon", "It is an alcohol"], correct: 0, d: 3 },
+    { q: "A mystery substance is made of only carbon and hydrogen atoms. Based on the fact sheet, what must be true about it?", options: ["It is a flammable hydrocarbon", "It is a good-solvent alcohol", "It is inorganic", "It contains oxygen"], correct: 0, d: 3 },
+    { q: "Which fact about carbon best explains why it can form more bonds than any other element?", options: ["It has 4 valence (outer) electrons", "It has only 2 outer electrons", "It always contains hydrogen", "It is a carbonate"], correct: 0, d: 4 },
+    { q: "Which three elements are always found in carbohydrates?", options: ["Carbon, hydrogen, and oxygen", "Carbon, hydrogen, and nitrogen", "Carbon, nitrogen, and phosphorus", "Hydrogen, oxygen, and sulfur"], correct: 0, d: 1 },
+    { q: "What is the building block (monomer) of a carbohydrate?", options: ["A monosaccharide", "A disaccharide", "A polysaccharide", "A starch molecule"], correct: 0, d: 1 },
+    { q: "In a carbohydrate, what is the ratio of hydrogen atoms to oxygen atoms?", options: ["2 to 1", "1 to 2", "1 to 1", "3 to 1"], correct: 0, d: 2 },
+    { q: "Sucrose is a disaccharide. Which two simple sugars join together to make it?", options: ["Glucose and fructose", "Glucose and glucose", "Glucose and galactose", "Fructose and galactose"], correct: 0, d: 2 },
+    { q: "A corn plant and a dog both store extra sugar to use for energy later. Which statement correctly matches each one to the carbohydrate it uses for storage?", options: ["The corn plant stores starch and the dog stores glycogen.", "The corn plant stores glycogen and the dog stores starch.", "Both the corn plant and the dog store cellulose.", "Both the corn plant and the dog store chitin."], correct: 0, d: 3 },
+    { q: "A beetle is an arthropod with a hard outer shell. Based on the fact sheet, which structural carbohydrate most likely makes up that shell?", options: ["Chitin", "Cellulose", "Starch", "Glycogen"], correct: 0, d: 3 },
+    { q: "When two monosaccharides are joined together to build a disaccharide, what is released?", options: ["A water molecule", "A carbon dioxide molecule", "An oxygen molecule", "An extra glucose molecule"], correct: 0, d: 3 },
+    { q: "People eat foods like celery that contain cellulose. Why does cellulose act as fiber (roughage) instead of giving people lots of energy?", options: ["Because humans cannot digest cellulose, so it passes through the body as fiber.", "Because cellulose is made of nitrogen, which gives no energy.", "Because cellulose is stored as energy in the human liver.", "Because cellulose is a single simple sugar with no calories."], correct: 0, d: 4 },
+    { q: "A simple sugar has the formula C6H12O6. How does this formula fit the rule about the hydrogen-to-oxygen ratio in carbohydrates?", options: ["It has 12 hydrogen atoms and 6 oxygen atoms, which is a 2 to 1 ratio.", "It has 6 hydrogen atoms and 12 oxygen atoms, which is a 1 to 2 ratio.", "It has equal hydrogen and oxygen, which is a 1 to 1 ratio.", "It breaks the rule because carbohydrates have no set ratio."], correct: 0, d: 4 },
+    { q: "Which of these is an example of a lipid?", options: ["Cholesterol", "A sugar such as glucose", "A protein such as an enzyme", "A strand of DNA"], correct: 0, d: 1 },
+    { q: "About how much energy do lipids store compared to carbohydrates?", options: ["About twice as much energy", "About half as much energy", "About the same amount of energy", "About one quarter as much energy"], correct: 0, d: 1 },
+    { q: "Which combination of molecules joins together to make one fat (a triglyceride)?", options: ["One glycerol molecule plus three fatty acids", "Three glycerol molecules plus one fatty acid", "One glycerol molecule plus two fatty acids", "A long chain of many glycerol molecules linked together"], correct: 0, d: 2 },
+    { q: "Which statement best describes saturated fats?", options: ["They are mostly animal fats, have no carbon-carbon double bonds, and are solid at room temperature", "They are mostly plant fats and are liquid at room temperature", "They have many double bonds that keep them from packing tightly", "They are the healthier choice and do not raise the risk of heart disease"], correct: 0, d: 2 },
+    { q: "What does the body use cholesterol for?", options: ["It is found in cell membranes and is used to make hormones", "It is used to store genetic information", "It is the body's first choice for quick energy", "It is a type of sugar used to build cell walls"], correct: 0, d: 2 },
+    { q: "A student tests a fat that is liquid at room temperature and comes from a plant. What type of fat is it, and is it the healthier choice?", options: ["An unsaturated fat, and yes it is the healthier choice", "A saturated fat, and yes it is the healthier choice", "An unsaturated fat, but it is the less healthy choice", "A saturated fat that is linked to heart disease"], correct: 0, d: 3 },
+    { q: "In a cell membrane, how are the phospholipids arranged?", options: ["The water-loving heads face outward toward water and the water-fearing tails face inward", "The water-fearing heads face outward and the water-loving tails face inward", "Both the heads and the tails face outward toward water", "Both the heads and the tails point inward away from water"], correct: 0, d: 3 },
+    { q: "Lipids store more energy than carbohydrates, so why does the body use carbohydrates for energy first?", options: ["Because carbohydrates are easier to break down", "Because carbohydrates actually store more energy than lipids", "Because lipids cannot be broken down for energy", "Because lipids are saved only for building DNA"], correct: 0, d: 4 },
+    { q: "Why do unsaturated fats stay liquid at room temperature while saturated fats are solid?", options: ["Double bonds bend the chains of unsaturated fats so they cannot pack tightly together", "Unsaturated fats have no double bonds, so they pack tightly and stay liquid", "Saturated fats have double bonds that keep their chains loose", "Unsaturated fats come from animals, which are naturally liquid"], correct: 0, d: 4 },
+    { q: "Enzymes are a type of which macromolecule?", options: ["Proteins", "Lipids", "Carbohydrates", "Nucleic acids"], correct: 0, d: 1 },
+    { q: "What do enzymes do to the chemical reactions in living things?", options: ["They speed them up", "They slow them down", "They stop them completely", "They have no effect on them"], correct: 0, d: 1 },
+    { q: "Most enzyme names usually end with which ending?", options: ["-ase", "-ose", "-ine", "-ate"], correct: 0, d: 1 },
+    { q: "In an enzyme reaction, what is the substrate?", options: ["The molecule that the enzyme works on", "The part of the enzyme the substrate fits into", "The helper that speeds up the reaction", "The enzyme and substrate temporarily joined together"], correct: 0, d: 2 },
+    { q: "In the lock-and-key model, the substrate fits into which part of the enzyme?", options: ["The active site", "The substrate", "The product", "The enzyme-substrate complex"], correct: 0, d: 2 },
+    { q: "After an enzyme has helped a reaction happen, what happens to that enzyme?", options: ["It is not used up and can be used again", "It is used up and destroyed", "It is changed into one of the products", "It turns into the substrate"], correct: 0, d: 2 },
+    { q: "An enzyme called lipase would most likely break down which kind of molecule?", options: ["Lipids", "Proteins", "Sucrose", "DNA"], correct: 0, d: 3 },
+    { q: "A human enzyme would most likely work best at about which temperature?", options: ["About 37 degrees C", "About 0 degrees C", "About 75 degrees C", "About 100 degrees C"], correct: 0, d: 3 },
+    { q: "A scientist heats an enzyme to a very high temperature and it stops working. What best explains why it stopped?", options: ["The heat denatured the enzyme, so it unfolded and lost its shape", "The heat used up the enzyme so none of it was left", "The heat turned the enzyme into a substrate", "The heat made the enzyme work so fast that it finished early"], correct: 0, d: 4 },
+    { q: "Why does adding more substrate usually make an enzyme reaction go faster?", options: ["There are more collisions between the enzyme and the substrate", "The enzyme changes its shape so it can work faster", "The extra substrate turns into more enzyme", "The enzyme is used up more slowly"], correct: 0, d: 4 },
+    { q: "Nucleic acids are large molecules built from smaller repeating units. What are these smaller units called?", options: ["Nucleotides", "Amino acids", "Monosaccharides", "Fatty acids"], correct: 0, d: 1 },
+    { q: "Besides carbon, hydrogen, oxygen, and nitrogen, which element is found in nucleic acids?", options: ["Phosphorus (P)", "Sulfur", "Calcium", "Iron"], correct: 0, d: 1 },
+    { q: "A single nucleotide is made of three parts. Which of these is one of those parts?", options: ["A phosphate group", "A fatty acid tail", "A glucose ring", "An amino group only"], correct: 0, d: 1 },
+    { q: "In DNA, the bases pair up in a set way. Which base pairs with adenine (A)?", options: ["Thymine (T)", "Guanine (G)", "Cytosine (C)", "Uracil (U)"], correct: 0, d: 2 },
+    { q: "Which sugar is the 5-carbon sugar found in RNA?", options: ["Ribose", "Deoxyribose", "Glucose", "Sucrose"], correct: 0, d: 2 },
+    { q: "RNA uses one base that DNA does not use at all. Which base is it?", options: ["Uracil (U)", "Thymine (T)", "Guanine (G)", "Adenine (A)"], correct: 0, d: 2 },
+    { q: "A student finds a nucleic acid that is single-stranded and contains the base uracil. Which type of nucleic acid is it most likely to be?", options: ["RNA", "DNA", "A protein", "Deoxyribose"], correct: 0, d: 3 },
+    { q: "One strand of DNA has the base sequence A-C-G. Using the base-pairing rules, what is the matching sequence on the other strand?", options: ["T-G-C", "U-G-C", "A-C-G", "T-C-G"], correct: 0, d: 3 },
+    { q: "Deoxyribose and ribose are almost alike. How is deoxyribose different from ribose?", options: ["It has one fewer oxygen atom", "It has one more oxygen atom", "It has one fewer carbon atom", "It has a phosphate group in place of oxygen"], correct: 0, d: 3 },
+    { q: "A cell makes a nucleic acid in its nucleus, and the molecule is shaped like a double helix. Based on the fact sheet, what can you conclude about this molecule?", options: ["It is DNA", "It is RNA", "It is single-stranded", "It uses uracil in place of thymine"], correct: 0, d: 4 },
+  ];
   // The topic registry. `accent` tints the topic's card and quiz backdrop; the
   // age game is intentionally left out of this list (kept in code, off the home
   // grid). Add a topic here and it appears on the home screen automatically.
@@ -2165,7 +2239,7 @@
       tiers:      ['Cabin Boy', 'Deckhand', 'Navigator', 'First Mate', 'Captain', 'Master Explorer'],
       tiersShort: ['Cabin Boy', 'Deckhand', 'Navigator', 'First Mate', 'Captain', 'Explorer'],
       blurbs:     ['Swabbing the deck.', 'Learning the ropes.', 'Charting the course.', 'Running the ship.', 'Commanding the voyage.', 'A master of exploration!'] },
-    { id: 'vinny-biology', name: "Vinny's Biology Test", icon: 'biotech', accent: '#276a2c', questions: VINNY_BIOLOGY_Q, group: 'school',
+    { id: 'vinny-biology', name: "Vinny's Biology Test", subject: 'Biology', unit: 'Cells & Organization', icon: 'biotech', accent: '#276a2c', questions: VINNY_BIOLOGY_Q, group: 'school',
       tiers:      ["Single Cell", "Tissue", "Organ", "Organ System", "Organism", "Master Biologist"],
       tiersShort: ["Cell", "Tissue", "Organ", "System", "Organism", "Biologist"],
       blurbs:     ["Just one cell.", "Cells working together.", "A working organ now.", "Systems online!", "A whole organism!", "A master biologist!"] },
@@ -2173,6 +2247,10 @@
       tiers:      ["Rookie Reader", "Page Turner", "Close Reader", "Theme Tracker", "Literary Analyst", "Master of Literature"],
       tiersShort: ["Rookie", "Pages", "Close Read", "Themes", "Analyst", "Master"],
       blurbs:     ["Just starting to read closely.", "Turning the pages now.", "Reading between the lines.", "You can spot the theme.", "Analyzing like a pro.", "A master of literature!"] },
+    { id: 'vinny-biology-2026-10-29', name: "Biology: Macromolecules", subject: "Biology", unit: "Macromolecules", date: "Oct 29, 2026", icon: 'bubble_chart', accent: '#2f8f4e', questions: VINNY_BIOLOGY_2026_10_29_Q, group: 'school',
+      tiers:      ["Beginner", "Molecule Maker", "Macro Master", "Enzyme Expert", "DNA Decoder", "Biochem Boss"],
+      tiersShort: ["Start", "Molecules", "Macro", "Enzymes", "DNA", "Boss"],
+      blurbs:     ["Just getting started.", "Building molecules.", "A macromolecule master.", "An enzyme expert!", "Cracking the DNA code.", "A biochemistry boss!"] },
   ];
   const topicById = id => TOPICS.find(t => t.id === id) || TOPICS[0];
   let activeTopic = TOPICS[0];
@@ -2496,7 +2574,9 @@
     state.opts = { values: idx.map(i => q.options[i]), correctIndex: idx.indexOf(q.correct) };
     const t = activeTopic;
     el('quiz').style.background = 'radial-gradient(120% 90% at 50% 18%, ' + t.accent + ' 0%, #15182b 66%, #0c0e1a 100%)';
-    el('quiz').innerHTML = '<div class="quiz-q">' + escapeHtml(q.q) + '</div>';
+    const qel = el('quiz');
+    qel.classList.toggle('has-fig', !!q.img);   // visual question: show the SVG diagram above the text
+    qel.innerHTML = (q.img ? '<div class="quiz-fig">' + q.img + '</div>' : '') + '<div class="quiz-q">' + escapeHtml(q.q) + '</div>';
     optEls.forEach((b, i) => {
       b.innerHTML = '<span class="opt-text opt-answer">' + escapeHtml(state.opts.values[i]) + '</span>';
       b.className = 'opt opt-trivia'; b.disabled = false;
@@ -2914,21 +2994,61 @@
       renderGroupTabs(); renderTopics();
     }));
   }
-  // Build the home screen's topic grid for the active group, each card showing
-  // the player's level and progress in that topic.
+  // A subject groups one or more tests (e.g. several Biology tests). Topics
+  // without an explicit subject stand alone (their name is their subject).
+  const subjectOf = t => t.subject || t.name;
+  const topicPct = t => { const p = topicProfile(t.id), L = topicLadder(t), lv = L[p.rank], nx = p.rank < L.length - 1 ? L[p.rank + 1] : null; return nx ? Math.max(5, Math.min(100, Math.round((p.xp - lv.xp) / (nx.xp - lv.xp) * 100))) : 100; };
+  // Build the home screen's topic grid for the active group. Subjects with a
+  // single test show a normal card; subjects with several show one card that
+  // opens a test picker.
   function renderTopics() {
     const wrap = el('homeTopics'); if (!wrap) return;
     const sb = el('studyBtn'); if (sb) sb.style.display = activeGroup === 'school' ? 'inline-flex' : 'none';
-    wrap.innerHTML = TOPICS.filter(t => groupOf(t) === activeGroup).map(t => {
-      const p = topicProfile(t.id), L = topicLadder(t), lv = L[p.rank], nx = p.rank < L.length - 1 ? L[p.rank + 1] : null;
-      const pct = nx ? Math.max(5, Math.min(100, Math.round((p.xp - lv.xp) / (nx.xp - lv.xp) * 100))) : 100;
-      return '<button class="topic-card" type="button" data-id="' + t.id + '" style="--tk:' + t.accent + '">'
-        + '<span class="msym topic-ic">' + t.icon + '</span>'
-        + '<span class="topic-name">' + escapeHtml(t.name) + '</span>'
-        + '<span class="topic-lvl">' + escapeHtml(lv.name) + '</span>'
-        + '<span class="topic-bar"><span style="width:' + pct + '%"></span></span></button>';
+    const order = [], bySubj = {};
+    TOPICS.filter(t => groupOf(t) === activeGroup).forEach(t => {
+      const s = subjectOf(t); if (!bySubj[s]) { bySubj[s] = []; order.push(s); } bySubj[s].push(t);
+    });
+    wrap.innerHTML = order.map(s => {
+      const tests = bySubj[s];
+      if (tests.length === 1) {
+        const t = tests[0], p = topicProfile(t.id), lv = topicLadder(t)[p.rank];
+        return '<button class="topic-card" type="button" data-id="' + t.id + '" style="--tk:' + t.accent + '">'
+          + '<span class="msym topic-ic">' + t.icon + '</span>'
+          + '<span class="topic-name">' + escapeHtml(t.name) + '</span>'
+          + '<span class="topic-lvl">' + escapeHtml(lv.name) + '</span>'
+          + '<span class="topic-bar"><span style="width:' + topicPct(t) + '%"></span></span></button>';
+      }
+      const t0 = tests[0];
+      const avg = Math.round(tests.reduce((a, t) => a + topicPct(t), 0) / tests.length);
+      return '<button class="topic-card subject-card" type="button" data-subject="' + escapeHtml(s) + '" style="--tk:' + t0.accent + '">'
+        + '<span class="msym topic-ic">' + t0.icon + '</span>'
+        + '<span class="topic-name">' + escapeHtml(s) + '</span>'
+        + '<span class="topic-lvl">' + tests.length + ' tests &middot; tap to pick</span>'
+        + '<span class="topic-bar"><span style="width:' + avg + '%"></span></span></button>';
     }).join('');
-    wrap.querySelectorAll('.topic-card').forEach(b => b.addEventListener('click', () => startTopic(b.dataset.id)));
+    wrap.querySelectorAll('.topic-card').forEach(b => b.addEventListener('click', () =>
+      b.dataset.subject ? openTestPicker(b.dataset.subject) : startTopic(b.dataset.id)));
+  }
+  // The test picker: list every test in a subject so the player can choose one.
+  function openTestPicker(subject) {
+    const tests = TOPICS.filter(t => groupOf(t) === activeGroup && subjectOf(t) === subject);
+    el('testpickSheet').innerHTML =
+      '<div style="font-family:var(--round);font-weight:800;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-2)">' + escapeHtml(subject) + '</div>'
+      + '<div style="font-family:\'Luckiest Guy\',var(--round);font-size:26px;color:var(--text);line-height:1.1;text-align:center">Pick a test</div>'
+      + '<div class="testpick-list">' + tests.map(t => {
+          const lv = topicLadder(t)[topicProfile(t.id).rank], label = t.unit || t.name;
+          return '<button class="testpick-row" type="button" data-id="' + t.id + '" style="--tk:' + t.accent + '">'
+            + '<span class="msym testpick-ic">' + t.icon + '</span>'
+            + '<span class="testpick-meta"><span class="testpick-name">' + escapeHtml(label) + '</span>'
+            + '<span class="testpick-sub">' + escapeHtml(lv.name) + (t.date ? ' &middot; ' + escapeHtml(t.date) : '') + '</span></span>'
+            + '<span class="msym testpick-go">chevron_right</span></button>';
+        }).join('') + '</div>'
+      + '<button id="testpickCancel" type="button" style="border:0;background:none;color:var(--text-2);font-family:var(--round);font-weight:700;font-size:13px;padding:4px;cursor:pointer">Back</button>';
+    el('testpick').classList.remove('hidden');
+    el('testpickSheet').querySelectorAll('.testpick-row').forEach(b => b.addEventListener('click', () => {
+      el('testpick').classList.add('hidden'); startTopic(b.dataset.id);
+    }, { once: true }));
+    el('testpickCancel').addEventListener('click', () => el('testpick').classList.add('hidden'), { once: true });
   }
   renderGroupTabs();
   renderTopics();

@@ -39,6 +39,11 @@ for (const k of ['tiers', 'tiersShort', 'blurbs']) {
   if (!Array.isArray(spec[k]) || spec[k].length !== 6 || spec[k].some(s => typeof s !== 'string' || !s || s.includes('"')))
     fail(k + ' must be exactly 6 non-empty strings without double-quotes');
 }
+// Optional grouping/display metadata: subject (groups tests under one home card),
+// unit (short label in the test picker), date (subtitle in the picker).
+for (const k of ['subject', 'unit', 'date']) {
+  if (spec[k] != null && (typeof spec[k] !== 'string' || !spec[k] || spec[k].includes('"'))) fail(k + ' must be a non-empty string without double-quotes');
+}
 if (!Array.isArray(spec.questions) || spec.questions.length < 20) fail('need at least 20 questions');
 
 const norm = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
@@ -47,6 +52,9 @@ const byd = { 1: 0, 2: 0, 3: 0, 4: 0 };
 spec.questions.forEach((q, i) => {
   if (!q.q || typeof q.q !== 'string' || q.q.includes('"')) fail('question #' + i + ' bad text or contains a double-quote');
   if (!Array.isArray(q.options) || q.options.length !== 4 || q.options.some(o => typeof o !== 'string' || !o || o.includes('"'))) fail('question #' + i + ' needs 4 plain-text options');
+  // Optional visual question: q.img is an inline SVG string. Attributes must use
+  // single quotes so the no-double-quote invariant holds (it is injected as-is).
+  if (q.img != null && (typeof q.img !== 'string' || !q.img || q.img.includes('"'))) fail('question #' + i + ' img must be an SVG string using single-quoted attributes (no double-quotes)');
   if (q.correct !== 0) fail('question #' + i + ' correct must be 0 (answer first)');
   if (![1, 2, 3, 4].includes(q.d)) fail('question #' + i + ' d must be 1-4');
   if (new Set(q.options.map(norm)).size !== 4) fail('question #' + i + ' has duplicate options');
@@ -65,7 +73,7 @@ if (idRe.test(html)) { console.log('SKIP: topic id "' + spec.id + '" already exi
 if (html.includes('const ' + VAR + ' ')) fail('variable ' + VAR + ' already defined');
 
 const J = s => JSON.stringify(s);
-const fmtQ = q => '    { q: ' + J(q.q) + ', options: [' + q.options.map(J).join(', ') + '], correct: 0, d: ' + q.d + ' },';
+const fmtQ = q => '    { q: ' + J(q.q) + ', options: [' + q.options.map(J).join(', ') + '], correct: 0, d: ' + q.d + (q.img ? ', img: ' + J(q.img) : '') + ' },';
 const bankBlock = '  // ' + spec.name + ' (auto-generated from source material).\n'
   + '  const ' + VAR + ' = [\n' + spec.questions.map(fmtQ).join('\n') + '\n  ];\n';
 
@@ -74,7 +82,10 @@ if (!html.includes(REG)) fail('could not find the topic-registry anchor');
 html = html.replace(REG, bankBlock + REG);
 
 const group = spec.group === 'fun' ? 'fun' : 'school';   // Drive-sourced test prep defaults to the School group
-const entry = "    { id: '" + spec.id + "', name: " + J(spec.name) + ", icon: '" + spec.icon + "', accent: '" + spec.accent + "', questions: " + VAR + ", group: '" + group + "',\n"
+const meta = (spec.subject ? ', subject: ' + J(spec.subject) : '')
+  + (spec.unit ? ', unit: ' + J(spec.unit) : '')
+  + (spec.date ? ', date: ' + J(spec.date) : '');
+const entry = "    { id: '" + spec.id + "', name: " + J(spec.name) + meta + ", icon: '" + spec.icon + "', accent: '" + spec.accent + "', questions: " + VAR + ", group: '" + group + "',\n"
   + '      tiers:      [' + spec.tiers.map(J).join(', ') + '],\n'
   + '      tiersShort: [' + spec.tiersShort.map(J).join(', ') + '],\n'
   + '      blurbs:     [' + spec.blurbs.map(J).join(', ') + '] },\n';

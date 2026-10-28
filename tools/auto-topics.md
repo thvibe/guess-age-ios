@@ -8,20 +8,36 @@ no manual steps.
 
 - Source folder in Google Drive: **Vinny School**
   (id `17PrFoG8IGgbb128OLcKn_-hTMwsrOKel`).
-- **Each subfolder = one subject** (e.g. `ELA`, `Bio`). The subfolder name is
-  the subject; the student is "Vinny".
+- **Each top-level subfolder = one subject** (e.g. `ELA`, `Bio`). The subfolder
+  name is the subject; the student is "Vinny". A subject can hold **several
+  tests**; on the home screen they collapse into one subject card that opens a
+  **test picker** (see the `subject` field below).
 - **What becomes a tile depends on the material:**
-  - **Each PDF study guide = its own tile (one game per PDF).** The unit name
-    comes from the PDF's title/first heading (fallback: the cleaned file name).
-    - Tile **name** = `"<Subject>: <Unit>"`, e.g. `ELA: Adolescence`.
-    - Tile **id** = `vinny-<subject-slug>-<unit-slug>`, e.g.
-      `vinny-ela-adolescence`.
+  - **A dated sub-subfolder = one test for that subject (the preferred way to
+    add more tests to a subject).** Merge every file inside it (PDFs and/or
+    `.md`) into one question bank.
+    - Tile **id** = `vinny-<subject-slug>-<date-slug>` (stable, from the folder
+      name — this keeps re-runs idempotent), e.g. `vinny-biology-2026-10-29`.
+    - Tile **name** = `"<Subject>: <short content title>"` (pick a clear unit
+      name from the material), with `subject` = the parent folder, `unit` = the
+      short title, and `date` = the folder's date.
+    - Example: `Vinny School / Bio / 10-29-2026 / {Enzymes.pdf, Lipids.pdf, ...}`
+      → the tile **Biology: Macromolecules** (`vinny-biology-2026-10-29`).
+  - **Each PDF directly in a subject folder = its own tile (one game per PDF).**
+    Unit name from the PDF's title/first heading (fallback: cleaned file name).
+    - Tile **name** = `"<Subject>: <Unit>"`, id = `vinny-<subject-slug>-<unit-slug>`.
     - Example: `Vinny School / ELA / Adolescence Test Study Guide.pdf`
-      → the tile **ELA: Adolescence**.
-  - **A subfolder of `.md` notes = one merged tile for that subject** (legacy
-    style). id = `vinny-<subject-slug>`, name = `"Vinny's <Subject> Test"`.
+      → the tile **ELA: Adolescence** (`vinny-ela-adolescence`).
+  - **A subfolder of `.md` notes directly in a subject folder = one merged tile**
+    (legacy). id = `vinny-<subject-slug>`, name = `"Vinny's <Subject> Test"`.
     - Example: `Vinny School / Bio / {Cell Theory, ...}.md`
       → the tile **Vinny's Biology Test** (`vinny-biology`).
+- **Visual questions:** when the material has diagrams worth testing (enzymes,
+  DNA, molecules, graphs), include a few **diagram questions**. A question may
+  carry an optional `img` = an inline **SVG** string (use single-quoted
+  attributes, dark strokes — it renders on a light panel). Spread them across
+  difficulties, with **some at `d: 1`** so a beginner sees them (questions are
+  gated by the player's level band; a fresh profile only draws `d: 1`).
 - A scheduled routine (daily) checks for PDFs/subjects that don't yet have a
   tile, reads the material, generates a question bank **strictly** from it,
   **adversarially verifies** every question against the source, then adds the
@@ -80,11 +96,24 @@ Spec shape (per-PDF ELA example):
 `group` is optional and defaults to `"school"` (Drive-sourced test prep shows
 under the **School** tab on the home screen; `"fun"` puts it under Just for Fun).
 
+Optional grouping/display fields (used when a subject has more than one test):
+
+- `subject` — groups tests under one home-screen card with a picker (e.g.
+  `"Biology"`). Omit for a stand-alone tile.
+- `unit` — the short label shown for this test in the picker (e.g.
+  `"Macromolecules"`).
+- `date` — a subtitle shown under the unit in the picker (e.g. `"Oct 29, 2026"`).
+
+Optional per-question field:
+
+- `img` — an inline **SVG** string for a visual/diagram question (single-quoted
+  attributes, no double-quotes). It renders on a light panel above the question.
+
 Rules enforced: id is a unique lowercase slug; 6 tiers/tiersShort/blurbs;
 each question has 4 plain-text options with the correct answer FIRST
 (`correct: 0`; the app shuffles at render), difficulty `d` 1-4, no double-quote
-characters anywhere, no duplicate questions. It SKIPs (does nothing) if the id
-already exists.
+characters anywhere (including inside `img`), no duplicate questions. It SKIPs
+(does nothing) if the id already exists.
 
 ## Setting up the schedule (claude.ai Routines)
 
@@ -111,30 +140,36 @@ can attach the **Google Drive** connector:
 > - Google Drive folder "Vinny School" id `17PrFoG8IGgbb128OLcKn_-hTMwsrOKel`.
 >   Each subfolder = one subject; student = "Vinny"; subfolder name = subject.
 >
-> Tile model:
-> - Each **PDF** in a subfolder = its own tile. Unit name = the PDF's
->   title/first heading (fallback: cleaned file name). Tile name =
->   `"<Subject>: <Unit>"`; id = `vinny-<subject-slug>-<unit-slug>`
->   (e.g. ELA / Adolescence → name `ELA: Adolescence`, id `vinny-ela-adolescence`).
-> - A subfolder containing `.md` notes (and no per-unit intent) = one merged
->   tile: id `vinny-<subject-slug>`, name `"Vinny's <Subject> Test"`. A `.md`
->   may start with front matter (class/subject/icon/accent) that overrides the
->   folder values.
+> Tile model (a subject can have several tests; set `subject` on each so they
+> group under one home-screen card with a picker):
+> - A **dated sub-subfolder** (e.g. `Bio/10-29-2026/`) = one test. Merge all
+>   files inside it. id = `vinny-<subject-slug>-<date-slug>` (from the folder
+>   name, so re-runs stay idempotent); name = `"<Subject>: <short unit>"`;
+>   set `subject` = parent folder, `unit` = short unit, `date` = the folder date.
+> - A **PDF** directly in a subject folder = its own tile. Unit = the PDF's
+>   title (fallback: cleaned file name). name = `"<Subject>: <Unit>"`; id =
+>   `vinny-<subject-slug>-<unit-slug>`; set `subject` and `unit`.
+> - A subject folder of `.md` notes (no sub-subfolders) = one merged tile: id
+>   `vinny-<subject-slug>`, name `"Vinny's <Subject> Test"`. A `.md` may start
+>   with front matter (class/subject/icon/accent) overriding folder values.
 >
 > Steps: (1) `git fetch` + hard-reset to origin/default branch. (2) List every
-> subfolder of that folder id and the files in each. (3) Build the work list:
-> for each PDF, compute its id as above; for each `.md`-only subject, compute
-> its merged id. If `web/index.html` already contains `id: '<that id>'`, SKIP
-> it. (4) For each remaining item, read the material (use Drive
-> `read_file_content` to extract PDF text), then write 40-55 multiple-choice
-> questions STRICTLY from the material (4 options, correct answer FIRST, no
-> double-quote characters, difficulty 1-4 roughly d1:12 d2:12 d3:12 d4:9, no
-> duplicates). Then ADVERSARIALLY VERIFY every question against the source:
-> keep it only if the correct answer is uniquely supported by the material and
-> all 3 distractors are clearly wrong; drop anything unsupported, ambiguous, or
-> needing outside knowledge. (Fanning this out with the Workflow tool —
-> one generator + one verifier per source — gives the best quality.) Build a
-> 6-tier themed ladder (tiers/tiersShort/blurbs; e.g. for ELA use
+> subfolder of that folder id, their sub-subfolders, and the files in each.
+> (3) Build the work list: compute the id for each dated sub-subfolder, each
+> stand-alone PDF, and each `.md`-only subject. If `web/index.html` already
+> contains `id: '<that id>'`, SKIP it. (4) For each remaining item, read the
+> material (use Drive `read_file_content` to extract PDF text), then write 40-55
+> multiple-choice questions STRICTLY from the material (4 options, correct answer
+> FIRST, no double-quote characters, difficulty 1-4 roughly d1:12 d2:12 d3:12
+> d4:9, no duplicates). When the material has diagrams worth testing, add a few
+> **visual questions** via the optional per-question `img` field (an inline SVG
+> with single-quoted attributes and dark strokes); put SOME of them at `d: 1` so
+> beginners see them. Then ADVERSARIALLY VERIFY every question against the
+> source: keep it only if the correct answer is uniquely supported by the
+> material and all 3 distractors are clearly wrong; drop anything unsupported,
+> ambiguous, or needing outside knowledge. (Fanning this out with the Workflow
+> tool — one generator + one verifier per source — gives the best quality.)
+> Build a 6-tier themed ladder (tiers/tiersShort/blurbs; e.g. for ELA use
 > `["Rookie Reader","Page Turner","Close Reader","Theme Tracker","Literary Analyst","Master of Literature"]`;
 > default `["Cramming","Studying","Quiz Whiz","Honor Roll","Top of the Class","Valedictorian"]`),
 > write the spec JSON, run the injector. (5) If nothing was added, stop without
