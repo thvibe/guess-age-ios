@@ -55,6 +55,8 @@ spec.questions.forEach((q, i) => {
   // Optional visual question: q.img is an inline SVG string. Attributes must use
   // single quotes so the no-double-quote invariant holds (it is injected as-is).
   if (q.img != null && (typeof q.img !== 'string' || !q.img || q.img.includes('"'))) fail('question #' + i + ' img must be an SVG string using single-quoted attributes (no double-quotes)');
+  // Optional kid-friendly explanation shown on skip / after a wrong answer.
+  if (q.explain != null && (typeof q.explain !== 'string' || !q.explain || q.explain.includes('"'))) fail('question #' + i + ' explain must be a string without double-quotes');
   if (q.correct !== 0) fail('question #' + i + ' correct must be 0 (answer first)');
   if (![1, 2, 3, 4].includes(q.d)) fail('question #' + i + ' d must be 1-4');
   if (new Set(q.options.map(norm)).size !== 4) fail('question #' + i + ' has duplicate options');
@@ -73,7 +75,7 @@ if (idRe.test(html)) { console.log('SKIP: topic id "' + spec.id + '" already exi
 if (html.includes('const ' + VAR + ' ')) fail('variable ' + VAR + ' already defined');
 
 const J = s => JSON.stringify(s);
-const fmtQ = q => '    { q: ' + J(q.q) + ', options: [' + q.options.map(J).join(', ') + '], correct: 0, d: ' + q.d + (q.img ? ', img: ' + J(q.img) : '') + ' },';
+const fmtQ = q => '    { q: ' + J(q.q) + ', options: [' + q.options.map(J).join(', ') + '], correct: 0, d: ' + q.d + (q.img ? ', img: ' + J(q.img) : '') + (q.explain ? ', explain: ' + J(q.explain) : '') + ' },';
 const bankBlock = '  // ' + spec.name + ' (auto-generated from source material).\n'
   + '  const ' + VAR + ' = [\n' + spec.questions.map(fmtQ).join('\n') + '\n  ];\n';
 

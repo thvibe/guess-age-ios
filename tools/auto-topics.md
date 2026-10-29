@@ -104,10 +104,13 @@ Optional grouping/display fields (used when a subject has more than one test):
   `"Macromolecules"`).
 - `date` — a subtitle shown under the unit in the picker (e.g. `"Oct 29, 2026"`).
 
-Optional per-question field:
+Optional per-question fields:
 
 - `img` — an inline **SVG** string for a visual/diagram question (single-quoted
   attributes, no double-quotes). It renders on a light panel above the question.
+- `explain` — a 1-2 sentence, 13-year-old-friendly explanation of **why** the
+  correct answer is right (no double-quotes). Shown on skip and after a wrong
+  answer, and in the end-of-quiz review of missed questions.
 
 Rules enforced: id is a unique lowercase slug; 6 tiers/tiersShort/blurbs;
 each question has 4 plain-text options with the correct answer FIRST
@@ -164,7 +167,9 @@ can attach the **Google Drive** connector:
 > d4:9, no duplicates). When the material has diagrams worth testing, add a few
 > **visual questions** via the optional per-question `img` field (an inline SVG
 > with single-quoted attributes and dark strokes); put SOME of them at `d: 1` so
-> beginners see them. Then ADVERSARIALLY VERIFY every question against the
+> beginners see them. For every question also write a 1-2 sentence,
+> 13-year-old-friendly `explain` saying why the correct answer is right (no
+> double-quotes). Then ADVERSARIALLY VERIFY every question against the
 > source: keep it only if the correct answer is uniquely supported by the
 > material and all 3 distractors are clearly wrong; drop anything unsupported,
 > ambiguous, or needing outside knowledge. (Fanning this out with the Workflow

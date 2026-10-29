@@ -180,10 +180,10 @@
   .rankstrip .rk-next { font-size: 10px; font-weight: 600; color: var(--text-3); margin-top: 3px; }
 
   /* Set Recap + Rank Up overlays (content is rendered by JS into the sheet). */
-  #recap, #rankup, #lenpick, #testpick { position: fixed; inset: 0; z-index: 7; display: grid; place-items: center; padding: 22px;
+  #recap, #rankup, #lenpick, #testpick, #explain { position: fixed; inset: 0; z-index: 7; display: grid; place-items: center; padding: 22px;
     background: rgba(20,16,28,.55); background: color-mix(in srgb, var(--bg) 82%, transparent);
     -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
-  #recap.hidden, #rankup.hidden, #lenpick.hidden, #testpick.hidden { display: none; }
+  #recap.hidden, #rankup.hidden, #lenpick.hidden, #testpick.hidden, #explain.hidden { display: none; }
   .recap-sheet, .lenpick-sheet, .testpick-sheet { width: 100%; max-width: 380px; background: var(--card); border-radius: 26px; box-shadow: var(--shadow);
     padding: 24px 22px 20px; display: flex; flex-direction: column; align-items: center; gap: 13px;
     animation: gameIn .4s cubic-bezier(.2,.9,.3,1) both; }
@@ -209,6 +209,18 @@
   .testpick-name { font-family: var(--round); font-weight: 800; font-size: 16px; line-height: 1.12; }
   .testpick-sub { font-size: 12px; color: var(--text-2); }
   .testpick-go { color: var(--text-2); font-size: 22px; flex: none; }
+  /* Explanation modal (on skip) + the inline "why" after a wrong answer + the
+     end-of-quiz review of missed questions. */
+  .sub .why { display: block; margin-top: 6px; font-size: 12.5px; font-weight: 600; color: rgba(255,255,255,.85); line-height: 1.3; }
+  .explain-ans { font-family: 'Luckiest Guy', var(--round); font-size: 24px; color: var(--good); line-height: 1.14; text-align: center; }
+  .explain-why { font-size: 14px; color: var(--text); line-height: 1.42; text-align: center; }
+  .explain-q { font-size: 13px; color: var(--text-2); text-align: center; line-height: 1.3; }
+  .miss-head { width: 100%; font-family: var(--round); font-weight: 800; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-2); text-align: left; }
+  .miss-list { width: 100%; max-height: 178px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+  .miss-item { background: var(--fill); border-radius: 12px; padding: 10px 12px; }
+  .miss-q { font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.25; }
+  .miss-a { font-size: 12.5px; color: var(--good); font-weight: 700; margin-top: 3px; }
+  .miss-why { font-size: 12px; color: var(--text-2); margin-top: 3px; line-height: 1.32; }
   #rankup { background: rgba(10,7,20,.72); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
   .rankup-sheet { width: 100%; max-width: 340px; display: flex; flex-direction: column; align-items: center;
     gap: 18px; text-align: center; animation: spring .55s cubic-bezier(.2,1.4,.35,1) both; }
@@ -715,6 +727,7 @@
 <div id="rankup" class="hidden" role="dialog" aria-label="Rank up"><div class="rankup-sheet" id="rankupSheet"></div></div>
 <div id="lenpick" class="hidden" role="dialog" aria-label="Choose how many questions"><div class="lenpick-sheet" id="lenpickSheet"></div></div>
 <div id="testpick" class="hidden" role="dialog" aria-label="Choose a test"><div class="testpick-sheet" id="testpickSheet"></div></div>
+<div id="explain" class="hidden" role="dialog" aria-label="Answer explanation"><div class="lenpick-sheet" id="explainSheet"></div></div>
 
 <div id="home">
   <div class="home-top">
@@ -2260,7 +2273,14 @@
   // reappears at another. Only once a band is fully exhausted of unseen
   // questions does that band's history reset and cycle fresh.
   let lastTriviaPick = -1;
+  let missed = [];            // questions missed (wrong or skipped) in the current set
+  let triviaQueue = null;     // when set, serve these exact questions (retry-missed mode)
+  let inRetry = false;        // true while replaying missed questions
   function nextTrivia() {
+    if (triviaQueue) {
+      if (triviaQueue.length) return triviaQueue.shift();
+      triviaQueue = null;     // queue drained -> back to normal selection
+    }
     const t = activeTopic, qs = t.questions, prof = topicProfile(t.id);
     const band = LEVELS[prof.rank].diff;
     const inBand = i => band.indexOf(qs[i].d || 1) >= 0;
@@ -2801,13 +2821,44 @@
         + '<span style="flex-grow:1"><span style="display:flex;justify-content:space-between"><b style="font-size:13px;color:var(--text)">' + r.name + '</b><span style="font-size:11px;color:var(--text-2)">' + toNext + '</span></span>'
         + '<span style="display:block;height:8px;border-radius:999px;background:var(--fill);overflow:hidden;margin-top:5px"><span style="display:block;height:100%;width:' + bar + '%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--blue))"></span></span></span></div>'
       + '<div style="font-size:13px;color:var(--text-2)">' + cheer + '</div>'
-      + '<button class="next" id="recapNext" style="width:100%">Next ' + setSize + ' &rarr;</button>'
+      + (missed.length
+          ? '<div class="miss-head">Review &mdash; ' + missed.length + ' to go over</div>'
+            + '<div class="miss-list">' + missed.map(q =>
+                '<div class="miss-item"><div class="miss-q">' + escapeHtml(q.q) + '</div>'
+                + '<div class="miss-a">&#10003; ' + escapeHtml(correctOf(q)) + '</div>'
+                + (q.explain ? '<div class="miss-why">' + escapeHtml(q.explain) + '</div>' : '')
+                + '</div>').join('') + '</div>'
+            + '<button class="next" id="recapRetry" style="width:100%;background:var(--accent)">' + (inRetry ? 'Retry still-missed (' + missed.length + ')' : 'Retry these ' + missed.length) + ' &rarr;</button>'
+          : (inRetry ? '<div style="font-size:13.5px;color:var(--good);font-weight:800">You cleared them all!</div>' : ''))
+      + (inRetry ? '' : '<button class="next" id="recapNext" style="width:100%' + (missed.length ? ';background:var(--fill);color:var(--text)' : '') + '">Next ' + setSize + ' &rarr;</button>')
       + '<button id="recapDone" style="border:0;background:none;color:var(--text-2);font-family:var(--round);font-weight:700;font-size:13px;padding:4px;cursor:pointer">Done for now</button>';
     el('recap').classList.remove('hidden');
-    el('recapNext').addEventListener('click', () => { el('recap').classList.add('hidden'); resetSet(); newRound(); }, { once: true });
+    if (el('recapRetry')) el('recapRetry').addEventListener('click', () => startRetry(missed), { once: true });
+    if (el('recapNext')) el('recapNext').addEventListener('click', () => { el('recap').classList.add('hidden'); resetSet(); newRound(); }, { once: true });
     el('recapDone').addEventListener('click', () => { el('recap').classList.add('hidden'); resetSet(); goHome(); }, { once: true });
   }
-  function resetSet() { setRounds = 0; setCorrect = 0; setXp = 0; comboNow = 0; comboBest = 0; }
+  function resetSet() { setRounds = 0; setCorrect = 0; setXp = 0; comboNow = 0; comboBest = 0; missed = []; }
+  // ---- Missed-question review: track wrong/skipped questions, explain them, replay them. ----
+  const correctOf = q => q.options[0];   // the bank always stores the correct answer first
+  function addMissed(q) { if (q && !missed.some(m => m.q === q.q)) missed.push(q); }
+  function shuffleArr(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+  function showExplain(q) {
+    el('explainSheet').innerHTML =
+      '<div style="font-family:var(--round);font-weight:800;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-2)">Answer</div>'
+      + '<div class="explain-ans">' + escapeHtml(correctOf(q)) + '</div>'
+      + '<div class="explain-q">' + escapeHtml(q.q) + '</div>'
+      + (q.explain ? '<div class="explain-why">' + escapeHtml(q.explain) + '</div>' : '<div class="explain-why" style="color:var(--text-2)">Added to your review list.</div>')
+      + '<button class="next" id="explainGo" style="width:100%">Got it &rarr;</button>';
+    el('explain').classList.remove('hidden');
+    el('explainGo').addEventListener('click', () => { el('explain').classList.add('hidden'); advance(); }, { once: true });
+  }
+  function startRetry(list) {
+    triviaQueue = shuffleArr(list.slice());
+    inRetry = true; setSize = triviaQueue.length;
+    el('recap').classList.add('hidden');
+    resetSet();            // fresh counters + a fresh missed list for the replay
+    newRound();
+  }
   function advance() {
     if (pendingRankUp >= 0) { showRankUp(pendingRankUp); return; }
     if (setRounds >= setSize) { showRecap(); return; }
@@ -2815,6 +2866,7 @@
   }
   function goHome() {
     recordSession();
+    triviaQueue = null; inRetry = false;
     document.body.classList.remove('playing', 'revealed', 'trivia');
     el('home').setAttribute('aria-hidden', 'false');
     el('phone').setAttribute('aria-hidden', 'true');
@@ -2841,6 +2893,7 @@
       comboNow++; comboBest = Math.max(comboBest, comboNow);
     } else {
       state.streak = 0; comboNow = 0;
+      if (game === 'trivia') addMissed(state.question);   // remember it for the end-of-quiz review
     }
     prof.rounds++; setRounds++;
     pendingRankUp = checkRankUp();
@@ -2862,6 +2915,7 @@
     let sub;
     if (game === 'trivia') {
       sub = 'Answer: ' + escapeHtml(state.opts.values[correctIdx]);
+      if (!isRight && state.question && state.question.explain) sub += '<div class="why">' + escapeHtml(state.question.explain) + '</div>';
     } else if (state.photo) {
       const p = state.photo, a = p.attribution || {};
       const who = p.name ? escapeHtml(p.name) + ' · age ' + state.age : 'Age ' + state.age;
@@ -2897,7 +2951,18 @@
 
   optEls.forEach((b,i) => b.addEventListener('click', () => answer(i)));
   el('next').addEventListener('click', advance);            // XP -> rank-up / set-recap / next round
-  el('skip').addEventListener('click', () => newRound());   // skip this face, no score change
+  function onSkip() {
+    if (game !== 'trivia') { newRound(); return; }   // age game: skip just re-rolls the face
+    if (state.answered) return;
+    state.answered = true; state.rounds++;
+    const tk = track(); tk.p.rounds++; setRounds++;
+    state.streak = 0; comboNow = 0;
+    addMissed(state.question);                        // skipped = didn't know it -> goes in the review
+    pendingRankUp = checkRankUp(); tk.save();
+    renderScores(false); renderRankStrip();
+    showExplain(state.question);                      // reveal the answer + a kid-friendly why
+  }
+  el('skip').addEventListener('click', onSkip);
   renderRankStrip();                                        // show the rank strip from the saved profile
   function sendReport(p, k) {
     if (!REPORT_ENDPOINT) return;             // no endpoint configured -> local only
@@ -2935,6 +3000,7 @@
     game = (g === 'trivia') ? 'trivia' : 'age';
     if (game === 'trivia') {
       lastTriviaPick = -1;   // fresh start, no carry-over of the last question
+      triviaQueue = null; inRetry = false;   // not a retry-missed replay
       const pr = topicProfile(activeTopic.id);   // count this play for the Study Tracker
       pr.plays = (pr.plays | 0) + 1; pr.lastPlayed = Date.now(); saveTrivia();
       if (groupOf(activeTopic) === 'school') logPlay(activeTopic);   // sync to the sheet, if connected
