@@ -34,7 +34,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-USER_AGENT = "GuessAgeDatasetBuilder/0.1 (https://github.com/thvibe/guess-age-ios; contact: maintainer)"
+USER_AGENT = "GuessAgeDatasetBuilder/0.1 (https://github.com/thvibe/trivia-league; contact: maintainer)"
 # QLever is a fast public Wikidata SPARQL endpoint that (unlike the official
 # query.wikidata.org service) does not aggressively rate-limit shared CI IPs.
 SPARQL_ENDPOINT = "https://qlever.cs.uni-freiburg.de/api/wikidata"

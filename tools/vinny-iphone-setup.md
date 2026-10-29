@@ -19,7 +19,7 @@ The tracker saves his plays and test scores right on his phone. No Google, no
 sheet.
 
 - [ ] On **Vinny's iPhone**, open the game in **Safari** (your
-      `thvibe.github.io/guess-age-ios` link).
+      `thvibe.github.io/trivia-league` link).
 - [ ] Tap **Share** (box with ↑) → **Add to Home Screen**. Now it opens like an
       app.
 - [ ] Open it, tap the **School** tab, let him play. Every School play is

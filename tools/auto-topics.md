@@ -132,7 +132,7 @@ can attach the **Google Drive** connector:
 ### Routine prompt
 
 > You are an automated job for the "Trivia League" web app (repo
-> thvibe/guess-age-ios). Turn new study material in Google Drive into trivia
+> thvibe/trivia-league). Turn new study material in Google Drive into trivia
 > topic tiles on the homepage and push them live, autonomously. Do not ask
 > questions; use ONLY facts from the provided files; never push broken code.
 >

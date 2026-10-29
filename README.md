@@ -57,7 +57,7 @@ to GitHub Pages by [`.github/workflows/pages.yml`](.github/workflows/pages.yml):
 
 - **One-time:** repo **Settings → Pages → Build and deployment → Source: GitHub
   Actions**. (Pages on a private repo needs a paid GitHub plan; public repos are free.)
-- Then every push that touches `web/` publishes to **`https://<owner>.github.io/guess-age-ios/`**.
+- Then every push that touches `web/` publishes to **`https://<owner>.github.io/trivia-league/`**.
 
 Open that URL on an iPhone in Safari → **Share → Add to Home Screen** to play it
 full-screen like an app. This is the free, no-Mac way to try the gameplay; the
